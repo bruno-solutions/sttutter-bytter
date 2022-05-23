@@ -1,1 +1,6 @@
+#VSCode Local Configurations
 .vscode/*
+
+#__pycache__ Content
+*.pyc
+*.pyo
