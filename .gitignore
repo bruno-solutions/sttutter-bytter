@@ -4,3 +4,10 @@
 #__pycache__ Content
 *.pyc
 *.pyo
+
+#C-build Stages
+*.o
+*.dll
+
+#Allow VScode Build Template Share
+!BUILD-TEMPLATE/tasks.json
