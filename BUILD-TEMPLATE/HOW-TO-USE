@@ -1,2 +1,4 @@
 Move "c_cpp_properties.json", "launch.json", "tasks.json" into ".vscode"
+Edit the files where needed (incert local PATHS)
 
+Test Launch Profile. Ask me if PROBLEMS.
