@@ -19,8 +19,12 @@ def downloader(url):
         if d['status'] == 'finished':
             print('Done downloading, now converting ...')
 
+    # name of wav file generated
+    name = 'stWavFile'
+
     # Our properties for the output file
     ydl_opts = {
+        'outtmpl': name + '.%(ext)s',
         'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -30,6 +34,12 @@ def downloader(url):
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
     }
+
     # Use youtubedl to download the wav file
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        try:
+            ydl.cache.remove()
+            ydl.download([url])
+        except youtube_dl.DownloadError as error:
+            print(error)
+
