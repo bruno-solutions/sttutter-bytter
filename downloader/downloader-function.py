@@ -3,7 +3,8 @@ import youtube_dl
 
 
 def downloader(url):
-    # Create the logging for youtubedl to accept in case of errors
+    # Create the logging for youtubedl to accept in case of errors and we can create debugging or warning
+    # functionalities
     class MyLogger(object):
         def debug(self, msg):
             pass
@@ -31,4 +32,4 @@ def downloader(url):
     }
     # Use youtubedl to download the wav file
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download(['whatever url we want'])
+        ydl.download([url])
