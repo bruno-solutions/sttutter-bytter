@@ -27,6 +27,7 @@ def downloader(url):
         'outtmpl': name + '.%(ext)s',
         'format': 'bestaudio/best',
         'postprocessors': [{
+            'ar': '44100',
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
             'preferredquality': '192',
@@ -42,4 +43,3 @@ def downloader(url):
             ydl.download([url])
         except youtube_dl.DownloadError as error:
             print(error)
-
