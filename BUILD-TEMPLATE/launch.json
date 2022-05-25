@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "preLaunchTask":"Build-all",
+            "name": "Launch App",
+            "type": "python",
+            "request": "launch",
+            "program": "app.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "preLaunchTask":"Build-all",
+            "name": "Test Replaygain",
+            "type": "python",
+            "request": "launch",
+            "program": "replaygaintest.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
