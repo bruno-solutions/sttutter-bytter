@@ -1,5 +1,5 @@
 """
-    Download songs from the internet.
+    Download songs from the internet (note this is the fast download version).
 
     Functions:
         getsong_from_url(url, outfile_name, logger) --> None:
@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import youtube_dl
 
 
-def getsong_from_url(url, outfile_name='stWavFile', logger=None):
+def getsong_from_url_fast(url, outfile_name='stWavFile', logger=None):
     """
     Use specified URL to download song from the internet and save as file.
     Accept logging for youtube_dl to handle errors.
@@ -19,6 +19,13 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
         url --> str:    The desired song's source URL   | *
         outfile_name:   File path for saving            | 'stWavFile'
         logger:         User supplied custom logger     | Default Built-in Logger
+
+    External Downloader: You can add an external downloader at external_downloader
+    in ydl_opts to have the overall application run faster (faster download speeds).
+    The current available external downloaders are aria2c, avconv, axel, curl, ffmpeg,
+    httpie, and wget. The default is set to aria2c but it will not mess up if you don't have any external
+    downloaders or aria2c.
+
     """
 
     # Use Monaural only for testing
@@ -28,6 +35,7 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
         """Custom logger class for future use."""
 
         """Pending implementation for debug and warning."""
+
         @staticmethod
         def debug(msg):
             print(msg)
@@ -49,6 +57,7 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
     ydl_args = {  # Properties for the output file
         'outtmpl': outfile_name + '.%(ext)s',
         'format': 'bestaudio/best',
+        'external_downloader': 'aria2c',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
