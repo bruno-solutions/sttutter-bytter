@@ -1,6 +1,5 @@
 import array
 import re
-from unittest import result
 import ffmpeg
 import os
 import json
@@ -9,13 +8,14 @@ import math
 import numpy as np
 #import requests
 
+from unittest import result
 from email.mime import audio
 from email.utils import format_datetime
 from typing_extensions import Self
 from pydub import AudioSegment
 
 
-def getLeveledAudioFile():
+def getLeveledAudioFile():#unfunished since Level function is not funushed
     """Get Leveled AudioFile"""
 
     #From downloader file
@@ -27,7 +27,6 @@ def processAudioClip(ClipList):
     pydub(fade in/ fade out)
     input: a list of clips will be processed
     """
-
     for clip in ClipList:
         clip.fade_in(250)
         clip.fade_out(250)
@@ -63,14 +62,13 @@ def pushOutClips(audioList):
 
     if not os.path.exists("AllAudioClips"):
         os.makedirs("AllAudioClips")
-    name = AudioClipsNameRoller()
+    name = Name_Roller()
     for Segment in audioList:
         Segment.export("AllAudioClips\\" + str(next(name)) + ".wav", format="wav")
 
 
-def AudioClipsNameRoller():
+def Name_Roller():
     """A naming helper of pushOutClips()"""
-    
     i = 0
     while True:
         yield i
@@ -83,7 +81,8 @@ def AudioClipsNameRoller():
 #   e.g: [[star1, end1],[star2, end2], [star3, end3]...]
 #We could mix match difference major change in pitch, beat, volumne to create more ways of slicing (like they can be different start, end points)
 def getCriticalTimeIndex():
-    """#reuturn: a list of pair list of critical times in ms
+    """
+    reuturn: a list of pair list of critical times in ms
     e.g: [[star1, end1],[star2, end2], [star3, end3]...]
     """
     pass
