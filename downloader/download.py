@@ -8,6 +8,7 @@
 
 from __future__ import unicode_literals
 import youtube_dl
+import logging
 
 
 def getsong_with_aria2c(*args, **kwargs):
@@ -49,9 +50,11 @@ def getsong_with_ytdl(
 
         @staticmethod
         def debug(msg):
-            """Print debug message on stdout for debugging."""
+            """Print debug message onto debug_log.txt for debugging."""
             if DEBUG_VERBOSE:
-                print(msg)
+                logging.basicConfig(filename='debug_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
+                                                                                   'levelname)s - %(message)s')
+                logging.exception("[DEBUG]" + msg)
 
         @staticmethod
         def warning(msg):
@@ -62,8 +65,11 @@ def getsong_with_ytdl(
 
         @staticmethod
         def error(msg):
-            """Print error message on stdout for debugging."""
-            print("[ERROR]: "+msg)
+            """Print error message onto error_log.txt for debugging."""
+            # print("[ERROR]: "+msg)
+            logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
+                                                                               'levelname)s - %(message)s')
+            logging.exception("[ERROR]" + msg)
 
     def my_hook(attrs):
         if attrs['status'] == 'finished':
@@ -97,4 +103,6 @@ def getsong_with_ytdl(
             ydl.cache.remove()
             ydl.download([url])
         except youtube_dl.DownloadError as dl_error:
-            print(dl_error)
+            logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
+                                                                               'levelname)s - %(message)s')
+            logging.exception(str(dl_error))
