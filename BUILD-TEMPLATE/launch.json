@@ -16,6 +16,13 @@
             "request": "launch",
             "program": "test_app.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "NO-BUILD Fast Launch Test",
+            "type": "python",
+            "request": "launch",
+            "program": "test_app.py",
+            "console": "integratedTerminal"
         }
     ]
 }

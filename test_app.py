@@ -2,4 +2,4 @@
 
 import downloader
 
-downloader.getsong_from_url("www.youtube.com/watch?v=dQw4w9WgXcQ")
+downloader.getsong("https://www.youtube.com/watch?v=dQw4w9WgXcQ")

@@ -2,14 +2,28 @@
     Download songs from the internet.
 
     Functions:
-        getsong_from_url(url, outfile_name, logger) --> None:
+        getsong_with_aria2c(url, outfile_name, logger) --> None:
+        getsong_with_ytdl(url, outfile_name, logger) --> None:
 """
 
 from __future__ import unicode_literals
 import youtube_dl
 
 
-def getsong_from_url(url, outfile_name='cache/ytdl-fullsong', logger=None):
+def getsong_with_aria2c(*args, **kwargs):
+    """
+    A faster version of getsong_with_ytdl() that utilizes external aria2c.
+    Accept logging for youtube_dl to handle errors.
+    """
+    getsong_with_ytdl(*args, **kwargs, external_downloader='aria2c')
+
+
+def getsong_with_ytdl(
+        url,
+        outfile_name='cache/ytdl-fullsong',
+        logger=None,
+        external_downloader=None
+    ):
     """
     Use specified URL to download song from the internet and save as file.
     Accept logging for youtube_dl to handle errors.
@@ -27,17 +41,29 @@ def getsong_from_url(url, outfile_name='cache/ytdl-fullsong', logger=None):
     #Use Monaural only for testing
     DEBUG_FORCE_MONO = True
 
+    #Print all debug info on stdout
+    DEBUG_VERBOSE = False
+
     class BuiltInLogger:
         """Custom logger class for future use."""
 
-        def debug(self, msg): """Pending implementation."""
+        @staticmethod
+        def debug(msg):
+            """Print debug message on stdout for debugging."""
+            if DEBUG_VERBOSE:
+                print(msg)
 
-        def warning(self, msg): """Pending implementation."""
+        @staticmethod
+        def warning(msg):
+            """
+            Print warning message on stdout for debugging.
+            """
+            print("[WARN]: "+msg)
 
         @staticmethod
         def error(msg):
             """Print error message on stdout for debugging."""
-            print(msg)
+            print("[ERROR]: "+msg)
 
     def my_hook(attrs):
         if attrs['status'] == 'finished':
@@ -47,6 +73,7 @@ def getsong_from_url(url, outfile_name='cache/ytdl-fullsong', logger=None):
     ydl_args = { # Properties for the output file
         'outtmpl': outfile_name + '.%(ext)s',
         'format': 'bestaudio/best',
+        'external_downloader': external_downloader,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
