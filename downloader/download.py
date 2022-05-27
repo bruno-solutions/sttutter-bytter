@@ -45,7 +45,7 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
 
         @staticmethod
         def error(msg):
-            """Print error message on stdout for debugging."""
+            """Print error message on error_log.txt file for debugging."""
             logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
                                                                                'levelname)s - %(message)s')
             logging.exception(msg)
