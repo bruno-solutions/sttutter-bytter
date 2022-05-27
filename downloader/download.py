@@ -2,17 +2,28 @@
     Download songs from the internet.
 
     Functions:
-        getsong_from_url(url, outfile_name, logger) --> None:
+        getsong_with_aria2c(url, outfile_name, logger) --> None:
+        getsong_with_ytdl(url, outfile_name, logger) --> None:
 """
 
 from __future__ import unicode_literals
-
-import logging
-
 import youtube_dl
 
 
-def getsong_from_url(url, outfile_name='stWavFile', logger=None):
+def getsong_with_aria2c(*args, **kwargs):
+    """
+    A faster version of getsong_with_ytdl() that utilizes external aria2c.
+    Accept logging for youtube_dl to handle errors.
+    """
+    getsong_with_ytdl(*args, **kwargs, external_downloader='aria2c')
+
+
+def getsong_with_ytdl(
+        url,
+        outfile_name='cache/ytdl-fullsong',
+        logger=None,
+        external_downloader=None
+    ):
     """
     Use specified URL to download song from the internet and save as file.
     Accept logging for youtube_dl to handle errors.
@@ -24,47 +35,49 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
         logger:         User supplied custom logger     | Default Built-in Logger
     """
 
-    # Testing .webm file
+    #Testing .webm file
     DEBUG_SKIP_YTDL_POST_PROCESSING = True
 
-    # Use Monaural only for testing
+    #Use Monaural only for testing
     DEBUG_FORCE_MONO = True
+
+    #Print all debug info on stdout
+    DEBUG_VERBOSE = False
 
     class BuiltInLogger:
         """Custom logger class for future use."""
 
         @staticmethod
         def debug(msg):
-            pass
-            # print(msg)
+            """Print debug message on stdout for debugging."""
+            if DEBUG_VERBOSE:
+                print(msg)
 
         @staticmethod
         def warning(msg):
-            pass
-            # print(msg)
+            """
+            Print warning message on stdout for debugging.
+            """
+            print("[WARN]: "+msg)
 
         @staticmethod
         def error(msg):
-            """Print error message on error_log.txt file for debugging."""
-            logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
-                                                                               'levelname)s - %(message)s')
-            logging.exception(msg)
+            """Print error message on stdout for debugging."""
+            print("[ERROR]: "+msg)
 
     def my_hook(attrs):
         if attrs['status'] == 'finished':
             print(attrs)
             print("Done downloading, now converting ...")
 
-    ydl_args = {  # Properties for the output file
+    ydl_args = { # Properties for the output file
         'outtmpl': outfile_name + '.%(ext)s',
         'format': 'bestaudio/best',
+        'external_downloader': external_downloader,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
             'preferredquality': '192',
-        }],
-        'postprocessors_args': [{
-            'ar': '44100'
         }],
         'logger': BuiltInLogger() if logger is None else logger,
         'progress_hooks': [my_hook],
@@ -75,7 +88,7 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
 
     if DEBUG_FORCE_MONO:
         ydl_args['postprocessor_args'] = {
-            'ac', '1'  # Mono audio
+            'ac', '1' # Mono audio
         }
 
     # Access youtube_dl and download the wav file
@@ -83,7 +96,5 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
         try:
             ydl.cache.remove()
             ydl.download([url])
-        except (youtube_dl.DownloadError, youtube_dl.utils.ExtractorError) as dl_error:
-            logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
-                                                                               'levelname)s - %(message)s')
-            logging.exception(str(dl_error))
+        except youtube_dl.DownloadError as dl_error:
+            print(dl_error)
