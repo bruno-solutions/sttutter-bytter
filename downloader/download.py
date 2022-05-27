@@ -6,6 +6,9 @@
 """
 
 from __future__ import unicode_literals
+
+import logging
+
 import youtube_dl
 
 
@@ -20,66 +23,67 @@ def getsong_from_url(url, outfile_name='stWavFile', logger=None):
         outfile_name:   File path for saving            | 'stWavFile'
         logger:         User supplied custom logger     | Default Built-in Logger
     """
-    if not youtube_dl:
-        raise ModuleNotFoundError("Youtube-dl not found in you environment. "
-                                  "You need to install youtube-dl to your environment")
-    else:
-        # Testing .webm file
-        DEBUG_SKIP_YTDL_POST_PROCESSING = True
 
-        # Use Monaural only for testing
-        DEBUG_FORCE_MONO = True
+    # Testing .webm file
+    DEBUG_SKIP_YTDL_POST_PROCESSING = True
 
-        class BuiltInLogger:
-            """Custom logger class for future use."""
+    # Use Monaural only for testing
+    DEBUG_FORCE_MONO = True
 
-            """Pending implementation."""
+    class BuiltInLogger:
+        """Custom logger class for future use."""
 
-            @staticmethod
-            def debug(msg):
-                print(msg)
+        @staticmethod
+        def debug(msg):
+            pass
+            # print(msg)
 
-            @staticmethod
-            def warning(msg):
-                print(msg)
+        @staticmethod
+        def warning(msg):
+            pass
+            # print(msg)
 
-            @staticmethod
-            def error(msg):
-                """Print error message on stdout for debugging."""
-                print(msg)
+        @staticmethod
+        def error(msg):
+            """Print error message on stdout for debugging."""
+            logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
+                                                                               'levelname)s - %(message)s')
+            logging.exception(msg)
 
-        def my_hook(attrs):
-            if attrs['status'] == 'finished':
-                print(attrs)
-                print("Done downloading, now converting ...")
+    def my_hook(attrs):
+        if attrs['status'] == 'finished':
+            print(attrs)
+            print("Done downloading, now converting ...")
 
-        ydl_args = {  # Properties for the output file
-            'outtmpl': outfile_name + '.%(ext)s',
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192',
-            }],
-            'postprocessors_args': [{
-                'ar': '44100'
-            }],
-            'logger': BuiltInLogger() if logger is None else logger,
-            'progress_hooks': [my_hook],
+    ydl_args = {  # Properties for the output file
+        'outtmpl': outfile_name + '.%(ext)s',
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192',
+        }],
+        'postprocessors_args': [{
+            'ar': '44100'
+        }],
+        'logger': BuiltInLogger() if logger is None else logger,
+        'progress_hooks': [my_hook],
+    }
+
+    if DEBUG_SKIP_YTDL_POST_PROCESSING:
+        del ydl_args['postprocessors']
+
+    if DEBUG_FORCE_MONO:
+        ydl_args['postprocessor_args'] = {
+            'ac', '1'  # Mono audio
         }
 
-        if DEBUG_SKIP_YTDL_POST_PROCESSING:
-            del ydl_args['postprocessors']
-
-        if DEBUG_FORCE_MONO:
-            ydl_args['postprocessor_args'] = {
-                'ac', '1'  # Mono audio
-            }
-
-        # Access youtube_dl and download the wav file
-        with youtube_dl.YoutubeDL(ydl_args) as ydl:
-            try:
-                ydl.cache.remove()
-                ydl.download([url])
-            except (youtube_dl.DownloadError, youtube_dl.utils.ExtractorError) as dl_error:
-                print(dl_error)
+    # Access youtube_dl and download the wav file
+    with youtube_dl.YoutubeDL(ydl_args) as ydl:
+        try:
+            ydl.cache.remove()
+            ydl.download([url])
+        except (youtube_dl.DownloadError, youtube_dl.utils.ExtractorError) as dl_error:
+            logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
+                                                                               'levelname)s - %(message)s')
+            logging.exception(str(dl_error))

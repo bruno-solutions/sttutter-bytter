@@ -29,60 +29,56 @@ def getsong_from_url_fast(url, outfile_name='stWavFile', logger=None):
     """
 
     # Use Monaural only for testing
-    if not youtube_dl:
-        raise ModuleNotFoundError("Youtube-dl not found in you environment. "
-                                  "You need to install youtube-dl to your environment")
-    else:
-        DEBUG_FORCE_MONO = False
+    DEBUG_FORCE_MONO = False
 
-        class BuiltInLogger:
-            """Custom logger class for future use."""
+    class BuiltInLogger:
+        """Custom logger class for future use."""
 
-            """Pending implementation for debug and warning."""
+        """Pending implementation for debug and warning."""
 
-            @staticmethod
-            def debug(msg):
-                print(msg)
+        @staticmethod
+        def debug(msg):
+            print(msg)
 
-            @staticmethod
-            def warning(msg):
-                print(msg)
+        @staticmethod
+        def warning(msg):
+            print(msg)
 
-            @staticmethod
-            def error(msg):
-                """Print error message on stdout for debugging."""
-                print(msg)
+        @staticmethod
+        def error(msg):
+            """Print error message on stdout for debugging."""
+            print(msg)
 
-        def my_hook(dic):
-            if dic['status'] == 'finished':
-                print(dic)
-                print("Done downloading, now converting ...")
+    def my_hook(dic):
+        if dic['status'] == 'finished':
+            print(dic)
+            print("Done downloading, now converting ...")
 
-        ydl_args = {  # Properties for the output file
-            'outtmpl': outfile_name + '.%(ext)s',
-            'format': 'bestaudio/best',
-            'external_downloader': 'aria2c',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192',
-            }],
-            'postproccessors_args': [{
-                'ar': '44100'
-            }],
-            'logger': BuiltInLogger() if logger is None else logger,
-            'progress_hooks': [my_hook],
+    ydl_args = {  # Properties for the output file
+        'outtmpl': outfile_name + '.%(ext)s',
+        'format': 'bestaudio/best',
+        'external_downloader': 'aria2c',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192',
+        }],
+        'postproccessors_args': [{
+            'ar': '44100'
+        }],
+        'logger': BuiltInLogger() if logger is None else logger,
+        'progress_hooks': [my_hook],
+    }
+
+    if DEBUG_FORCE_MONO:
+        ydl_args["postprocessor_args"] = {
+            'ac', '1'  # Mono audio
         }
 
-        if DEBUG_FORCE_MONO:
-            ydl_args["postprocessor_args"] = {
-                'ac', '1'  # Mono audio
-            }
-
-        # Access youtube_dl and download the wav file
-        with youtube_dl.YoutubeDL(ydl_args) as ydl:
-            try:
-                ydl.cache.remove()
-                ydl.download([url])
-            except (youtube_dl.DownloadError, youtube_dl.utils.ExtractorError) as dl_error:
-                print(dl_error)
+    # Access youtube_dl and download the wav file
+    with youtube_dl.YoutubeDL(ydl_args) as ydl:
+        try:
+            ydl.cache.remove()
+            ydl.download([url])
+        except (youtube_dl.DownloadError, youtube_dl.utils.ExtractorError) as dl_error:
+            print(dl_error)
