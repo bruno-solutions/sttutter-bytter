@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import youtube_dl
 
 
-def getsong_from_url(url, outfile_name='stWavFile', logger=None):
+def getsong_from_url(url, outfile_name='cache/ytdl-fullsong', logger=None):
     """
     Use specified URL to download song from the internet and save as file.
     Accept logging for youtube_dl to handle errors.
