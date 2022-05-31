@@ -1,7 +1,6 @@
 import os
 
-from .slicer_legacy import *
+from .slicer import *
 
 if os.path.exists("AllAudioClips"):
     os.remove("AllAudioClips")
-
