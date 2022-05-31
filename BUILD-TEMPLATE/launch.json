@@ -11,10 +11,17 @@
         },
         {
             "preLaunchTask":"Build-all",
-            "name": "Test Replaygain",
+            "name": "Launch Test App",
             "type": "python",
             "request": "launch",
-            "program": "replaygaintest.py",
+            "program": "test_app.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "NO-BUILD Fast Launch Test",
+            "type": "python",
+            "request": "launch",
+            "program": "test_app.py",
             "console": "integratedTerminal"
         }
     ]
