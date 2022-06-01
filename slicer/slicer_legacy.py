@@ -219,6 +219,10 @@ class Slicer:
 s = Slicer("slicer\slicerTestSrc\ZomboCom.wav")
     def get_pitch(self):
         return librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
+
+    def get_amplitude(self):
+        return self.y
+
 print("Onset Detection Result: ")
 print(s.onset_detection()[:20])
 
