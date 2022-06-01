@@ -66,4 +66,6 @@ class ReplaygainHandler:
         A less elegant method of normalization used as a substitute before
         smart_normalization() finishes implementation.
         """
-        self.audio_seg = pydub.AudioSegment.normalize(self.audio_seg)
+
+        self.audio_seg = pydub.AudioSegment\
+            .normalize(self.audio_seg)  # pylint: disable=no-member

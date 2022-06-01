@@ -20,7 +20,8 @@ Slicer.invoke_slicers({
 AudioProcessor()\
     .preprocess()\
     .apply_slicer(
-        pydub.AudioSegment.temporary_test_mode # pylint: disable=no-member
+        pydub.AudioSegment.temporary_test_mode, # pylint: disable=no-member
+        count=5                                 # since all slicer members are dynamically loaded.
     )\
     .postprocess(
         export_path="./cache/test_export"
