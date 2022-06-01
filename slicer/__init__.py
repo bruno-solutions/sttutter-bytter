@@ -1,6 +1,3 @@
-import os
+"""The module for splitting songs into shorter clips."""
 
-from .slicer import *
-
-if os.path.exists("AllAudioClips"):
-    os.remove("AllAudioClips")
+from .slicer import Slicer
