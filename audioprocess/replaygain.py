@@ -25,8 +25,9 @@ class ReplaygainHandler:
 
     def generate_debug_msg(self):
         """Debugger method"""
-        self.data_p = ctypes.c_char_p(b"\
-            replaygain.py l.29: TEST DEBUG INFO PRINT\n")
+        self.data_p = ctypes.c_char_p(
+            b"replaygain.py l.29: TEST DEBUG INFO PRINT\n"
+        )
 
     def normalize(self, audio):
         """
