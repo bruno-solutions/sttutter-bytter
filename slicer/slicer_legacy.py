@@ -6,6 +6,7 @@ import os
 import librosa
 import numpy as np
 from pydub import AudioSegment
+from sklearn.multiclass import OneVsRestClassifier
 
 #MAIN
 if not os.path.exists("./audioTemp"):
@@ -137,8 +138,6 @@ class Slicer:
             so to prevent error, we might need to pass in single channel input
         """
 
-        #y, sr = librosa.load('TESTING.wav') ###all files are currenly librosa example files, used as placeholder
-        #slicer\TESTING.wav
         pitches = librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
         difference = math.fabs(pitches[1]-pitches[0])
         pos = -1
@@ -157,7 +156,6 @@ class Slicer:
         '''
         y, sr = librosa.load('80HZVolum2.wav')#sr=22050)
         return y, sr ##### here slicer\\slicerTestSrc\\80HZVolum2.wav
-        return self.y
 
         difference = math.fabs(self.y[1]-self.y[0])
         pos=-1
@@ -213,16 +211,47 @@ class Slicer:
         return tempo, beats
     
     def get_beat_time(self):
-        tempo, beat = Slicer.get_tempo(self)
-        return librosa.frames_to_time(beat, sr=self.sr)
+        tempo, beats = Slicer.get_tempo(self)
+        return librosa.frames_to_time(beats, sr=self.sr)
 
-s = Slicer("slicer\slicerTestSrc\ZomboCom.wav")
+    #bpm higher-> freedom down
+    #freedom constant
+    def highlighter(self, onset, beats):
+        re = []
+        #cur_pointer = 0
+        for b in beats:
+            for o in onset:
+                if math.fabs(b - o) < 0.0348: #free = 3.1008 / bpm #60 / bpm
+                    re.append(b)
+                    #break
+        return re
+    
+    def highlighter2(self, onset, beats):
+        re = []
+        #cur_pointer = 0
+        for b in beats:
+            for o in onset:
+                if b == o:
+                    re.append(b)
+                    #break
+        return re
+
+    #barDuration(bpm) = 4/ 60 / bpm / (s/ bar)
+        #bpm(beat/min) 4(beats/bar) 60(s)
+    #s/bar 240/bpm
+    #0.5s for faded out
+print("Begin-------------------rebelPath.wav")
+s = Slicer("slicer\\slicerTestSrc\\ZomboCom.wav")
+o = s.onset_detection()[:40]
 print("Onset Detection Result: ")
-print(s.onset_detection()[:20])
-
+print(o)
+b = s.get_beat_time()[:40]
 print("Beat Detection")
-print(s.get_beat_time()[:20])
+print(b)
 
+print(s.highlighter(beats= b, onset=o))
+tempo, beat = s.get_tempo()
+print("\nTempo:" + str(tempo))
 # print("\nMajor Pitch Change @")
 # print(s.major_pitch_change())
 

@@ -1,10 +1,12 @@
 """Slicer homonymous submodule."""
 
+from unittest import result
 import pydub
-
+import librosa
 
 
 class Slicer:
+    
     """The primary object of the slicer module."""
     def __init__(self, base_seg, count):
         self.base_seg = base_seg
@@ -15,6 +17,10 @@ class Slicer:
 
         self.intervals = []
         self.clips = []
+
+        # ibrosa import
+        # self.y
+        # self.sr
 
     @classmethod
     def invoke_slicers(cls, slicer_methods):
@@ -64,3 +70,14 @@ class Slicer:
         ]
 
         return self
+
+    def get_critical_time(self):
+        """
+        reuturn: a list of pair list of critical times in ms
+        e.g: [[star1, end1],[star2, end2], [star3, end3]...]
+        """
+        beat = librosa.beat.beat_track(y = self.y, sr = self.sr)[1] * 1000 
+        critical_time = []
+        for i in range(4, len(beat), 8):
+            critical_time.append([beat[i - 4], beat[i] + 500])
+            
