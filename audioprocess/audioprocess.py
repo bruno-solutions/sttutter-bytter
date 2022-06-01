@@ -20,11 +20,11 @@ class AudioProcessor:
 
         self.clips = list()
 
-    def load_audio_fromwav(self, filename):
+    def load_audio_fromwav(self, filename, frame_rate=44100):
         """Loads a wave file as AudioSegmant object."""
         self.base_seg = pydub.AudioSegment.from_file(
             file=filename if filename else 'cache/ytdl-fullsong.webm'
-        )
+        ).set_frame_rate(frame_rate)
         return self
 
     def preprocess(self, handler=ReplaygainHandler):
