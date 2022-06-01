@@ -1,11 +1,8 @@
 """Slicer homonymous submodule."""
 
-<<<<<<< HEAD
-from unittest import result
-=======
-import random
 
->>>>>>> d0846a21dff2240fb8fe81864ebc43b1e2938ca6
+from unittest import result
+import random
 import pydub
 import librosa
 
@@ -104,4 +101,5 @@ class Slicer:
         critical_time = []
         for i in range(4, len(beat), 8):
             critical_time.append([beat[i - 4], beat[i] + 500])
+        return critical_time
             
