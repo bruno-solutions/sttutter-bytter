@@ -140,9 +140,9 @@ class Slicer:
         #y, sr = librosa.load('TESTING.wav') ###all files are currenly librosa example files, used as placeholder
         #slicer\TESTING.wav
         pitches = librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
-        difference = math.fabs(pitches[1]-pitches[0])
+        difference = math.fabs(pitches[2]-pitches[1])
         pos = -1
-        for i in range(pitches.size-1):
+        for i in range(1, pitches.size-1):
             if (math.fabs(pitches[i+1]-pitches[i]))>difference:
                 difference = math.fabs(pitches[i+1]-pitches[i])
                 pos = i+1
