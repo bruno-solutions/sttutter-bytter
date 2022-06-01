@@ -32,8 +32,6 @@ class Slicer:
         elif isinstance(slicer_methods, tuple):
             name, method = slicer_methods
 
-            print(f"registering: name: {name}, method: {method}")
-
             @pydub.utils.register_pydub_effect(name)
             def slicer_method_wrap(seg, count, *args, **kwargs):
                 return getattr(cls(seg, count), method)(*args, **kwargs).\
@@ -45,16 +43,20 @@ class Slicer:
         """Data loader and converter pending implementation."""
 
     def execute_slicing(self):
-        """Execute slicing"""
-        for interval in self.intervals:
+        """Execute slicing."""
+        for i in self.intervals:
             self.clips.append(
-                self.base_seg[interval[0]:interval[1]]
+                self.base_seg[i[0]:i[1]]
             )
 
         return self
 
     def random_slice(self):
-        """Create slices at random."""
+        """
+        Create slices at random.
+        This slicer method is meant to be a template
+        for the creation of other slicer methods.
+        """
 
         # Access data, equivalent to data=librosa.load()
         # Alternatively, self.data can be used in place
@@ -78,8 +80,8 @@ class Slicer:
                 1000, 10000 # 1 to 10 seconds long.
             )
 
-            # Append clip ranges to self.clips.
-            self.clips.append(
+            # Append clip ranges to self.intervals.
+            self.intervals.append(
                 self.base_seg[start_ms:end_ms]
             )
 
