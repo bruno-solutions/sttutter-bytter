@@ -44,6 +44,7 @@
 
 
 #define GAIN_NOT_ENOUGH_SAMPLES  -24601
+#define REPLAYGAIN_NOT_IMPLEMENTED -3
 
 #define YULE_ORDER         10
 #define BUTTER_ORDER       2

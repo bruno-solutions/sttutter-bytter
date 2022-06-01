@@ -69,7 +69,9 @@ int ReplayGain_init(replaygain_ReplayGain *self){
     return 0;
 }
 
-_REPLAYGAIN_EXPORTS int __stdcall replaygain_wip(){
-    printf("Replaygain Function PENDING IMPLEMENTATION\n");
-    return -1;
+_REPLAYGAIN_EXPORTS int __stdcall replaygain_calc(void *debuginfo){ //Placeholder function
+    printf("[DEBUG] | replaygain.c l.73:\n- Replaygain Function PENDING IMPLEMENTATION\n");
+    if(debuginfo != NULL)
+        printf("[DEBUG] | replaygain.c l.74:\n- %s", (char*)debuginfo);
+    return REPLAYGAIN_NOT_IMPLEMENTED;
 }
