@@ -25,8 +25,9 @@ class ReplaygainHandler:
 
     def generate_debug_msg(self):
         """Debugger method"""
-        self.data_p = ctypes.c_char_p(b"\
-            replaygain.py l.29: TEST DEBUG INFO PRINT\n")
+        self.data_p = ctypes.c_char_p(
+            b"replaygain.py l.29: TEST DEBUG INFO PRINT\n"
+        )
 
     def normalize(self, audio):
         """
@@ -66,4 +67,6 @@ class ReplaygainHandler:
         A less elegant method of normalization used as a substitute before
         smart_normalization() finishes implementation.
         """
-        self.audio_seg = pydub.AudioSegment.normalize(self.audio_seg)
+
+        self.audio_seg = pydub.AudioSegment\
+            .normalize(self.audio_seg)  # pylint: disable=no-member

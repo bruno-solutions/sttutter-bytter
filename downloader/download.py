@@ -73,8 +73,7 @@ def getsong_with_ytdl(
 
     def my_hook(attrs):
         if attrs['status'] == 'finished':
-            print(attrs)
-            print("Done downloading, now converting ...")
+            print("[YTDL]: Download success.")
 
     ydl_args = { # Properties for the output file
         'outtmpl': outfile_name + '.%(ext)s',

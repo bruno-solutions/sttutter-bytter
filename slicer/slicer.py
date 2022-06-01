@@ -1,6 +1,11 @@
 """Slicer homonymous submodule."""
 
+<<<<<<< HEAD
 from unittest import result
+=======
+import random
+
+>>>>>>> d0846a21dff2240fb8fe81864ebc43b1e2938ca6
 import pydub
 import librosa
 
@@ -36,8 +41,6 @@ class Slicer:
         elif isinstance(slicer_methods, tuple):
             name, method = slicer_methods
 
-            print(f"registering: name: {name}, method: {method}")
-
             @pydub.utils.register_pydub_effect(name)
             def slicer_method_wrap(seg, count, *args, **kwargs):
                 return getattr(cls(seg, count), method)(*args, **kwargs).\
@@ -49,26 +52,47 @@ class Slicer:
         """Data loader and converter pending implementation."""
 
     def execute_slicing(self):
-        """Execute slicing"""
-        for interval in self.intervals:
+        """Execute slicing."""
+        for i in self.intervals:
             self.clips.append(
-                self.base_seg[interval[0]:interval[1]]
+                self.base_seg[i[0]:i[1]]
             )
 
         return self
 
     def random_slice(self):
-        """Create slices at random."""
-        # access self.data
+        """
+        Create slices at random.
+        This slicer method is meant to be a template
+        for the creation of other slicer methods.
+        """
 
-        # NOT EVEN RANDOM PLACEHOLDER
-        self.intervals += [
-            (5000, 15000),
-            (10000, 20000),
-            (30000, 40000),
-            (20000, 21000)
-        ]
+        # Access data, equivalent to data=librosa.load()
+        # Alternatively, self.data can be used in place
+        # of 'data' directly.
+        data = self.data
 
+        # The total amount of clips desiered is stored
+        # in self.count. Loop for self.count.
+        for index in range(self.count):
+
+            # Calculate random range.
+            duration_ms = int(
+                self.base_seg.duration_seconds * 1000
+            )
+
+            start_ms = random.randint(
+                0, duration_ms - 1000
+            )
+
+            end_ms = start_ms + random.randint(
+                1000, 10000 # 1 to 10 seconds long.
+            )
+
+            # Append clip ranges to self.intervals.
+            self.intervals.append((start_ms, end_ms))
+
+        # Mandatory return-self.
         return self
 
     def get_critical_time(self):
