@@ -81,9 +81,7 @@ class Slicer:
             )
 
             # Append clip ranges to self.intervals.
-            self.intervals.append(
-                self.base_seg[start_ms:end_ms]
-            )
+            self.intervals.append((start_ms, end_ms))
 
         # Mandatory return-self.
         return self
