@@ -223,6 +223,9 @@ s = Slicer("slicer\slicerTestSrc\ZomboCom.wav")
     def get_amplitude(self):
         return self.y
 
+    def get_volume(self):
+        return librosa.amplitude_to_db(S=self.y,ref=0)
+
 print("Onset Detection Result: ")
 print(s.onset_detection()[:20])
 
