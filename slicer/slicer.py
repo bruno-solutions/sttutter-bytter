@@ -116,7 +116,7 @@ class Slicer:
             frequency curves are estimated separately for each channel,
             so to prevent error, we might need to pass in single channel input
         """
-        pitches = librosa.yin(self.data,fmin=440, fmax=880, sr=22050, frame_length=2048)
+        pitches = librosa.yin(self.y,fmin=40, fmax=2200, sr=22050, frame_length=2048)
         difference = math.fabs(pitches[2]-pitches[1])
         pos = -1
         for i in range(1, pitches.size-1):
@@ -178,7 +178,7 @@ class Slicer:
         return librosa.frames_to_time(beats, sr=44100)
 
     def get_pitch(self):
-        return librosa.yin(self.data,fmin=440, fmax=880, sr=22050, frame_length=2048)
+        return librosa.yin(self.y,fmin=40, fmax=2200, sr=22050, frame_length=2048)
 
     def get_amplitude(self):
         return self
