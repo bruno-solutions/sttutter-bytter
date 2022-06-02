@@ -110,6 +110,7 @@ class Slicer:
         """
         Output is in ms
         Identify major pitch change time
+        return 4/173 or 23 ms if pitch change occurs at the first/second frame
         search pitch detection algorithm (PDA)
         Note:
             If multi-channel input is provided,
