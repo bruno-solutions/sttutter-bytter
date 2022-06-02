@@ -1,9 +1,7 @@
 """Slicer homonymous submodule."""
 
-from unittest import result
-import random
-import pydub
-import librosa
+import random, numpy
+import pydub, librosa
 
 
 class Slicer:
@@ -43,7 +41,22 @@ class Slicer:
             raise TypeError
 
     def convert_data(self):
-        """Data loader and converter pending implementation."""
+        """Converts the data info librosa-compatible format."""
+
+        data_raw_stereo = numpy.array(
+            self.base_seg.get_array_of_samples()
+        )
+
+        data_raw_left  = data_raw_stereo[::2]
+        data_raw_right = data_raw_stereo[1::2]
+
+        data_raw_mono = (
+            data_raw_left + data_raw_right
+        ) / 2
+
+        # Convert int32 data to float (-1. ~ 1.)
+        self.data = data_raw_mono /\
+            numpy.iinfo(numpy.int32).max
 
     def execute_slicing(self):
         """Execute slicing."""
@@ -90,14 +103,20 @@ class Slicer:
         # Mandatory return-self.
         return self
 
-    def get_critical_time(self):
+
+class CriticalTimes:
+    """Saves, mixes, and convert critical time indexes into intervals."""
+
+    def __init__(self, host):
+        self.host = host
+
+    def generate_from_beats(self):
         """
-        return: a list of pair list of critical times in ms
-        e.g: [[star1, end1],[star2, end2], [star3, end3]...]
+        Return a list of pair list of critical times in ms.
+        E.g. [[star1, end1],[star2, end2], [star3, end3]...]
         """
 
-        ### Load in beat
-        beat = librosa.beat.beat_track(y=self.data, sr=44100)[1] * 1000
+        beat = librosa.beat.beat_track(y=self.host.data, sr=44100)[1] * 1000
 
         critical_time = []
 

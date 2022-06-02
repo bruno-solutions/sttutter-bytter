@@ -51,7 +51,7 @@ class AudioProcessor:
         return self
 
     def export(self):
-        """DOCSTRING"""
+        """Export the sliced audio clips into the desired directory."""
         for index, clip in enumerate(self.clips):
             clip.export(f"cache/test_export/{index}.wav")
 
