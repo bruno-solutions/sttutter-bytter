@@ -108,7 +108,7 @@ class Slicer:
         temp = [
                 Slicer.major_volumn_change(),
                 Slicer.major_tempo_change(),
-                Slicer.major_pitch_change()
+                # Slicer.major_pitch_change()
                 ]
         for i in Slicer.onset_detection():
             temp.append(i)

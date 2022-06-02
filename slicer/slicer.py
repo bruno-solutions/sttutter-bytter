@@ -97,7 +97,7 @@ class Slicer:
         """
 
         ### Load in beat
-        beat = librosa.beat.beat_track(y=self.y, sr=self.sr)[1] * 1000
+        beat = librosa.beat.beat_track(y=self.data, sr=44100)[1] * 1000
 
         critical_time = []
 
