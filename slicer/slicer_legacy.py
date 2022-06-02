@@ -176,6 +176,11 @@ class Slicer:
         #multiplied_onsets = onsets*1000
         #return multiplied_onsets
 
+    def get_real_time_tempo(self):
+        onset_env = librosa.onset.onset_strength(y=self.y,sr=self.sr)
+        tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=self.sr,aggregate=None)
+        return tempo
+        
     
     def major_tempo_change(self):
          """
