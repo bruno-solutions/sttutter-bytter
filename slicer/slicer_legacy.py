@@ -185,20 +185,21 @@ class Slicer:
          return location of biggest beat change
          Note that most songs could have the same beat throughout
          """
-         tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
-         beat_times = librosa.frames_to_time(beats, sr = self.sr)
-         beats=beat_times
-        
-         difference = math.fabs(beats[1]-beats[0])
+         onset_env = librosa.onset.onset_strength(y=self.y,sr=self.sr)
+         tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=self.sr,aggregate=None)
+
+         difference = math.fabs(tempo[1]-tempo[0])
 
          pos=-1
-         for i in range(beats.size-1):
-             if (math.fabs(beats[i+1]-beats[i])) >= difference+0.1:
-                 difference = math.fabs(beats[i+1]-beats[i])
+         for i in range(tempo.size-1):
+             if (math.fabs(tempo[i+1]-tempo[i])) >= difference+1:
+                 difference = math.fabs(tempo[i+1]-tempo[i])
                  pos = i+1
-         if difference == math.fabs(beats[1]-beats[0]):
+         if difference == math.fabs(tempo[1]-tempo[0]):
              return -1
-         return beats[pos]
+
+         time_from_frame = librosa.frames_to_time(pos, sr=self.sr)
+         return time_from_frame
 
     def get_tempo(self):
         tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
