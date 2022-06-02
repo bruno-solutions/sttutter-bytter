@@ -185,10 +185,10 @@ class Slicer:
     def major_tempo_change(self):
          """
          Output is in ms
-         Identify major tempo/beat change time
-         return -1 if no beat change
-         return location of biggest beat change
-         Note that most songs could have the same beat throughout
+         Identify major tempo (beats per minute) change time
+         return -1 if no tempo change
+         return location of biggest tempo change
+         Note that most songs could have the same tempo throughout
          """
          onset_env = librosa.onset.onset_strength(y=self.y,sr=self.sr)
          tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=self.sr,aggregate=None)
@@ -197,7 +197,7 @@ class Slicer:
 
          pos=-1
          for i in range(tempo.size-1):
-             if (math.fabs(tempo[i+1]-tempo[i])) >= difference+1:
+             if (math.fabs(tempo[i+1]-tempo[i])) >= difference+2:
                  difference = math.fabs(tempo[i+1]-tempo[i])
                  pos = i+1
          if difference == math.fabs(tempo[1]-tempo[0]):
