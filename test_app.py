@@ -29,22 +29,3 @@ DEBUG_AUTO_CLEAN_CACHE = False
 
 # if DEBUG_AUTO_CLEAN_CACHE:
 #     os.remove("cache/ytdl-fullsong.webm")
-
-
-import numpy
-import librosa
-
-ldata = librosa.load("./cache/ytdl-fullsong.webm", sr=None)[0]
-pdata_raw = numpy.array(pydub.AudioSegment.from_file("./cache/ytdl-fullsong.webm").get_array_of_samples())
-
-pdata_l = pdata_raw[::2]
-pdata_r = pdata_raw[1::2]
-
-pdata = (pdata_l+pdata_r)/2
-
-pdata_conv = pdata/numpy.iinfo(numpy.int32).max
-
-print(ldata[150040:150050])
-print(pdata_conv[150040:150050])
-
-pass
