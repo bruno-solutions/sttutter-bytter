@@ -179,34 +179,28 @@ class Slicer:
         #return multiplied_onsets
 
     
-    # def major_tempo_change(self):
-    #     """
-    #     Output is in ms
-    #     Identify major tempo/beat change time
-    #     return -1 if no beat change
-    #     return location of biggest beat change
-    #     Note that most songs could have the same beat throughout
-    #     """
-
-    #     #y, sr = librosa.load('TESTING.wav')
-    #     tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
-    #     beat_times = librosa.frames_to_time(beats, sr = self.sr)
-    #     beats=beat_times
+    def major_tempo_change(self):
+         """
+         Output is in ms
+         Identify major tempo/beat change time
+         return -1 if no beat change
+         return location of biggest beat change
+         Note that most songs could have the same beat throughout
+         """
+         tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
+         beat_times = librosa.frames_to_time(beats, sr = self.sr)
+         beats=beat_times
         
-    #     difference = math.fabs(beats[1]-beats[0])
-    #     # Error Record:
-    #     #     difference = math.fabs(beats[1]-beats[0])
-    #     #     IndexError: index 1 is out of bounds for axis 0 with size 0
-    #     #     When a constant 80HZ file input
+         difference = math.fabs(beats[1]-beats[0])
 
-    #     pos=-1
-    #     for i in range(beats.size-1):
-    #         if (math.fabs(beats[i+1]-beats[i])) > difference:
-    #             difference = math.fabs(beats[i+1]-beats[i])
-    #             pos = i+1
-    #     if difference == math.fabs(beats[1]-beats[0]):
-    #         return -1
-    #     return beats[pos]*1000
+         pos=-1
+         for i in range(beats.size-1):
+             if (math.fabs(beats[i+1]-beats[i])) >= difference+0.1:
+                 difference = math.fabs(beats[i+1]-beats[i])
+                 pos = i+1
+         if difference == math.fabs(beats[1]-beats[0]):
+             return -1
+         return beats[pos]
 
     def get_tempo(self):
         tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
