@@ -138,7 +138,7 @@ class Slicer:
             so to prevent error, we might need to pass in single channel input
         """
 
-        pitches = librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
+        pitches = librosa.yin(self.y,fmin=40, fmax=2200, sr=22050, frame_length=2048)
         difference = math.fabs(pitches[2]-pitches[1])
         pos = -1
         for i in range(1, pitches.size-1):
@@ -146,9 +146,9 @@ class Slicer:
                 difference = math.fabs(pitches[i+1]-pitches[i])
                 pos = i+1
         if pos == -1:
-            return 930
+            return 4/173
         else:
-            return pos * 930
+            return pos * (4/173)
 
     def major_volumn_change(self):#Work partially finished
         '''
@@ -215,7 +215,7 @@ class Slicer:
         return librosa.frames_to_time(beats, sr=self.sr)
 
     def get_pitch(self):
-        return librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
+        return librosa.yin(self.y,fmin=440, fmax=880, sr=22050, frame_length=2048)
 
     def get_amplitude(self):
         return self.y
