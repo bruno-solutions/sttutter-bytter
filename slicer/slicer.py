@@ -2,6 +2,7 @@
 
 import random, numpy
 import pydub, librosa
+import math
 
 
 class Slicer:
@@ -102,6 +103,89 @@ class Slicer:
 
         # Mandatory return-self.
         return self
+    
+
+    # all functions to find critical points
+    def major_pitch_change(self):
+        """
+        Output is in ms
+        Identify major pitch change time
+        search pitch detection algorithm (PDA)
+        Note:
+            If multi-channel input is provided,
+            frequency curves are estimated separately for each channel,
+            so to prevent error, we might need to pass in single channel input
+        """
+
+        pitches = librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
+        difference = math.fabs(pitches[2]-pitches[1])
+        pos = -1
+        for i in range(1, pitches.size-1):
+            if (math.fabs(pitches[i+1]-pitches[i]))>difference:
+                difference = math.fabs(pitches[i+1]-pitches[i])
+                pos = i+1
+        if pos == -1:
+            return 930
+        else:
+            return pos * 930
+    
+    def onset_detection(self):
+        """
+        Onset (major sound change) Detection (librosa has this exact function we can use)
+        return an numpy array of onset appearances in time in ms
+        only works for monophonic sound (I think this means single channel sound)
+        """
+        return librosa.onset.onset_detect(y = self.y, sr = self.sr, units ='time')
+        #multiplied_onsets = onsets*1000
+        #return multiplied_onsets        
+    
+    def major_tempo_change(self):
+         """
+         Output is in ms
+         Identify major tempo (beats per minute) change time
+         return -1 if no tempo change
+         return location of biggest tempo change
+         Note that most songs could have the same tempo throughout
+         """
+         onset_env = librosa.onset.onset_strength(y=self.y,sr=self.sr)
+         tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=self.sr,aggregate=None)
+
+         difference = math.fabs(tempo[1]-tempo[0])
+
+         pos=-1
+         for i in range(tempo.size-1):
+             if (math.fabs(tempo[i+1]-tempo[i])) >= difference+2:
+                 difference = math.fabs(tempo[i+1]-tempo[i])
+                 pos = i+1
+         if difference == math.fabs(tempo[1]-tempo[0]):
+             return -1
+
+         time_from_frame = librosa.frames_to_time(pos, sr=self.sr)
+         return time_from_frame
+    
+# functions that can be used for debugging if needed in the future
+
+    def get_real_time_tempo(self):
+        onset_env = librosa.onset.onset_strength(y=self.y,sr=self.sr)
+        tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=self.sr,aggregate=None)
+        return tempo
+
+    def get_tempo(self):
+        tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
+        return tempo
+    
+    def get_beat_time(self):
+        tempo, beats = librosa.beat.beat_track(y = self.y, sr = self.sr)
+        return librosa.frames_to_time(beats, sr=self.sr)
+
+    def get_pitch(self):
+        return librosa.yin(self.y, fmin=65, fmax=2093, frame_length=20480)
+
+    def get_amplitude(self):
+        return self.y
+
+    def get_volume(self):
+        return librosa.amplitude_to_db(S=self.y,ref=0)
 
 
 class CriticalTimes:
