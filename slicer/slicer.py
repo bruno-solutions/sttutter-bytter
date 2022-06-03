@@ -11,7 +11,7 @@ class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
 
     def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change):
-        self.critical_point = numpy.append(major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change)
+        self.critical_point = numpy.array([major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
         self.critical_point = numpy.sort(self.critical_point)
 
     def __init__(self):
