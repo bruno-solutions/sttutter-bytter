@@ -1,15 +1,79 @@
 """Slicer homonymous submodule."""
 
-import random, numpy
-import pydub, librosa
-import math
+import random
+import numpy
+import pydub
+import librosa
+from matplotlib.pyplot import plot, show
+
+
+class CriticalTimeIndexes:
+    """Saves, mixes, and convert critical time indexes into intervals."""
+
+    def __init__(self):
+        self.host = None
+
+    @classmethod
+    def generate_from_beats(cls, data):
+        """
+        Author: Johnson Lin
+
+        Return a list of pair list of critical times in ms.
+        E.g. [[star1, end1],[star2, end2], [star3, end3]...]
+        """
+
+        beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
+
+        critical_time = []
+
+        ### Get every fourth beat and return it in critical_time
+        for i in range(4, len(beat), 8):
+            critical_time.append([beat[i - 4], beat[i] + 500])
+        return critical_time
+
+
+class VolumeChangeDetector:
+    """A handler that hosts the volume change slicer."""
+
+    def __init__(self, host):
+        self.host = host
+
+        self.db_profile = None
+        self.critical = CriticalTimeIndexes()
+
+        self.parse_data()
+
+    @staticmethod
+    def angled_lp_filter(db_profile, weight=0.1):
+        """Filter out unusually high and short volume spikes."""
+
+        buoy = -20.
+
+        for volume in db_profile:
+            if buoy < volume <= buoy+weight:
+                buoy = volume
+
+            elif buoy+weight < volume:
+                buoy += weight
+
+        return buoy
+
+    def parse_data(self, filter_width=441):
+        """Extract data and convert it to desired formats."""
+
+        this_data_1 = numpy.pad(librosa.amplitude_to_db(self.host.data), (0,len(self.host.data)%filter_width)).reshape((len(self.host.data)-1)//filter_width+1, filter_width)
+        self.filtered = [self.angled_lp_filter(db_profile) for db_profile in this_data_1]
+
+        pass
+
+    def generate_intervals(self):
+        """DEBUG FUNC"""
 
 
 class Slicer:
     """The primary object of the slicer module."""
 
     def __init__(self, base_seg, count):
-        ### Get all
         self.base_seg = base_seg
         self.count = count
 
@@ -55,9 +119,10 @@ class Slicer:
             data_raw_left + data_raw_right
         ) / 2
 
-        # Convert int32 data to float (-1. ~ 1.)
-        self.data = data_raw_mono /\
-            numpy.iinfo(numpy.int32).max
+        # Convert int16 or int32 data to float (-1. ~ 1.)
+        self.data = data_raw_mono / ( 1 << (
+            self.base_seg.sample_width * 8
+        ) - 1 )
 
     def execute_slicing(self):
         """Execute slicing."""
@@ -70,7 +135,7 @@ class Slicer:
 
         return self
 
-    def random_slice(self):
+    def slice_at_random(self):
         """
         Create slices at random.
         This slicer method is meant to be a template
@@ -80,11 +145,12 @@ class Slicer:
         # Access data, equivalent to data=librosa.load()
         # Alternatively, self.data can be used in place
         # of 'data' directly.
-        data = self.data
+        data = self.data # pylint: disable=unused-variable
 
         # The total amount of clips desired is stored
         # in self.count. Loop for self.count.
-        for index in range(self.count):
+        for index in range(self.count): # pylint: disable=unused-variable
+
             # Calculate random range.
             duration_ms = int(
                 self.base_seg.duration_seconds * 1000
@@ -103,7 +169,11 @@ class Slicer:
 
         # Mandatory return-self.
         return self
-    
+
+    def slice_at_volume_change(self):
+        """Slice the audio at moments of rapid volume changes."""
+        VolumeChangeDetector(self).generate_intervals()
+        return self
 
     # all functions to find critical points
     def major_pitch_change(self):
@@ -186,25 +256,3 @@ class Slicer:
 
     def get_volume(self):
         return librosa.amplitude_to_db(S=self.data,ref=0)
-
-
-class CriticalTimes:
-    """Saves, mixes, and convert critical time indexes into intervals."""
-
-    def __init__(self, host):
-        self.host = host
-
-    def generate_from_beats(self):
-        """
-        Return a list of pair list of critical times in ms.
-        E.g. [[star1, end1],[star2, end2], [star3, end3]...]
-        """
-
-        beat = librosa.beat.beat_track(y=self.host.data, sr=44100)[1] * 1000
-
-        critical_time = []
-
-        ### Get every fourth beat and return it in critical_time
-        for i in range(4, len(beat), 8):
-            critical_time.append([beat[i - 4], beat[i] + 500])
-        return critical_time
