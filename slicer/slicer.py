@@ -1,5 +1,6 @@
 """Slicer homonymous submodule."""
 
+import math
 import random
 import numpy
 import pydub
@@ -16,7 +17,7 @@ class CriticalTimeIndexes:
     @classmethod
     def generate_from_beats(cls, data):
         """
-        Author: Johnson Lin
+        Author Johnson Lin
 
         Return a list of pair list of critical times in ms.
         E.g. [[star1, end1],[star2, end2], [star3, end3]...]
@@ -31,7 +32,54 @@ class CriticalTimeIndexes:
             critical_time.append([beat[i - 4], beat[i] + 500])
         return critical_time
 
+    def get_start_point(self, x, arr):
+        """
+        A binary search to find the nearby point of the target x in array arr
+        input:
+            x: target number
+            arr: target array
+        output:
+            [low, mid, high]
+            if any of these points is not exsit in the range of 0.1, -1 will be returned.
+            Otherwise an index will be returned. 
+        """
+        if len(arr) == 0:
+            return -1
 
+        low = 0
+        mid = 0
+        high = len(arr) - 1
+        is_found = False
+
+        while low <= high:
+            
+            mid = (high + low) // 2
+            
+            if arr[mid] < x:
+                low = mid + 1
+            
+            elif arr[mid] > x:
+                high = mid - 1
+            
+            else:
+                is_found = True
+                break
+
+        high += 1
+
+        if is_found: #x is exist on the arr
+            if x == arr[low] or x - arr[low] > 0.1:
+                low = -1
+            if x == arr[high] or arr[high] - x > 0.1:
+                high = -1
+        else: #x is not exist on the arr
+            if low != 0 and x - arr[low - 1] > 0.1:
+                low = -1
+            if high == len(arr) or arr[high + 1] - x > 0.1:
+                high = -1
+            mid = -1
+        
+        return low, mid, high    
 class VolumeChangeDetector:
     """A handler that hosts the volume change slicer."""
 
