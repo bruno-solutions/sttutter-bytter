@@ -12,35 +12,28 @@ class CriticalTimeIndexes:
 
     def __init__(self):
         self.host = None
+        self.cti = {}
 
-    @classmethod
-    def generate_from_beats(cls, data):
-        """
-        Author: Johnson Lin
+    @staticmethod
+    def abs_derivative(data):
+        """Get the absolute value of the rate of change of each point."""
+        raise SyntaxError("Not implemented.")
 
-        Return a list of pair list of critical times in ms.
-        E.g. [[star1, end1],[star2, end2], [star3, end3]...]
-        """
+    def append(self, item):
+        """Appends a critical time to the list of CTIs."""
+        raise SyntaxError("Not implemented.")
 
-        beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
-
-        critical_time = []
-
-        ### Get every fourth beat and return it in critical_time
-        for i in range(4, len(beat), 8):
-            critical_time.append([beat[i - 4], beat[i] + 500])
-        return critical_time
+    @property
+    def intervals(self):
+        """Generate critical intervals from the critical time indexes."""
+        raise SyntaxError("Not implemented.")
 
 
 class VolumeChangeDetector:
     """A handler that hosts the volume change slicer."""
 
-    def __init__(self, host):
-        self.host = host
-
-        self.db_profile = None
-        self.critical = CriticalTimeIndexes()
-
+    def __init__(self, data):
+        self.data = data
         self.parse_data()
 
     @staticmethod
@@ -61,13 +54,21 @@ class VolumeChangeDetector:
     def parse_data(self, filter_width=441):
         """Extract data and convert it to desired formats."""
 
-        this_data_1 = numpy.pad(librosa.amplitude_to_db(self.host.data), (0,len(self.host.data)%filter_width)).reshape((len(self.host.data)-1)//filter_width+1, filter_width)
-        self.filtered = [self.angled_lp_filter(db_profile) for db_profile in this_data_1]
+        # Convert and filter each section of the data.
+        self.filtered = [ self.angled_lp_filter(db_profile)\
+        for db_profile in\
+            numpy.pad(
+                librosa.amplitude_to_db(self.data),
+                ( 0, len(self.data) % filter_width )
+            ).reshape(
+                ( len(self.data) - 1 ) // filter_width + 1,
+                filter_width
+            )
+        ]
 
-        pass
-
-    def generate_intervals(self):
-        """DEBUG FUNC"""
+    def write_critical_time(self, cti):
+        """Writes volume change information to CTI."""
+        raise SyntaxError("Not implemented.")
 
 
 class Slicer:
@@ -80,7 +81,7 @@ class Slicer:
         self.data = None
         self.convert_data()
 
-        self.intervals = []
+        self.critical = CriticalTimeIndexes()
         self.clips = []
 
     @classmethod
@@ -128,7 +129,7 @@ class Slicer:
         """Execute slicing."""
 
         ### Use clip intervals to segment the clip
-        for i in self.intervals:
+        for i in self.critical.intervals:
             self.clips.append(
                 self.base_seg[i[0]:i[1]]
             )
@@ -165,94 +166,123 @@ class Slicer:
             )
 
             # Append clip ranges to self.intervals.
-            self.intervals.append((start_ms, end_ms))
+
+            raise SyntaxError("PENDING CHANGE: Append to self.critical instead of self.intervals.")
+
+            # e.g.
+            #   self.critical.append({
+            #       "type": "major_volume_change",
+            #       "index": _time,
+            #       "weight": _weight
+            #   })
 
         # Mandatory return-self.
         return self
 
     def slice_at_volume_change(self):
         """Slice the audio at moments of rapid volume changes."""
-        VolumeChangeDetector(self).generate_intervals()
+        VolumeChangeDetector(self.data).\
+            write_critical_time(self.critical.cti)
         return self
 
-    # all functions to find critical points
-    def major_pitch_change(self):
-        """
-        Output is in ms
-        Identify major pitch change time
-        return 4/173 or 23 ms if pitch change occurs at the first/second frame
-        search pitch detection algorithm (PDA)
-        Note:
-            If multi-channel input is provided,
-            frequency curves are estimated separately for each channel,
-            so to prevent error, we might need to pass in single channel input
-        """
-        pitches = librosa.yin(self.data,fmin=40, fmax=2200, sr=22050, frame_length=2048)
-        difference = math.fabs(pitches[2]-pitches[1])
-        pos = -1
-        for i in range(1, pitches.size-1):
-            if (math.fabs(pitches[i+1]-pitches[i]))>difference:
-                difference = math.fabs(pitches[i+1]-pitches[i])
-                pos = i+1
-        if pos == -1:
-            return 4/173
-        else:
-            return pos * (4/173)
+
+#     # all functions to find critical points
+#     def major_pitch_change(self):
+#         """
+#         Output is in ms
+#         Identify major pitch change time
+#         return 4/173 or 23 ms if pitch change occurs at the first/second frame
+#         search pitch detection algorithm (PDA)
+#         Note:
+#             If multi-channel input is provided,
+#             frequency curves are estimated separately for each channel,
+#             so to prevent error, we might need to pass in single channel input
+#         """
+#         pitches = librosa.yin(self.data,fmin=40, fmax=2200, sr=22050, frame_length=2048)
+#         difference = math.fabs(pitches[2]-pitches[1])
+#         pos = -1
+#         for i in range(1, pitches.size-1):
+#             if (math.fabs(pitches[i+1]-pitches[i]))>difference:
+#                 difference = math.fabs(pitches[i+1]-pitches[i])
+#                 pos = i+1
+#         if pos == -1:
+#             return 4/173
+#         else:
+#             return pos * (4/173)
     
-    def onset_detection(self):
-        """
-        Onset (major sound change) Detection (librosa has this exact function we can use)
-        return an numpy array of onset appearances in time in ms
-        only works for monophonic sound (I think this means single channel sound)
-        """
-        return librosa.onset.onset_detect(y = self.data, sr = 44100, units ='time')
-        #multiplied_onsets = onsets*1000
-        #return multiplied_onsets        
+#     def onset_detection(self):
+#         """
+#         Onset (major sound change) Detection (librosa has this exact function we can use)
+#         return an numpy array of onset appearances in time in ms
+#         only works for monophonic sound (I think this means single channel sound)
+#         """
+#         return librosa.onset.onset_detect(y = self.data, sr = 44100, units ='time')
+#         #multiplied_onsets = onsets*1000
+#         #return multiplied_onsets        
     
-    def major_tempo_change(self):
-         """
-         Output is in ms
-         Identify major tempo (beats per minute) change time
-         return -1 if no tempo change
-         return location of biggest tempo change
-         Note that most songs could have the same tempo throughout
-         """
-         onset_env = librosa.onset.onset_strength(y = self.data, sr=44100)
-         tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=44100,aggregate=None)
+#     def major_tempo_change(self):
+#          """
+#          Output is in ms
+#          Identify major tempo (beats per minute) change time
+#          return -1 if no tempo change
+#          return location of biggest tempo change
+#          Note that most songs could have the same tempo throughout
+#          """
+#          onset_env = librosa.onset.onset_strength(y = self.data, sr=44100)
+#          tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=44100,aggregate=None)
 
-         difference = math.fabs(tempo[1]-tempo[0])
+#          difference = math.fabs(tempo[1]-tempo[0])
 
-         pos=-1
-         for i in range(tempo.size-1):
-             if (math.fabs(tempo[i+1]-tempo[i])) >= difference+2:
-                 difference = math.fabs(tempo[i+1]-tempo[i])
-                 pos = i+1
-         if difference == math.fabs(tempo[1]-tempo[0]):
-             return -1
+#          pos=-1
+#          for i in range(tempo.size-1):
+#              if (math.fabs(tempo[i+1]-tempo[i])) >= difference+2:
+#                  difference = math.fabs(tempo[i+1]-tempo[i])
+#                  pos = i+1
+#          if difference == math.fabs(tempo[1]-tempo[0]):
+#              return -1
 
-         time_from_frame = librosa.frames_to_time(pos, sr=44100)
-         return time_from_frame
+#          time_from_frame = librosa.frames_to_time(pos, sr=44100)
+#          return time_from_frame
     
-# functions that can be used for debugging if needed in the future
+# # functions that can be used for debugging if needed in the future
 
-    def get_real_time_tempo(self):
-        onset_env = librosa.onset.onset_strength(y=self.data,sr=44100)
-        tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=44100,aggregate=None)
-        return tempo
+#     def get_real_time_tempo(self):
+#         onset_env = librosa.onset.onset_strength(y=self.data,sr=44100)
+#         tempo = librosa.beat.tempo(onset_envelope=onset_env,sr=44100,aggregate=None)
+#         return tempo
 
-    def get_tempo(self):
-        return librosa.beat.beat_track(y = self.data, sr = 44100)[0]
+#     def get_tempo(self):
+#         return librosa.beat.beat_track(y = self.data, sr = 44100)[0]
         
     
-    def get_beat_time(self):
-        beats = librosa.beat.beat_track(y = self.data, sr = 44100)[1]
-        return librosa.frames_to_time(beats, sr=44100)
+#     def get_beat_time(self):
+#         beats = librosa.beat.beat_track(y = self.data, sr = 44100)[1]
+#         return librosa.frames_to_time(beats, sr=44100)
 
-    def get_pitch(self):
-        return librosa.yin(self.data,fmin=40, fmax=2200, sr=22050, frame_length=2048)
+#     def get_pitch(self):
+#         return librosa.yin(self.data,fmin=40, fmax=2200, sr=22050, frame_length=2048)
 
-    def get_amplitude(self):
-        return self
+#     def get_amplitude(self):
+#         return self
 
-    def get_volume(self):
-        return librosa.amplitude_to_db(S=self.data,ref=0)
+#     def get_volume(self):
+#         return librosa.amplitude_to_db(S=self.data,ref=0)
+
+    # @classmethod
+    # def generate_from_beats(cls, data):
+    #     """
+    #     Author: Johnson Lin
+
+    #     Return a list of pair list of critical times in ms.
+    #     E.g. [[star1, end1],[star2, end2], [star3, end3]...]
+    #     """
+
+    #     beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
+
+    #     critical_time = []
+
+    #     ### Get every fourth beat and return it in critical_time
+    #     for i in range(4, len(beat), 8):
+    #         critical_time.append([beat[i - 4], beat[i] + 500])
+    #     return critical_time    
+
