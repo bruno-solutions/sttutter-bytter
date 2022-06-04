@@ -1,5 +1,6 @@
 """Slicer homonymous submodule."""
 
+import math
 import random
 import numpy
 import pydub
@@ -10,6 +11,10 @@ from matplotlib.pyplot import plot, show
 class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
 
+    def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change):
+        self.critical_point = numpy.array([major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
+        self.critical_point = numpy.sort(self.critical_point)
+
     def __init__(self):
         self.host = None
         self.cti = {}
@@ -18,6 +23,11 @@ class CriticalTimeIndexes:
     def abs_derivative(data):
         """Get the absolute value of the rate of change of each point."""
         raise SyntaxError("Not implemented.")
+    @classmethod
+    def generate_from_beats(cls, data):
+        """
+        Author Johnson Lin | CONTENT IN COMMENTED OUT AREA BELOW
+        """
 
     def append(self, item):
         """Appends a critical time to the list of CTIs."""
@@ -28,7 +38,54 @@ class CriticalTimeIndexes:
         """Generate critical intervals from the critical time indexes."""
         raise SyntaxError("Not implemented.")
 
+    def get_start_point(self, x, arr):
+        """
+        A binary search to find the nearby point of the target x in array arr
+        input:
+            x: target number
+            arr: target array
+        output:
+            [low, mid, high]
+            if any of these points is not exsit in the range of 0.1, -1 will be returned.
+            Otherwise an index will be returned.
+        """
+        if len(arr) == 0:
+            return -1
 
+        low = 0
+        mid = 0
+        high = len(arr) - 1
+        is_found = False
+
+        while low <= high:
+            
+            mid = (high + low) // 2
+            
+            if arr[mid] < x:
+                low = mid + 1
+            
+            elif arr[mid] > x:
+                high = mid - 1
+            
+            else:
+                is_found = True
+                break
+
+        high += 1
+
+        if is_found: #x is exist on the arr
+            if x == arr[low] or x - arr[low] > 0.1:
+                low = -1
+            if x == arr[high] or arr[high] - x > 0.1:
+                high = -1
+        else: #x is not exist on the arr
+            if low != 0 and x - arr[low - 1] > 0.1:
+                low = -1
+            if high == len(arr) or arr[high + 1] - x > 0.1:
+                high = -1
+            mid = -1
+        
+        return low, mid, high    
 class VolumeChangeDetector:
     """A handler that hosts the volume change slicer."""
 
