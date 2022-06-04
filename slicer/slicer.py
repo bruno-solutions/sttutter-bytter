@@ -1,4 +1,15 @@
-"""Slicer homonymous submodule."""
+"""
+    Slicer module's homonymous submodule.
+
+    Note: This file is incredibly messy currently
+    since multiple people rushed to work on it on
+    Friday the 4th of June, 2022.
+
+    Contact Zack Wang at wang5511@purdue.edu for an
+    explanation of how this file should eventually
+    be structured.
+"""
+
 
 import math
 import random
