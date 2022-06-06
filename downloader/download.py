@@ -32,7 +32,7 @@ def getsong_with_ytdl(
 
     Args:
         url --> str:    The desired song's source URL   | *
-        outfile_name:   File path for saving            | 'stWavFile'
+        outfile_name:   File path for saving            | 'cache/ytdl-fullsong' (outfile_name)
         logger:         User supplied custom logger     | Default Built-in Logger
     """
 

@@ -10,7 +10,6 @@
     be structured.
 """
 
-
 import math
 import random
 import numpy
@@ -22,8 +21,10 @@ from matplotlib.pyplot import plot, show
 class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
 
-    def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change):
-        self.critical_point = numpy.array([major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
+    def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats,
+                                    major_volume_change):
+        self.critical_point = numpy.array(
+            [major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
         self.critical_point = numpy.sort(self.critical_point)
 
     def __init__(self):
@@ -34,15 +35,21 @@ class CriticalTimeIndexes:
     def abs_derivative(data):
         """Get the absolute value of the rate of change of each point."""
         raise SyntaxError("Not implemented.")
+
     @classmethod
     def generate_from_beats(cls, data):
         """
-        Author Johnson Lin | CONTENT IN COMMENTED OUT AREA BELOW
+        Author Johnson Lin | WORK in PROGRESS
         """
+        beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
+
+        # Get every fourth beat and use append class method to append it to CTI
+        for i in range(4, len(beat), 8):
+            cls.append(self=cls.self, item=[beat[i - 4], beat[i] + 500])
 
     def append(self, item):
         """Appends a critical time to the list of CTIs."""
-        raise SyntaxError("Not implemented.")
+        self.cti.append(item)
 
     @property
     def intervals(self):
@@ -69,34 +76,36 @@ class CriticalTimeIndexes:
         is_found = False
 
         while low <= high:
-            
+
             mid = (high + low) // 2
-            
+
             if arr[mid] < x:
                 low = mid + 1
-            
+
             elif arr[mid] > x:
                 high = mid - 1
-            
+
             else:
                 is_found = True
                 break
 
         high += 1
 
-        if is_found: #x is exist on the arr
+        if is_found:  # x is exist on the arr
             if x == arr[low] or x - arr[low] > 0.1:
                 low = -1
             if x == arr[high] or arr[high] - x > 0.1:
                 high = -1
-        else: #x is not exist on the arr
+        else:  # x is not exist on the arr
             if low != 0 and x - arr[low - 1] > 0.1:
                 low = -1
             if high == len(arr) or arr[high + 1] - x > 0.1:
                 high = -1
             mid = -1
-        
-        return low, mid, high    
+
+        return low, mid, high
+
+
 class VolumeChangeDetector:
     """A handler that hosts the volume change slicer."""
 
@@ -111,10 +120,10 @@ class VolumeChangeDetector:
         buoy = -20.
 
         for volume in db_profile:
-            if buoy < volume <= buoy+weight:
+            if buoy < volume <= buoy + weight:
                 buoy = volume
 
-            elif buoy+weight < volume:
+            elif buoy + weight < volume:
                 buoy += weight
 
         return buoy
@@ -123,16 +132,16 @@ class VolumeChangeDetector:
         """Extract data and convert it to desired formats."""
 
         # Convert and filter each section of the data.
-        self.filtered = [ self.angled_lp_filter(db_profile)\
-        for db_profile in\
-            numpy.pad(
-                librosa.amplitude_to_db(self.data),
-                ( 0, len(self.data) % filter_width )
-            ).reshape(
-                ( len(self.data) - 1 ) // filter_width + 1,
-                filter_width
-            )
-        ]
+        self.filtered = [self.angled_lp_filter(db_profile) \
+                         for db_profile in \
+                         numpy.pad(
+                             librosa.amplitude_to_db(self.data),
+                             (0, len(self.data) % filter_width)
+                         ).reshape(
+                             (len(self.data) - 1) // filter_width + 1,
+                             filter_width
+                         )
+                         ]
 
     def write_critical_time(self, cti):
         """Writes volume change information to CTI."""
@@ -181,17 +190,17 @@ class Slicer:
             self.base_seg.get_array_of_samples()
         )
 
-        data_raw_left  = data_raw_stereo[::2]
+        data_raw_left = data_raw_stereo[::2]
         data_raw_right = data_raw_stereo[1::2]
 
         data_raw_mono = (
-            data_raw_left + data_raw_right
-        ) / 2
+                                data_raw_left + data_raw_right
+                        ) / 2
 
         # Convert int16 or int32 data to float (-1. ~ 1.)
-        self.data = data_raw_mono / ( 1 << (
-            self.base_seg.sample_width * 8
-        ) - 1 )
+        self.data = data_raw_mono / (1 << (
+                self.base_seg.sample_width * 8
+        ) - 1)
 
     def execute_slicing(self):
         """Execute slicing."""
@@ -214,11 +223,11 @@ class Slicer:
         # Access data, equivalent to data=librosa.load()
         # Alternatively, self.data can be used in place
         # of 'data' directly.
-        data = self.data # pylint: disable=unused-variable
+        data = self.data  # pylint: disable=unused-variable
 
         # The total amount of clips desired is stored
         # in self.count. Loop for self.count.
-        for index in range(self.count): # pylint: disable=unused-variable
+        for index in range(self.count):  # pylint: disable=unused-variable
 
             # Calculate random range.
             duration_ms = int(
@@ -249,10 +258,9 @@ class Slicer:
 
     def slice_at_volume_change(self):
         """Slice the audio at moments of rapid volume changes."""
-        VolumeChangeDetector(self.data).\
+        VolumeChangeDetector(self.data). \
             write_critical_time(self.critical.cti)
         return self
-
 
 #     # all functions to find critical points
 #     def major_pitch_change(self):
@@ -277,7 +285,7 @@ class Slicer:
 #             return 4/173
 #         else:
 #             return pos * (4/173)
-    
+
 #     def onset_detection(self):
 #         """
 #         Onset (major sound change) Detection (librosa has this exact function we can use)
@@ -287,7 +295,7 @@ class Slicer:
 #         return librosa.onset.onset_detect(y = self.data, sr = 44100, units ='time')
 #         #multiplied_onsets = onsets*1000
 #         #return multiplied_onsets        
-    
+
 #     def major_tempo_change(self):
 #          """
 #          Output is in ms
@@ -311,7 +319,7 @@ class Slicer:
 
 #          time_from_frame = librosa.frames_to_time(pos, sr=44100)
 #          return time_from_frame
-    
+
 # # functions that can be used for debugging if needed in the future
 
 #     def get_real_time_tempo(self):
@@ -321,8 +329,8 @@ class Slicer:
 
 #     def get_tempo(self):
 #         return librosa.beat.beat_track(y = self.data, sr = 44100)[0]
-        
-    
+
+
 #     def get_beat_time(self):
 #         beats = librosa.beat.beat_track(y = self.data, sr = 44100)[1]
 #         return librosa.frames_to_time(beats, sr=44100)
@@ -336,21 +344,20 @@ class Slicer:
 #     def get_volume(self):
 #         return librosa.amplitude_to_db(S=self.data,ref=0)
 
-    # @classmethod
-    # def generate_from_beats(cls, data):
-    #     """
-    #     Author: Johnson Lin
+# @classmethod
+# def generate_from_beats(cls, data):
+#     """
+#     Author: Johnson Lin
 
-    #     Return a list of pair list of critical times in ms.
-    #     E.g. [[star1, end1],[star2, end2], [star3, end3]...]
-    #     """
+#     Return a list of pair list of critical times in ms.
+#     E.g. [[star1, end1],[star2, end2], [star3, end3]...]
+#     """
 
-    #     beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
+#     beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
 
-    #     critical_time = []
+#     critical_time = []
 
-    #     ### Get every fourth beat and return it in critical_time
-    #     for i in range(4, len(beat), 8):
-    #         critical_time.append([beat[i - 4], beat[i] + 500])
-    #     return critical_time    
-
+#     ### Get every fourth beat and return it in critical_time
+#     for i in range(4, len(beat), 8):
+#         critical_time.append([beat[i - 4], beat[i] + 500])
+#     return critical_time
