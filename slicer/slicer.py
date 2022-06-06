@@ -30,22 +30,16 @@ class CriticalTimeIndexes:
     def __init__(self):
         self.host = None
         self.cti = {}
+        self.interval = {}
 
     @staticmethod
     def abs_derivative(data):
         """Get the absolute value of the rate of change of each point."""
         raise SyntaxError("Not implemented.")
 
-    @classmethod
-    def generate_from_beats(cls, data):
-        """
-        Author Johnson Lin | WORK in PROGRESS
-        """
-        beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
-
-        # Get every fourth beat and use append class method to append it to CTI
-        for i in range(4, len(beat), 8):
-            cls.append(self=cls.self, item=[beat[i - 4], beat[i] + 500])
+    """We need to put the function generate_from_beats down somewhere
+    We need to create a smart way of putting the critical points into intervals,
+    we can use the dict for weighting (diff properties correspond to different weights)"""
 
     def append(self, item):
         """Appends a critical time to the list of CTIs."""
@@ -53,8 +47,13 @@ class CriticalTimeIndexes:
 
     @property
     def intervals(self):
-        """Generate critical intervals from the critical time indexes."""
-        raise SyntaxError("Not implemented.")
+        """Generate critical intervals from the critical time indexes.
+        Initially, I'm going to try to use a for loop to get every two cti's and put them in as intervals"""
+        for i in range(len(self.cti) - 2):
+            self.interval.append({"type": "bar_change",
+                                  "timeindex": [self.cti[i], self.cti[i+1]],
+                                  "weight": "weight"})
+
 
     def get_start_point(self, x, arr):
         """
@@ -161,6 +160,16 @@ class Slicer:
         self.critical = CriticalTimeIndexes()
         self.clips = []
 
+    def generate_from_beats(self, data):
+        """
+        Author Johnson Lin | WORK in PROGRESS
+        """
+        beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
+
+        # Get every fourth beat and use append class method to append it to CTI
+        for i in range(0, len(beat), 4):
+            CriticalTimeIndexes.append(self=self, item=beat[i])
+
     @classmethod
     def invoke_slicers(cls, slicer_methods):
         """
@@ -205,8 +214,8 @@ class Slicer:
     def execute_slicing(self):
         """Execute slicing."""
 
-        ### Use clip intervals to segment the clip
-        for i in self.critical.intervals:
+        """Took off extra s at the end of interval in order to be able to call it at the critical time index class"""
+        for i in self.critical.interval:
             self.clips.append(
                 self.base_seg[i[0]:i[1]]
             )
