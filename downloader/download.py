@@ -24,7 +24,7 @@ def getsong_with_ytdl(
         outfile_name='cache/ytdl-fullsong',
         logger=None,
         external_downloader=None
-    ):
+):
     """
     Use specified URL to download song from the internet and save as file.
     Accept logging for youtube_dl to handle errors.
@@ -36,13 +36,13 @@ def getsong_with_ytdl(
         logger:         User supplied custom logger     | Default Built-in Logger
     """
 
-    #Testing .webm file
+    # Testing .webm file
     DEBUG_SKIP_YTDL_POST_PROCESSING = True
 
-    #Use Monaural only for testing
+    # Use Monaural only for testing
     DEBUG_FORCE_MONO = True
 
-    #Print all debug info on stdout
+    # Print all debug info on stdout
     DEBUG_VERBOSE = False
 
     class BuiltInLogger:
@@ -61,7 +61,7 @@ def getsong_with_ytdl(
             """
             Print warning message on stdout for debugging.
             """
-            print("[WARN]: "+msg)
+            print("[WARN]: " + msg)
 
         @staticmethod
         def error(msg):
@@ -75,7 +75,7 @@ def getsong_with_ytdl(
         if attrs['status'] == 'finished':
             print("[YTDL]: Download success.")
 
-    ydl_args = { # Properties for the output file
+    ydl_args = {  # Properties for the output file
         'outtmpl': outfile_name + '.%(ext)s',
         'format': 'bestaudio/best',
         'external_downloader': external_downloader,
@@ -83,7 +83,10 @@ def getsong_with_ytdl(
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
             'preferredquality': '192',
-        }],
+        },
+            {
+                'key': 'FFmpegMetadata'
+            }],
         'logger': BuiltInLogger() if logger is None else logger,
         'progress_hooks': [my_hook],
     }
@@ -93,7 +96,7 @@ def getsong_with_ytdl(
 
     if DEBUG_FORCE_MONO:
         ydl_args['postprocessor_args'] = {
-            'ac', '1' # Mono audio
+            'ac', '1'  # Mono audio
         }
 
     # Access youtube_dl and download the wav file
