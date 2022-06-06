@@ -14,14 +14,14 @@
             "label": "Compile Object Code",
             "type": "shell",
             "windows":{
-                "command": "gcc -c -o ${workspaceFolder}\\audioprocess\\src\\replaygain.o ${workspaceFolder}\\audioprocess\\src\\replaygain.c"
+                "command": "gcc -c -o audioprocess\\src\\replaygain.o audioprocess\\src\\replaygain.c"
             }
         },
         {
             "label": "Build Shared Library",
             "type": "shell",
             "windows":{
-                "command": "gcc -shared -o ${workspaceFolder}\\audioprocess\\lib\\replaygain.dll ${workspaceFolder}\\audioprocess\\src\\replaygain.o"
+                "command": "gcc -shared -o audioprocess\\lib\\replaygain.dll audioprocess\\src\\replaygain.o"
             }
         },
         {
