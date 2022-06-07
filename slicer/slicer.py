@@ -51,9 +51,8 @@ class CriticalTimeIndexes:
         Initially, I'm going to try to use a for loop to get every two cti's and put them in as intervals"""
         for i in range(len(self.cti) - 2):
             self.interval.append({"type": "bar_change",
-                                  "timeindex": [self.cti[i], self.cti[i+1]],
+                                  "timeindex": [self.cti[i], self.cti[i + 1]],
                                   "weight": "weight"})
-
 
     def get_start_point(self, x, arr):
         """
@@ -142,9 +141,13 @@ class VolumeChangeDetector:
                          )
                          ]
 
-    def write_critical_time(self, cti):
+    def write_critical_time(self, cti, db_profile):
         """Writes volume change information to CTI."""
-        raise SyntaxError("Not implemented.")
+        """Trying to append the volume spikes onto cti but I'm not sure if it is appending one buoy or multiple 
+        volume changes """
+        for i in range(0, len(db_profile)):
+            cti.append(self.angled_lp_filter(db_profile))
+
 
 
 class Slicer:
@@ -168,7 +171,7 @@ class Slicer:
 
         # Get every fourth beat and use append class method to append it to CTI
         for i in range(0, len(beat), 4):
-            CriticalTimeIndexes.append(self=self, item=beat[i])
+            self.critical.append(item=beat[i])
 
     @classmethod
     def invoke_slicers(cls, slicer_methods):
