@@ -1,0 +1,6 @@
+numpy~=1.22.3
+pydub~=0.25.1
+librosa~=0.9.1
+matplotlib~=3.5.2
+pytaglib~=1.5.0
+youtube-dl~=2021.12.17
