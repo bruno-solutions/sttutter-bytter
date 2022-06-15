@@ -11,3 +11,13 @@
 
 #Allow VScode Build Template Share
 !BUILD-TEMPLATE/tasks.json
+/.idea/.gitignore
+/.idea/aws.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/environment/Scripts/python.exe
+/environment/Scripts/pythonw.exe
+/environment/pyvenv.cfg
+/sttutter-youtube-audiobot.iml
+/.idea/vcs.xml
