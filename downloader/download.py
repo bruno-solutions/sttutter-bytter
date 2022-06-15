@@ -7,6 +7,8 @@
 """
 
 from __future__ import unicode_literals
+
+import taglib
 import youtube_dl
 import logging
 
@@ -37,10 +39,10 @@ def getsong_with_ytdl(
     """
 
     # Testing .webm file
-    DEBUG_SKIP_YTDL_POST_PROCESSING = True
+    DEBUG_SKIP_YTDL_POST_PROCESSING = False
 
     # Use Monaural only for testing
-    DEBUG_FORCE_MONO = True
+    DEBUG_FORCE_MONO = False
 
     # Print all debug info on stdout
     DEBUG_VERBOSE = False
@@ -104,7 +106,13 @@ def getsong_with_ytdl(
         try:
             ydl.cache.remove()
             ydl.download([url])
+            # Add url to metadata
+            # https://id3.org/id3v2.3.0#URL_link_frames
+            song = taglib.File('cache/ytdl-fullsong.wav')
+            song.tags["WPUB"] = [url]
+            song.save()
         except youtube_dl.DownloadError as dl_error:
             logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
                                                                                'levelname)s - %(message)s')
             logging.exception(str(dl_error))
+
