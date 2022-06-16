@@ -2,7 +2,7 @@
 
 import pydub
 
-from audioprocess.replaygain import ReplaygainHandler
+from .replaygain import ReplaygainHandler
 
 
 DEBUG_DEF_LOAD_WAV_ONLY = True

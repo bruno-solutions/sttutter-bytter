@@ -16,21 +16,24 @@ import numpy
 import pydub
 import librosa
 from matplotlib.pyplot import plot, show
+from pydub.utils import register_pydub_effect
 
 
 class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
 
-    def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats,
-                                    major_volume_change):
-        self.critical_point = numpy.array(
-            [major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
-        self.critical_point = numpy.sort(self.critical_point)
+    # def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats,
+    #                                 major_volume_change):
+    #     self.critical_point = numpy.array(
+    #         [major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
+    #     self.critical_point = numpy.sort(self.critical_point)
 
     def __init__(self):
         self.host = None
-        self.cti = {}
-        self.interval = {}
+        # self.cti = {}
+        # self.interval = {}
+        self.cti = []
+        self.interval = []
 
     @staticmethod
     def abs_derivative(data):
@@ -45,14 +48,16 @@ class CriticalTimeIndexes:
         """Appends a critical time to the list of CTIs."""
         self.cti.append(item)
 
-    @property
+    """Made this not property for now, will need to decide what to do with this"""
+    # @property
     def intervals(self):
         """Generate critical intervals from the critical time indexes.
         Initially, I'm going to try to use a for loop to get every two cti's and put them in as intervals"""
         for i in range(len(self.cti) - 2):
-            self.interval.append({"type": "bar_change",
-                                  "timeindex": [self.cti[i], self.cti[i + 1]],
-                                  "weight": "weight"})
+            # self.interval.update({"type": "bar_change",
+            #                       "timeindex": [self.cti[i], self.cti[i + 1]],
+            #                       "weight": "weight"})
+            self.interval.append([self.cti[i], self.cti[i + 1]])
 
     def get_start_point(self, x, arr):
         """
@@ -141,13 +146,14 @@ class VolumeChangeDetector:
                          )
                          ]
 
-    def write_critical_time(self, cti, db_profile):
+    def write_critical_time(self, cti):
         """Writes volume change information to CTI."""
         """Trying to append the volume spikes onto cti but I'm not sure if it is appending one buoy or multiple 
         volume changes """
-        for i in range(0, len(db_profile)):
-            cti.append(self.angled_lp_filter(db_profile))
 
+        self.parse_data()
+        for i in range(0, len(self.data)):
+            cti.append(self.angled_lp_filter(self.data))
 
 
 class Slicer:
@@ -163,15 +169,23 @@ class Slicer:
         self.critical = CriticalTimeIndexes()
         self.clips = []
 
-    def generate_from_beats(self, data):
+    def generate_from_beats(self):
         """
         Author Johnson Lin | WORK in PROGRESS
         """
-        beat = librosa.beat.beat_track(y=data, sr=44100)[1] * 1000
+        # Convert the data to appropriate formatting
+        self.convert_data()
+
+        beat = librosa.beat.beat_track(y=self.data, sr=44100)[1] * 1000
 
         # Get every fourth beat and use append class method to append it to CTI
-        for i in range(0, len(beat), 4):
+        for i in range(0, len(beat), 3):
             self.critical.append(item=beat[i])
+
+        """Need to find the proper location for this"""
+        self.critical.intervals()
+
+        return self
 
     @classmethod
     def invoke_slicers(cls, slicer_methods):
