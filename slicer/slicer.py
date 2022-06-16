@@ -176,11 +176,20 @@ class Slicer:
         # Convert the data to appropriate formatting
         self.convert_data()
 
-        beat = librosa.beat.beat_track(y=self.data, sr=44100)[1] * 1000
+        # The duration of time (we can also make it an argument)
+        time_duration = 21
+
+        # Sampling rate
+        sr = 44100
+
+        beat = librosa.beat.beat_track(y=self.data, sr=sr)[1]
+
+        # Change the beats from frames to time (ms)
+        beat_time = librosa.frames_to_time(beat, sr=sr) * 1000
 
         # Get every fourth beat and use append class method to append it to CTI
-        for i in range(0, len(beat), 3):
-            self.critical.append(item=beat[i])
+        for i in range(0, len(beat), time_duration):
+            self.critical.append(item=beat_time[i])
 
         """Need to find the proper location for this"""
         self.critical.intervals()
