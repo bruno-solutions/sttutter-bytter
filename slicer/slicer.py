@@ -171,8 +171,10 @@ class Slicer:
 
     def generate_from_beats(self):
         """
-        Author Johnson Lin | WORK in PROGRESS
+        Author Johnson Lin | Get every beat in a song and use that to input a bar of beats
+        as critical times
         """
+
         # Convert the data to appropriate formatting
         self.convert_data()
 

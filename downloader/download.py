@@ -107,12 +107,10 @@ def getsong_with_ytdl(
             ydl.cache.remove()
             ydl.download([url])
             # Add url to metadata
-            # https://id3.org/id3v2.3.0#URL_link_frames
-            song = taglib.File('cache/ytdl-fullsong.wav')
+            song = taglib.File('cache/ytdl-fullsong.wav')  # https://id3.org/id3v2.3.0#URL_link_frames
             song.tags["WPUB"] = [url]
             song.save()
         except youtube_dl.DownloadError as dl_error:
             logging.basicConfig(filename='error_log.txt', filemode='w', format='%(asctime)s - %(name)s - %('
                                                                                'levelname)s - %(message)s')
             logging.exception(str(dl_error))
-

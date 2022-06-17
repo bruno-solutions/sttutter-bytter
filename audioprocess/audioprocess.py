@@ -1,6 +1,7 @@
 """The main processor of audioprocess module"""
 
 import pydub
+from pydub.utils import mediainfo
 
 from .replaygain import ReplaygainHandler
 
@@ -53,6 +54,7 @@ class AudioProcessor:
     def export(self):
         """Export the sliced audio clips into the desired directory."""
         for index, clip in enumerate(self.clips):
-            clip.export(f"cache/test_export/{index}.wav")
+            print(mediainfo("ytdl-fullsong.wav"))
+            clip.export(f"cache/test_export/{index}.wav", tags=mediainfo("ytdl-fullsong.wav"))
 
         return self
