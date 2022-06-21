@@ -19,6 +19,7 @@ from matplotlib.pyplot import plot, show
 from pydub.utils import register_pydub_effect
 
 
+
 class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
 
@@ -154,6 +155,19 @@ class VolumeChangeDetector:
         self.parse_data()
         for i in range(0, len(self.data)):
             cti.append(self.angled_lp_filter(self.data))
+
+
+class voice_slicer:
+    """The object for slicing due to the vocals"""
+    def __init__(self, data):
+        self.data = data
+        self.create_stems
+
+    def create_stems(self):
+        if __name__ == '__main__':
+            # Need correct imports
+            separator = Separator('spleeter:4stems')
+            separator.separate_to_file('test.wav', './testingfors')
 
 
 class Slicer:
