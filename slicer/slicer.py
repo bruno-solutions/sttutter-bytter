@@ -17,6 +17,7 @@ import pydub
 import librosa
 from matplotlib.pyplot import plot, show
 from pydub.utils import register_pydub_effect
+from spleeter.separator import Separator
 
 
 
@@ -161,13 +162,17 @@ class voice_slicer:
     """The object for slicing due to the vocals"""
     def __init__(self, data):
         self.data = data
-        self.create_stems
-
+        self.create_stems()
+    
+    # Create seperate module for this
     def create_stems(self):
         if __name__ == '__main__':
-            # Need correct imports
+            # Do the seperation
             separator = Separator('spleeter:4stems')
-            separator.separate_to_file('test.wav', './testingfors')
+            separator.separate_to_file('test.wav', './slicer/seperated')
+
+    def write_critical_time(self, cti):
+        pass
 
 
 class Slicer:
@@ -310,6 +315,12 @@ class Slicer:
     def slice_at_volume_change(self):
         """Slice the audio at moments of rapid volume changes."""
         VolumeChangeDetector(self.data). \
+            write_critical_time(self.critical.cti)
+        return self
+
+    def slice_at_voice(self):
+        """Slice the audio according to the vocals of a song"""
+        voice_slicer(self.data). \
             write_critical_time(self.critical.cti)
         return self
 

@@ -13,7 +13,7 @@ downloader.getsong("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
 Slicer.invoke_slicers({
     # """Initially volumeSlicer: volume function but now beats"""
-    "beats": "generate_from_beats"
+    "voice": "slice_at_voice"
 })
 
 # Zach's test case
@@ -22,7 +22,7 @@ Slicer.invoke_slicers({
 AudioProcessor("cache/ytdl-fullsong.wav") \
     .preprocess() \
     .apply_slicer(
-    pydub.AudioSegment.beats,  # pylint: disable=no-member
+    pydub.AudioSegment.voice,  # pylint: disable=no-member
     count=5  # since all slicer members are dynamically loaded.
 ) \
     .postprocess(
