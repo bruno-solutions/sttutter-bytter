@@ -17,6 +17,8 @@ import pydub
 import librosa
 from matplotlib.pyplot import plot, show
 from pydub.utils import register_pydub_effect
+from spleeter import separator
+from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 
 
@@ -160,19 +162,34 @@ class VolumeChangeDetector:
 
 class voice_slicer:
     """The object for slicing due to the vocals"""
-    def __init__(self, data):
+    def __init__(self, data, base_seg):
+        self.base_seg = base_seg
         self.data = data
         self.create_stems()
     
     # Create seperate module for this
     def create_stems(self):
+        # We are running into an unexpected error that we had fixed earlier
+        __name__ = '__main__'
         if __name__ == '__main__':
-            # Do the seperation
             separator = Separator('spleeter:4stems')
-            separator.separate_to_file('test.wav', './slicer/seperated')
+            file = "./cache/ytdl-fullsong.wav"
+            audio_loader = AudioAdapter.default()
+            sample_rate = 44100
+            waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
+            prediction = separator._separate_librosa(waveform, file)
+            print(prediction['vocals'])
+
+        # separator = Separator('spleeter:4stems')
+        # file = "./cache/ytdl-fullsong.wav"
+        # audio_loader = AudioAdapter.default()
+        # sample_rate = 44100
+        # waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
+        # prediction = separator._separate_librosa(waveform, file)
+        # print(prediction['vocals'])
 
     def write_critical_time(self, cti):
-        pass
+        self.create_stems()
 
 
 class Slicer:
@@ -241,12 +258,12 @@ class Slicer:
 
     def convert_data(self):
         """Converts the data info librosa-compatible format."""
-
         data_raw_stereo = numpy.array(
             self.base_seg.get_array_of_samples()
         )
 
         data_raw_left = data_raw_stereo[::2]
+
         data_raw_right = data_raw_stereo[1::2]
 
         data_raw_mono = (
@@ -320,7 +337,7 @@ class Slicer:
 
     def slice_at_voice(self):
         """Slice the audio according to the vocals of a song"""
-        voice_slicer(self.data). \
+        voice_slicer(self.data, self.base_seg). \
             write_critical_time(self.critical.cti)
         return self
 
