@@ -15,23 +15,13 @@ import random
 import numpy
 import pydub
 import librosa
-from matplotlib.pyplot import plot, show
 from pydub.utils import register_pydub_effect
-from spleeter import separator
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 
 
-
 class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
-
-    # def get_array_of_critical_point(self, major_pitch_change, major_tempo_change, generate_from_beats,
-    #                                 major_volume_change):
-    #     self.critical_point = numpy.array(
-    #         [major_pitch_change, major_tempo_change, generate_from_beats, major_volume_change])
-    #     self.critical_point = numpy.sort(self.critical_point)
-
     def __init__(self):
         self.host = None
         # self.cti = {}
@@ -154,43 +144,31 @@ class VolumeChangeDetector:
         """Writes volume change information to CTI."""
         """Trying to append the volume spikes onto cti but I'm not sure if it is appending one buoy or multiple 
         volume changes """
-
-        self.parse_data()
         for i in range(0, len(self.data)):
             cti.append(self.angled_lp_filter(self.data))
 
 
 class voice_slicer:
     """The object for slicing due to the vocals"""
-    def __init__(self, data, base_seg):
-        self.base_seg = base_seg
+    def __init__(self, data):
         self.data = data
-        self.create_stems()
-    
-    # Create seperate module for this
-    def create_stems(self):
-        # We are running into an unexpected error that we had fixed earlier
-        __name__ = '__main__'
-        if __name__ == '__main__':
-            separator = Separator('spleeter:4stems')
-            file = "./cache/ytdl-fullsong.wav"
-            audio_loader = AudioAdapter.default()
-            sample_rate = 44100
-            waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
-            prediction = separator._separate_librosa(waveform, file)
-            print(prediction['vocals'])
+        self.prediction = None
+        self.separator()
 
-        # separator = Separator('spleeter:4stems')
-        # file = "./cache/ytdl-fullsong.wav"
-        # audio_loader = AudioAdapter.default()
-        # sample_rate = 44100
-        # waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
-        # prediction = separator._separate_librosa(waveform, file)
-        # print(prediction['vocals'])
+    def separator(self):
+        separator = Separator('spleeter:2stems', multiprocess=False)
+        file = "./cache/ytdl-fullsong.wav"
+        audio_loader = AudioAdapter.default()
+        sample_rate = 44100
+        waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
+        self.prediction = separator.separate(waveform, file)
 
     def write_critical_time(self, cti):
-        self.create_stems()
-
+        threshold = 0.01
+        # 44100/ 4 = 11025
+        for i in range(0, len(self.prediction), 44100):
+            if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
+                cti.append(self.prediction['vocals'][i][0])
 
 class Slicer:
     """The primary object of the slicer module."""
@@ -337,8 +315,9 @@ class Slicer:
 
     def slice_at_voice(self):
         """Slice the audio according to the vocals of a song"""
-        voice_slicer(self.data, self.base_seg). \
+        voice_slicer(self.data). \
             write_critical_time(self.critical.cti)
+        self.critical.intervals()
         return self
 
 #     # all functions to find critical points

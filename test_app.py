@@ -7,18 +7,15 @@ import downloader
 from audioprocess import AudioProcessor
 from slicer import Slicer
 
+
 DEBUG_AUTO_CLEAN_CACHE = False
 
 downloader.getsong("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
 Slicer.invoke_slicers({
-    # """Initially volumeSlicer: volume function but now beats"""
     "voice": "slice_at_voice"
 })
 
-# Zach's test case
-# AudioProcessor("./test_data/test_cases/loudness_change_at_2sec.wav") \
-# Rohan's test case
 AudioProcessor("cache/ytdl-fullsong.wav") \
     .preprocess() \
     .apply_slicer(
