@@ -22,6 +22,7 @@ from spleeter.separator import Separator
 
 class CriticalTimeIndexes:
     """Saves, mixes, and convert critical time indexes into intervals."""
+
     def __init__(self):
         self.host = None
         # self.cti = {}
@@ -43,6 +44,7 @@ class CriticalTimeIndexes:
         self.cti.append(item)
 
     """Made this not property for now, will need to decide what to do with this"""
+
     # @property
     def intervals(self):
         """Generate critical intervals from the critical time indexes.
@@ -150,6 +152,7 @@ class VolumeChangeDetector:
 
 class voice_slicer:
     """The object for slicing due to the vocals"""
+
     def __init__(self, data):
         self.data = data
         self.prediction = None
@@ -166,9 +169,11 @@ class voice_slicer:
     def write_critical_time(self, cti):
         threshold = 0.01
         # 44100/ 4 = 11025
-        for i in range(0, len(self.prediction), 44100):
+        amount_of_crits = self.prediction['vocals'].shape[0]
+        for i in range(0, amount_of_crits, 44100 * 9):
             if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
-                cti.append(self.prediction['vocals'][i][0])
+                cti.append(i / 44100 * 1000)
+
 
 class Slicer:
     """The primary object of the slicer module."""
