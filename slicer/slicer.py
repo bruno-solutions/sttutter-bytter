@@ -43,7 +43,7 @@ class CriticalTimeIndexes:
         """Appends a critical time to the list of CTIs."""
         self.cti.append(item)
 
-    """Made this not property for now, will need to decide what to do with this"""
+    """Made this not a property for now, will need to decide what to do with this"""
 
     # @property
     def intervals(self):
@@ -53,6 +53,7 @@ class CriticalTimeIndexes:
             # self.interval.update({"type": "bar_change",
             #                       "timeindex": [self.cti[i], self.cti[i + 1]],
             #                       "weight": "weight"})
+            # if 8.5 <= math.fabs(self.cti[i] - self.cti[i + 1]) <= 9:
             self.interval.append([self.cti[i], self.cti[i + 1]])
 
     def get_start_point(self, x, arr):
@@ -153,12 +154,13 @@ class VolumeChangeDetector:
 class voice_slicer:
     """The object for slicing due to the vocals"""
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self):
         self.prediction = None
         self.separator()
 
     def separator(self):
+        # Uses spleeter to separate the wav file into its distinct parts and
+        # create a dict. out of it
         separator = Separator('spleeter:2stems', multiprocess=False)
         file = "./cache/ytdl-fullsong.wav"
         audio_loader = AudioAdapter.default()
@@ -167,10 +169,11 @@ class voice_slicer:
         self.prediction = separator.separate(waveform, file)
 
     def write_critical_time(self, cti):
+        # Writes a critical time whenever the volume of the vocals is zero (depends
+        # on user-input for time)
         threshold = 0.01
-        # 44100/ 4 = 11025
         amount_of_crits = self.prediction['vocals'].shape[0]
-        for i in range(0, amount_of_crits, 44100 * 9):
+        for i in range(0, amount_of_crits, 44100//4 * 9):
             if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
                 cti.append(i / 44100 * 1000)
 
@@ -320,7 +323,7 @@ class Slicer:
 
     def slice_at_voice(self):
         """Slice the audio according to the vocals of a song"""
-        voice_slicer(self.data). \
+        voice_slicer(). \
             write_critical_time(self.critical.cti)
         self.critical.intervals()
         return self
