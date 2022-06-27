@@ -49,12 +49,12 @@ class CriticalTimeIndexes:
     def intervals(self):
         """Generate critical intervals from the critical time indexes.
         Initially, I'm going to try to use a for loop to get every two cti's and put them in as intervals"""
-        for i in range(len(self.cti) - 2):
+        for i in range(0, len(self.cti)):
             # self.interval.update({"type": "bar_change",
             #                       "timeindex": [self.cti[i], self.cti[i + 1]],
             #                       "weight": "weight"})
             # if 8.5 <= math.fabs(self.cti[i] - self.cti[i + 1]) <= 9:
-            self.interval.append([self.cti[i], self.cti[i + 1]])
+            self.interval.append([self.cti[i][0], self.cti[i][1]])
 
     def get_start_point(self, x, arr):
         """
@@ -172,10 +172,28 @@ class voice_slicer:
         # Writes a critical time whenever the volume of the vocals is zero (depends
         # on user-input for time)
         threshold = 0.01
+        time_user_input = 9
         amount_of_crits = self.prediction['vocals'].shape[0]
-        for i in range(0, amount_of_crits, 44100//4 * 9):
+        i = 0
+        while not i > amount_of_crits:
             if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
-                cti.append(i / 44100 * 1000)
+                if i + 44100 * time_user_input + 44100 // 2 <= amount_of_crits:
+                    j = i + 44100 * time_user_input - 44100 // 2  # introduce var here to have an anchor point and then use
+                else:
+                    break
+                # anchor point to search in the next for loop
+                # So if the crit_time has amp. of 0 then search for 0 amp. with the time parameter
+                while self.prediction['vocals'][j][0] != self.prediction['vocals'][i + 44100 // 2][0]:
+                    if self.prediction['vocals'][j][0] <= threshold:
+                        cti.append([i / 44100 * 1000, j / 44100 * 1000])
+                        # Go ahead one second in the song
+                        break
+                    else:
+                        # Go to the next sample to test with j
+                        j += 1000
+                i += 44100 * 2
+            else:
+                i += 1000
 
 
 class Slicer:
