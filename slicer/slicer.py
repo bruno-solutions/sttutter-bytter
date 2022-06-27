@@ -178,10 +178,11 @@ class voice_slicer:
         while not i > amount_of_crits:
             if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
                 if i + 44100 * time_user_input + 44100 // 2 <= amount_of_crits:
-                    j = i + 44100 * time_user_input - 44100 // 2  # introduce var here to have an anchor point and then use
+                    j = i + 44100 * time_user_input - 44100 // 2  # introduce var here to have an anchor point and then use the
+                    # anchor point to search in the next for loop
                 else:
                     break
-                # anchor point to search in the next for loop
+
                 # So if the crit_time has amp. of 0 then search for 0 amp. with the time parameter
                 while self.prediction['vocals'][j][0] != self.prediction['vocals'][i + 44100 // 2][0]:
                     if self.prediction['vocals'][j][0] <= threshold:
@@ -190,10 +191,10 @@ class voice_slicer:
                         break
                     else:
                         # Go to the next sample to test with j
-                        j += 1000
+                        j += 44100 // 4
                 i += 44100 * 2
             else:
-                i += 1000
+                i += 44100 // 4
 
 
 class Slicer:
