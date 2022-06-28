@@ -35,16 +35,11 @@ class CriticalTimeIndexes:
         """Get the absolute value of the rate of change of each point."""
         raise SyntaxError("Not implemented.")
 
-    """We need to put the function generate_from_beats down somewhere
-    We need to create a smart way of putting the critical points into intervals,
-    we can use the dict for weighting (diff properties correspond to different weights)"""
-
     def append(self, item):
         """Appends a critical time to the list of CTIs."""
         self.cti.append(item)
 
-    """Made this not a property for now, will need to decide what to do with this"""
-
+    # We need to decide if this'll be a property or not
     # @property
     def intervals(self):
         """Generate critical intervals from the critical time indexes."""
@@ -154,8 +149,7 @@ class voice_slicer:
         self.separator()
 
     def separator(self):
-        # Uses spleeter to separate the wav file into its distinct parts and
-        # create a dict. out of it
+        """Use Spleeter's library to seperate wav file into a dict. of amplitudes of its components"""
         separator = Separator('spleeter:2stems', multiprocess=False)
         file = "./cache/ytdl-fullsong.wav"
         audio_loader = AudioAdapter.default()
@@ -163,8 +157,16 @@ class voice_slicer:
         waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
         self.prediction = separator.separate(waveform, file)
 
-    def get_var(self, time_user_input, i):
-        # Get the proper values based upon the time_input
+    @staticmethod
+    def get_var(time_user_input, i):
+        """Return the needed variables for write_critical_time
+            j_next_sample: Starting at j, get the next sample to see if it has a vol. of 0.
+            add_time: How much time we go forward if we successfully get CTI's.
+            start_of_j: Where j (the end-point for the CTI) will start at.
+            end_of_j: The extent to which we can search from the start_of_j.
+            add_to_next_zero: If the initial i value doesn't work, we go forward some samples with this variable.
+        """
+
         if time_user_input == 1:
             j_next_sample = 44100 // 4
             add_time = 44100 * 1
@@ -195,35 +197,38 @@ class voice_slicer:
         return j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero
 
     def write_critical_time(self, cti):
-        # Writes a critical time whenever the volume of the vocals is zero (depends
-        # on user-input for time)
+        """Makes critical time array using the vocal component of Spleeter's seperation function
+            Input: Empty CTI array
+            Output: Full CTI array of time arrays [[i time value, j time value], ....]
+        """
         threshold = 0.01
-        """For 9 secs: j += 44100 // 4 and i += 44100 * 2 in the innermost loop and i += 44100 //4 in the 
-        outermost """
+        # Going to have to make this an input variable in the app.py
         time_user_input = 27
         amount_of_criticals = self.prediction['vocals'].shape[0]
         i = 0
 
         while not i > amount_of_criticals:
+            # Get the needed vars.
             j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero = self.get_var(time_user_input, i)
+
             if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
                 if i + 44100 * time_user_input + 44100 // 2 <= amount_of_criticals:
-                    j = start_of_j  # introduce var here to have an anchor point and then use the
-                    # anchor point to search in the next for loop
+                    j = start_of_j  # to use as starting point for j
                 else:
                     break
 
-                # So if the crit_time has amp. of 0 then search for 0 amp. with the time parameter
+                # So if the current time has amp. of 0 then search for 0 amp. by adding time parameter to current
+                # time position
                 while self.prediction['vocals'][j][0] != self.prediction['vocals'][end_of_j][0]:
                     if self.prediction['vocals'][j][0] <= threshold:
                         cti.append([i / 44100 * 1000, j / 44100 * 1000])
-                        # Go ahead one second in the song
                         break
                     else:
-                        # Go to the next sample to test with j
+                        # Go forward some samples from j to test again for 0 vol.
                         j += j_next_sample
                 i += add_time
             else:
+                # From i go forward some samples to get to next value with 0 vol.
                 i += add_to_next_zero
 
 
