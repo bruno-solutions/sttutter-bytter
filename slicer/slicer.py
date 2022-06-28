@@ -47,13 +47,8 @@ class CriticalTimeIndexes:
 
     # @property
     def intervals(self):
-        """Generate critical intervals from the critical time indexes.
-        Initially, I'm going to try to use a for loop to get every two cti's and put them in as intervals"""
+        """Generate critical intervals from the critical time indexes."""
         for i in range(0, len(self.cti)):
-            # self.interval.update({"type": "bar_change",
-            #                       "timeindex": [self.cti[i], self.cti[i + 1]],
-            #                       "weight": "weight"})
-            # if 8.5 <= math.fabs(self.cti[i] - self.cti[i + 1]) <= 9:
             self.interval.append([self.cti[i][0], self.cti[i][1]])
 
     def get_start_point(self, x, arr):
@@ -168,33 +163,68 @@ class voice_slicer:
         waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
         self.prediction = separator.separate(waveform, file)
 
+    def get_var(self, time_user_input, i):
+        # Get the proper values based upon the time_input
+        if time_user_input == 1:
+            j_next_sample = 44100 // 4
+            add_time = 44100 * 1
+            start_of_j = i + 44100 * time_user_input - 44100 // 6
+            end_of_j = i + 44100
+            add_to_next_zero = 44100 // 3
+        elif time_user_input == 3:
+            j_next_sample = 44100 // 4
+            add_time = 44100 * 2
+            start_of_j = i + 44100 * time_user_input - 44100 + 1
+            end_of_j = i + 44100 - 1
+            add_to_next_zero = 44100 // 3
+        elif time_user_input == 9:
+            j_next_sample = 44100 // 4
+            add_time = 44100 * 3
+            start_of_j = i + 44100 * time_user_input - 44100 + 1
+            end_of_j = i + 44100 - 1
+            add_to_next_zero = 44100 // 4
+        elif time_user_input == 27:
+            j_next_sample = 44100 // 4
+            add_time = 44100 * 3
+            start_of_j = i + 44100 * time_user_input - 44100 + 1
+            end_of_j = i + 44100 - 1
+            add_to_next_zero = 44100 // 4
+        else:
+            print("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
+
+        return j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero
+
     def write_critical_time(self, cti):
         # Writes a critical time whenever the volume of the vocals is zero (depends
         # on user-input for time)
-        threshold = 0.01
-        time_user_input = 9
-        amount_of_crits = self.prediction['vocals'].shape[0]
+        threshold = 0.0001
+        """For 9 secs: j += 44100 // 4 and i += 44100 * 2 in the innermost loop and i += 44100 //4 in the 
+        outermost """
+        time_user_input = 27
+        amount_of_criticals = self.prediction['vocals'].shape[0]
         i = 0
-        while not i > amount_of_crits:
+
+        while not i > amount_of_criticals:
+            j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero = self.get_var(time_user_input, i)
             if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
-                if i + 44100 * time_user_input + 44100 // 2 <= amount_of_crits:
-                    j = i + 44100 * time_user_input - 44100 // 2  # introduce var here to have an anchor point and then use the
+                if i + 44100 * time_user_input + 44100 // 2 <= amount_of_criticals:
+                    j = start_of_j  # introduce var here to have an anchor point and then use the
                     # anchor point to search in the next for loop
                 else:
                     break
 
                 # So if the crit_time has amp. of 0 then search for 0 amp. with the time parameter
-                while self.prediction['vocals'][j][0] != self.prediction['vocals'][i + 44100 // 2][0]:
+                while self.prediction['vocals'][j][0] != self.prediction['vocals'][end_of_j][0]:
                     if self.prediction['vocals'][j][0] <= threshold:
                         cti.append([i / 44100 * 1000, j / 44100 * 1000])
                         # Go ahead one second in the song
                         break
                     else:
                         # Go to the next sample to test with j
-                        j += 44100 // 4
-                i += 44100 * 2
+                        j += j_next_sample
+                i += add_time
             else:
-                i += 44100 // 4
+                i += add_to_next_zero
 
 
 class Slicer:

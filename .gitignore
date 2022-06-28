@@ -22,3 +22,6 @@
 /sttutter-youtube-audiobot.iml
 /.idea/vcs.xml
 /cache/
+
+#Spleeter's pre-trained models
+/pretrained_models/
