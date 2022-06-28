@@ -197,7 +197,7 @@ class voice_slicer:
     def write_critical_time(self, cti):
         # Writes a critical time whenever the volume of the vocals is zero (depends
         # on user-input for time)
-        threshold = 0.0001
+        threshold = 0.01
         """For 9 secs: j += 44100 // 4 and i += 44100 * 2 in the innermost loop and i += 44100 //4 in the 
         outermost """
         time_user_input = 27
