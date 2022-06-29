@@ -158,90 +158,51 @@ class VoiceSlicer:
         self.stem_waveforms = separator.separate(waveform, file)
 
     def get_var(self, duration, base_sample_index):
-        """Return the needed variables for write_critical_time
+        """Return the needed variables for write_critical_time:
             end_sample_next_index: Starting at end_sample_index, get the next sample to see if it has a vol. of 0.
+
             add_time: How much time we go forward if we successfully get CTI's.
+
             end_sample_starting_index: Where end_sample_index (the end-point for the CTI) will start at.
+
             end_sample_last_possible_index: The last possible sample index we can search till.
-            add_time_to_test_sample: If the initial i value doesn't work, we go forward some samples with this variable.
+
+            add_time_to_test_sample: If the initial base_sample_index value doesn't work, we go forward some samples
+            with this variable.
         """
-        
-# """
-# const slicing_factors: []
-# 
-# slicing_factors[1]= {
-#     j_next_sample: bits_per_second / 4,
-#     add_time: bits_per_second * 1,
-#     start_of_j_factor: bits_per_second / 6,
-#     end_of_j_factor: bits_per_second,
-#     add_to_next_zero: bits_per_second / 3
-# };
-# 
-# slicing_factors[3]= {
-#     ...
-# };
-# 
-# slicing_factors[9]= {
-#     ...
-# };
-# 
-# slicing_factors[27]= {
-#     ...
-# };
-# 
-# const slicing_factor = slicing_factors[time_user_input];
-# 
-# j_next_sample = slicing_factor.j_next_sample
-# add_time = slicing_factor.add_time
-# start_of_j = i + bits_per_second * time_user_input - slicing_factor.start_of_j_factor
-# end_of_j = i + slicing_factor.end_of_j_factor
-# add_to_next_zero = slicing_factor.add_to_next_zero
-# ```
-# """
 
-        slicing_factors = []
+        slicing_factors = {1: {"end_sample_next_index": self.sample_rate // 4,
+                               "add_time": self.sample_rate * 1,
+                               "end_sample_starting_index": self.sample_rate // 6,
+                               "end_sample_last_possible_index": self.sample_rate,
+                               "add_time_to_test_sample": self.sample_rate // 3},
+                           3: {"end_sample_next_index": self.sample_rate // 4,
+                               "add_time": self.sample_rate * 2,
+                               "end_sample_starting_index": self.sample_rate + 1,
+                               "end_sample_last_possible_index": self.sample_rate - 1,
+                               "add_time_to_test_sample": self.sample_rate // 3},
+                           9: {"end_sample_next_index": self.sample_rate // 4,
+                               "add_time": self.sample_rate * 3,
+                               "end_sample_starting_index": self.sample_rate + 1,
+                               "end_sample_last_possible_index": self.sample_rate - 1,
+                               "add_time_to_test_sample": self.sample_rate // 4},
+                           27: {"end_sample_next_index": self.sample_rate // 4,
+                                "add_time": self.sample_rate * 3,
+                                "end_sample_starting_index": self.sample_rate + 1,
+                                "end_sample_last_possible_index": self.sample_rate - 1,
+                                "add_time_to_test_sample": self.sample_rate // 4}
+                           }
 
-        slicing_factors[1].j_next_sample = self.sample_rate / 4
-        slicing_factors[1].add_time = self.sample_rate * 1
-        slicing_factors[1].start_of_j_factor = self.sample_rate / 6
-        slicing_factors[1].end_of_j_factor = self.sample_rate
-        slicing_factors[1].add_to_next_zero = self.sample_rate / 3
-
-
-        slicing_factor = slicing_factors[duration];
-
-        j_next_sample = slicing_factor.j_next_sample
-        add_time = slicing_factor.add_time
-        start_of_j = base_sample_index + self.sample_rate * duration - slicing_factor.start_of_j_factor
-        end_of_j = base_sample_index + slicing_factor.end_of_j_factor
-        add_to_next_zero = slicing_factor.add_to_next_zero
-        
-        if 1 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 1
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 // 6
-            end_sample_last_possible_index = base_sample_index + 44100
-            add_time_to_test_sample = 44100 // 3
-        elif 3 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 2
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
-            end_sample_last_possible_index = base_sample_index + 44100 - 1
-            add_time_to_test_sample = 44100 // 3
-        elif 9 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 3
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
-            end_sample_last_possible_index = base_sample_index + 44100 - 1
-            add_time_to_test_sample = 44100 // 4
-        elif 27 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 3
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
-            end_sample_last_possible_index = base_sample_index + 44100 - 1
-            add_time_to_test_sample = 44100 // 4
-        else:
+        if duration not in slicing_factors:
             raise ValueError("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
+
+        slicing_factor = slicing_factors[duration]
+        end_sample_next_index = slicing_factor["end_sample_next_index"]
+        add_time = slicing_factor["add_time"]
+        end_sample_starting_index = base_sample_index + self.sample_rate * duration - slicing_factor[
+            "end_sample_starting_index"]
+        end_sample_last_possible_index = base_sample_index + slicing_factor["end_sample_last_possible_index"]
+        add_time_to_test_sample = slicing_factor["add_time_to_test_sample"]
 
         return end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample
 
@@ -271,7 +232,8 @@ class VoiceSlicer:
                 while self.stem_waveforms['vocals'][end_sample_index][0] != \
                         self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
                     if self.stem_waveforms['vocals'][end_sample_index][0] <= threshold:
-                        cti.append([base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
+                        cti.append(
+                            [base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
                         break
                     else:
                         # Go forward some samples from end_sample_index to test again for 0 vol.
