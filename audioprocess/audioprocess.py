@@ -3,7 +3,7 @@
 import pydub
 from pydub.utils import mediainfo
 
-from .replaygain import ReplaygainHandler
+from .replaygain import ReplayGain
 
 
 class AudioProcessor:
@@ -27,7 +27,7 @@ class AudioProcessor:
         ).set_frame_rate(self.sample_rate)
         return self
 
-    def preprocess(self, handler=ReplaygainHandler):
+    def preprocess(self, handler=ReplayGain):
         """Execute audio normalization."""
         self.base_seg = handler() \
             .normalize(self.base_seg)

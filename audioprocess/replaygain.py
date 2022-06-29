@@ -1,33 +1,22 @@
 """
-The replaygain module that provides functionalities of audio leveling:
-    - class ReplaygainHandler
+The module that provides audio leveling functionality:
+    - class ReplayGain
 """
 
 import ctypes
 import pydub
 
 
-TEST_DEBUG_INFO_REPLAYGAIN_C = True
-
-
-class ReplaygainHandler:
+class ReplayGain:
     """
-    The class that handles replaygain, including C/C++ portings.
+    The class that implements ReplayGain.
     """
+
     def __init__(self):
-        self.data_p = ctypes.c_void_p(None) # void *data = NULL;
+        self.data_p = ctypes.c_void_p(None)  # void *data = NULL;
         self.status = None
         self.is_async_locked = False
         self.audio_seg = None
-
-        if TEST_DEBUG_INFO_REPLAYGAIN_C:
-            self.generate_debug_msg()
-
-    def generate_debug_msg(self):
-        """Debugger method"""
-        self.data_p = ctypes.c_char_p(
-            b"replaygain.py l.29: TEST DEBUG INFO PRINT\n"
-        )
 
     def normalize(self, audio):
         """
@@ -49,18 +38,7 @@ class ReplaygainHandler:
         The normalization algorithm adapted from replaygain.c of MP3GAIN.
         Pending proper implementation.
         """
-        assert not self.is_async_locked
-        self.status = "__C_CPP_INVOKE"
-
-        # Pending implementation
-        # Convert AudioSegment object to raw bits
-        # and pass C-style pointer void* buf;
-
-        replaygain_dll = ctypes.cdll.LoadLibrary(
-            'audioprocess/lib/replaygain.dll'
-        )
-
-        return replaygain_dll.replaygain_calc(self.data_p)
+        return -3
 
     def peak_normalization(self):
         """
@@ -68,5 +46,5 @@ class ReplaygainHandler:
         smart_normalization() finishes implementation.
         """
 
-        self.audio_seg = pydub.AudioSegment\
+        self.audio_seg = pydub.AudioSegment \
             .normalize(self.audio_seg)  # pylint: disable=no-member
