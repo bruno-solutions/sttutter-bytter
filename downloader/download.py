@@ -91,6 +91,7 @@ def getsong_with_ytdl(
             }],
         'logger': BuiltInLogger() if logger is None else logger,
         'progress_hooks': [my_hook],
+        'sr': 44100
     }
 
     if DEBUG_SKIP_YTDL_POST_PROCESSING:

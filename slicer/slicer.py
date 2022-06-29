@@ -142,9 +142,10 @@ class VolumeChangeDetector:
 class VoiceSlicer:
     """The object for slicing due to the vocals"""
 
-    def __init__(self):
+    def __init__(self, sample_rate):
         self.stem_waveforms = None
         self.separator()
+        self.sample_rate = sample_rate
 
     def separator(self):
         """Use Spleeter's library to seperate wav file into a dict. of amplitudes of its components"""
@@ -206,19 +207,21 @@ class VoiceSlicer:
         base_sample_index = 0
 
         while not base_sample_index > total_samples:
-            end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample = self.get_var(duration, base_sample_index)
+            end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample = self.get_var(
+                duration, base_sample_index)
 
             if math.fabs(self.stem_waveforms['vocals'][base_sample_index][0]) <= threshold:
-                if base_sample_index + 44100 * duration + 44100 // 2 <= total_samples:
+                if base_sample_index + self.sample_rate * duration + self.sample_rate // 2 <= total_samples:
                     end_sample_index = end_sample_starting_index  # to use as starting point for end_sample_index
                 else:
                     break
 
                 # So if the current time has vol. of 0 then search for 0 vol. by adding time parameter to current
                 # time position
-                while self.stem_waveforms['vocals'][end_sample_index][0] != self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
+                while self.stem_waveforms['vocals'][end_sample_index][0] != \
+                        self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
                     if self.stem_waveforms['vocals'][end_sample_index][0] <= threshold:
-                        cti.append([base_sample_index / 44100 * 1000, end_sample_index / 44100 * 1000])
+                        cti.append([base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
                         break
                     else:
                         # Go forward some samples from end_sample_index to test again for 0 vol.
@@ -232,7 +235,8 @@ class VoiceSlicer:
 class Slicer:
     """The primary object of the slicer module."""
 
-    def __init__(self, base_seg, count):
+    def __init__(self, sample_rate, base_seg, count):
+        self.sample_rate = sample_rate
         self.base_seg = base_seg
         self.count = count
 
@@ -254,13 +258,10 @@ class Slicer:
         # The duration of time (we can also make it an argument)
         time_duration = 21
 
-        # Sampling rate
-        sr = 44100
-
-        beat = librosa.beat.beat_track(y=self.data, sr=sr)[1]
+        beat = librosa.beat.beat_track(y=self.data, sr=self.sample_rate)[1]
 
         # Change the beats from frames to time (ms)
-        beat_time = librosa.frames_to_time(beat, sr=sr) * 1000
+        beat_time = librosa.frames_to_time(beat, sr=self.sample_rate) * 1000
 
         # Get every fourth beat and use append class method to append it to CTI
         for i in range(0, len(beat), time_duration):
@@ -285,8 +286,8 @@ class Slicer:
             name, method = slicer_methods
 
             @pydub.utils.register_pydub_effect(name)
-            def slicer_method_wrap(seg, count, *args, **kwargs):
-                return getattr(cls(seg, count), method)(*args, **kwargs). \
+            def slicer_method_wrap(sample_rate, seg, count, *args, **kwargs):
+                return getattr(cls(sample_rate, seg, count), method)(*args, **kwargs). \
                     execute_slicing().clips
 
         else:
@@ -371,7 +372,7 @@ class Slicer:
 
     def slice_at_voice(self):
         """Slice the audio according to the vocals of a song"""
-        VoiceSlicer().write_critical_time(self.critical.cti)
+        VoiceSlicer(self.sample_rate).write_critical_time(self.critical.cti)
         self.critical.intervals()
         return self
 
