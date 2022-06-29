@@ -39,8 +39,6 @@ class CriticalTimeIndexes:
         """Appends a critical time to the list of CTIs."""
         self.cti.append(item)
 
-    # We need to decide if this'll be a property or not
-    # @property
     def intervals(self):
         """Generate critical intervals from the critical time indexes."""
         for i in range(0, len(self.cti)):
@@ -192,12 +190,12 @@ class voice_slicer:
             end_of_j = i + 44100 - 1
             add_to_next_zero = 44100 // 4
         else:
-            print("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
+            raise ValueError("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
 
         return j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero
 
     def write_critical_time(self, cti):
-        """Makes critical time array using the vocal component of Spleeter's seperation function
+        """Makes critical time array using the vocal dict. component of Spleeter's seperation function
             Input: Empty CTI array
             Output: Full CTI array of time arrays [[i time value, j time value], ....]
         """
@@ -269,7 +267,6 @@ class Slicer:
         for i in range(0, len(beat), time_duration):
             self.critical.append(item=beat_time[i])
 
-        """Need to find the proper location for this"""
         self.critical.intervals()
 
         return self
@@ -318,7 +315,6 @@ class Slicer:
     def execute_slicing(self):
         """Execute slicing."""
 
-        """Took off extra s at the end of interval in order to be able to call it at the critical time index class"""
         for i in self.critical.interval:
             self.clips.append(
                 self.base_seg[i[0]:i[1]]
