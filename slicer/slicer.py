@@ -12,9 +12,10 @@
 
 import math
 import random
+
+import librosa
 import numpy
 import pydub
-import librosa
 from pydub.utils import register_pydub_effect
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
@@ -156,8 +157,7 @@ class VoiceSlicer:
         waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
         self.stem_waveforms = separator.separate(waveform, file)
 
-    @staticmethod
-    def get_var(duration, base_sample_index):
+    def get_var(self, duration, base_sample_index):
         """Return the needed variables for write_critical_time
             end_sample_next_index: Starting at end_sample_index, get the next sample to see if it has a vol. of 0.
             add_time: How much time we go forward if we successfully get CTI's.
@@ -165,7 +165,57 @@ class VoiceSlicer:
             end_sample_last_possible_index: The last possible sample index we can search till.
             add_time_to_test_sample: If the initial i value doesn't work, we go forward some samples with this variable.
         """
+        
+# """
+# const slicing_factors: []
+# 
+# slicing_factors[1]= {
+#     j_next_sample: bits_per_second / 4,
+#     add_time: bits_per_second * 1,
+#     start_of_j_factor: bits_per_second / 6,
+#     end_of_j_factor: bits_per_second,
+#     add_to_next_zero: bits_per_second / 3
+# };
+# 
+# slicing_factors[3]= {
+#     ...
+# };
+# 
+# slicing_factors[9]= {
+#     ...
+# };
+# 
+# slicing_factors[27]= {
+#     ...
+# };
+# 
+# const slicing_factor = slicing_factors[time_user_input];
+# 
+# j_next_sample = slicing_factor.j_next_sample
+# add_time = slicing_factor.add_time
+# start_of_j = i + bits_per_second * time_user_input - slicing_factor.start_of_j_factor
+# end_of_j = i + slicing_factor.end_of_j_factor
+# add_to_next_zero = slicing_factor.add_to_next_zero
+# ```
+# """
 
+        slicing_factors = []
+
+        slicing_factors[1].j_next_sample = self.sample_rate / 4
+        slicing_factors[1].add_time = self.sample_rate * 1
+        slicing_factors[1].start_of_j_factor = self.sample_rate / 6
+        slicing_factors[1].end_of_j_factor = self.sample_rate
+        slicing_factors[1].add_to_next_zero = self.sample_rate / 3
+
+
+        slicing_factor = slicing_factors[duration];
+
+        j_next_sample = slicing_factor.j_next_sample
+        add_time = slicing_factor.add_time
+        start_of_j = base_sample_index + self.sample_rate * duration - slicing_factor.start_of_j_factor
+        end_of_j = base_sample_index + slicing_factor.end_of_j_factor
+        add_to_next_zero = slicing_factor.add_to_next_zero
+        
         if 1 == duration:
             end_sample_next_index = 44100 // 4
             add_time = 44100 * 1
