@@ -7,8 +7,9 @@ import downloader
 from audioprocess import AudioProcessor
 from slicer import Slicer
 
-
+SAMPLE_RATE = 44100
 DEBUG_AUTO_CLEAN_CACHE = False
+DEBUG_LOAD_WAV_ONLY = False
 
 downloader.getsong("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
@@ -16,7 +17,7 @@ Slicer.invoke_slicers({
     "voice": "slice_at_voice"
 })
 
-AudioProcessor("cache/ytdl-fullsong.wav") \
+AudioProcessor(SAMPLE_RATE, "cache/ytdl-fullsong.wav", DEBUG_LOAD_WAV_ONLY) \
     .preprocess() \
     .apply_slicer(
     pydub.AudioSegment.voice,  # pylint: disable=no-member

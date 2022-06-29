@@ -6,31 +6,30 @@ from pydub.utils import mediainfo
 from .replaygain import ReplaygainHandler
 
 
-DEBUG_DEF_LOAD_WAV_ONLY = True
-
-
 class AudioProcessor:
     """The class that handles overall audio processing."""
-    def __init__(self, filename=None):
-        self.base_seg = None # pydub.AudioSegment object
 
-        if DEBUG_DEF_LOAD_WAV_ONLY:
+    def __init__(self, sample_rate, filename=None, load_wave_only=False):
+        self.sample_rate = sample_rate
+        self.base_seg = None  # pydub.AudioSegment object
+
+        if load_wave_only:
             self.load_audio_fromwav(filename)
         else:
             raise RuntimeError("Default general file loader not implemented.")
 
         self.clips = list()
 
-    def load_audio_fromwav(self, filename, frame_rate=44100):
+    def load_audio_fromwav(self, filename):
         """Loads a wave file as AudioSegmant object."""
         self.base_seg = pydub.AudioSegment.from_file(
             file=filename if filename else 'cache/ytdl-fullsong.webm'
-        ).set_frame_rate(frame_rate)
+        ).set_frame_rate(self.sample_rate)
         return self
 
     def preprocess(self, handler=ReplaygainHandler):
         """Execute audio normalization."""
-        self.base_seg = handler()\
+        self.base_seg = handler() \
             .normalize(self.base_seg)
         return self
 
@@ -44,8 +43,8 @@ class AudioProcessor:
     def postprocess(self, fadein_duration=500, fadeout_duration=500, export_path="cache"):
         """Append fade-in and fade-out."""
         for index, clip in enumerate(self.clips):
-            self.clips[index] = clip\
-                .fade_in(fadein_duration)\
+            self.clips[index] = clip \
+                .fade_in(fadein_duration) \
                 .fade_out(fadeout_duration)
 
         self.export()
