@@ -139,11 +139,11 @@ class VolumeChangeDetector:
             cti.append(self.angled_lp_filter(self.data))
 
 
-class voice_slicer:
+class VoiceSlicer:
     """The object for slicing due to the vocals"""
 
     def __init__(self):
-        self.prediction = None
+        self.stem_waveforms = None
         self.separator()
 
     def separator(self):
@@ -153,81 +153,80 @@ class voice_slicer:
         audio_loader = AudioAdapter.default()
         sample_rate = 44100
         waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
-        self.prediction = separator.separate(waveform, file)
+        self.stem_waveforms = separator.separate(waveform, file)
 
     @staticmethod
-    def get_var(time_user_input, i):
+    def get_var(duration, base_sample_index):
         """Return the needed variables for write_critical_time
-            j_next_sample: Starting at j, get the next sample to see if it has a vol. of 0.
+            end_sample_next_index: Starting at end_sample_index, get the next sample to see if it has a vol. of 0.
             add_time: How much time we go forward if we successfully get CTI's.
-            start_of_j: Where j (the end-point for the CTI) will start at.
-            end_of_j: The extent to which we can search from the start_of_j.
-            add_to_next_zero: If the initial i value doesn't work, we go forward some samples with this variable.
+            end_sample_starting_index: Where end_sample_index (the end-point for the CTI) will start at.
+            end_sample_last_possible_index: The last possible sample index we can search till.
+            add_time_to_test_sample: If the initial i value doesn't work, we go forward some samples with this variable.
         """
 
-        if time_user_input == 1:
-            j_next_sample = 44100 // 4
+        if 1 == duration:
+            end_sample_next_index = 44100 // 4
             add_time = 44100 * 1
-            start_of_j = i + 44100 * time_user_input - 44100 // 6
-            end_of_j = i + 44100
-            add_to_next_zero = 44100 // 3
-        elif time_user_input == 3:
-            j_next_sample = 44100 // 4
+            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 // 6
+            end_sample_last_possible_index = base_sample_index + 44100
+            add_time_to_test_sample = 44100 // 3
+        elif 3 == duration:
+            end_sample_next_index = 44100 // 4
             add_time = 44100 * 2
-            start_of_j = i + 44100 * time_user_input - 44100 + 1
-            end_of_j = i + 44100 - 1
-            add_to_next_zero = 44100 // 3
-        elif time_user_input == 9:
-            j_next_sample = 44100 // 4
+            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
+            end_sample_last_possible_index = base_sample_index + 44100 - 1
+            add_time_to_test_sample = 44100 // 3
+        elif 9 == duration:
+            end_sample_next_index = 44100 // 4
             add_time = 44100 * 3
-            start_of_j = i + 44100 * time_user_input - 44100 + 1
-            end_of_j = i + 44100 - 1
-            add_to_next_zero = 44100 // 4
-        elif time_user_input == 27:
-            j_next_sample = 44100 // 4
+            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
+            end_sample_last_possible_index = base_sample_index + 44100 - 1
+            add_time_to_test_sample = 44100 // 4
+        elif 27 == duration:
+            end_sample_next_index = 44100 // 4
             add_time = 44100 * 3
-            start_of_j = i + 44100 * time_user_input - 44100 + 1
-            end_of_j = i + 44100 - 1
-            add_to_next_zero = 44100 // 4
+            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
+            end_sample_last_possible_index = base_sample_index + 44100 - 1
+            add_time_to_test_sample = 44100 // 4
         else:
             raise ValueError("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
 
-        return j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero
+        return end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample
 
     def write_critical_time(self, cti):
         """Makes critical time array using the vocal dict. component of Spleeter's seperation function
             Input: Empty CTI array
-            Output: Full CTI array of time arrays [[i time value, j time value], ....]
+            Output: Full CTI array of time arrays [[base_sample_index time value, end_sample_index time value], ....]
         """
         threshold = 0.01
         # Going to have to make this an input variable in the app.py
-        time_user_input = 27
-        amount_of_criticals = self.prediction['vocals'].shape[0]
-        i = 0
+        duration = 27
+        total_samples = self.stem_waveforms['vocals'].shape[0]
+        base_sample_index = 0
 
-        while not i > amount_of_criticals:
-            # Get the needed vars.
-            j_next_sample, add_time, start_of_j, end_of_j, add_to_next_zero = self.get_var(time_user_input, i)
+        while not base_sample_index > total_samples:
+            end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample = self.get_var(duration, base_sample_index)
 
-            if math.fabs(self.prediction['vocals'][i][0]) <= threshold:
-                if i + 44100 * time_user_input + 44100 // 2 <= amount_of_criticals:
-                    j = start_of_j  # to use as starting point for j
+            if math.fabs(self.stem_waveforms['vocals'][base_sample_index][0]) <= threshold:
+                if base_sample_index + 44100 * duration + 44100 // 2 <= total_samples:
+                    end_sample_index = end_sample_starting_index  # to use as starting point for end_sample_index
                 else:
                     break
 
-                # So if the current time has amp. of 0 then search for 0 amp. by adding time parameter to current
+                # So if the current time has vol. of 0 then search for 0 vol. by adding time parameter to current
                 # time position
-                while self.prediction['vocals'][j][0] != self.prediction['vocals'][end_of_j][0]:
-                    if self.prediction['vocals'][j][0] <= threshold:
-                        cti.append([i / 44100 * 1000, j / 44100 * 1000])
+                while self.stem_waveforms['vocals'][end_sample_index][0] != self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
+                    if self.stem_waveforms['vocals'][end_sample_index][0] <= threshold:
+                        cti.append([base_sample_index / 44100 * 1000, end_sample_index / 44100 * 1000])
                         break
                     else:
-                        # Go forward some samples from j to test again for 0 vol.
-                        j += j_next_sample
-                i += add_time
+                        # Go forward some samples from end_sample_index to test again for 0 vol.
+                        end_sample_index += end_sample_next_index
+                base_sample_index += add_time
             else:
-                # From i go forward some samples to get to next value with 0 vol.
-                i += add_to_next_zero
+                # From base_sample_index go forward some samples to get to next value to test for 0 vol.
+                base_sample_index += add_time_to_test_sample
 
 
 class Slicer:
@@ -367,14 +366,12 @@ class Slicer:
 
     def slice_at_volume_change(self):
         """Slice the audio at moments of rapid volume changes."""
-        VolumeChangeDetector(self.data). \
-            write_critical_time(self.critical.cti)
+        VolumeChangeDetector(self.data).write_critical_time(self.critical.cti)
         return self
 
     def slice_at_voice(self):
         """Slice the audio according to the vocals of a song"""
-        voice_slicer(). \
-            write_critical_time(self.critical.cti)
+        VoiceSlicer().write_critical_time(self.critical.cti)
         self.critical.intervals()
         return self
 
