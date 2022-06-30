@@ -1,6 +1,7 @@
+import math
+
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
-import math
 
 from configuration import CACHE_WAV_FILE_NAME
 
