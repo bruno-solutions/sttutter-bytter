@@ -16,6 +16,7 @@ import librosa
 import numpy
 import pydub
 from pydub.utils import register_pydub_effect
+
 from .critical import CriticalTimeIndexes
 from .voice import VoiceSlicer
 
@@ -26,6 +27,7 @@ class VolumeChangeDetector:
     def __init__(self, data):
         self.data = data
         self.parse_data()
+        self.filtered = None
 
     @staticmethod
     def angled_lp_filter(db_profile, weight=0.1):
@@ -43,19 +45,14 @@ class VolumeChangeDetector:
         return buoy
 
     def parse_data(self, filter_width=441):
-        """Extract data and convert it to desired formats."""
+        """Extract data and convert it to desired formats"""
 
-        # Convert and filter each section of the data.
-        self.filtered = [self.angled_lp_filter(db_profile) \
-                         for db_profile in \
-                         numpy.pad(
-                             librosa.amplitude_to_db(self.data),
-                             (0, len(self.data) % filter_width)
-                         ).reshape(
-                             (len(self.data) - 1) // filter_width + 1,
-                             filter_width
-                         )
-                         ]
+        # Convert and filter each section of the data
+        self.filtered = [
+            self.angled_lp_filter(db_profile)
+            for db_profile in numpy.pad(librosa.amplitude_to_db(self.data), (0, len(self.data) % filter_width))
+                .reshape((len(self.data) - 1) // filter_width + 1, filter_width)
+        ]
 
     def write_critical_time(self, cti):
         """Writes volume change information to CTI."""
@@ -97,7 +94,7 @@ class Slicer:
 
         # Get every fourth beat and use append class method to append it to CTI
         for i in range(1, len(beat)):
-            self.critical.append(item=[beat_time[i], beat_time[i-1]])
+            self.critical.append(item=[beat_time[i], beat_time[i - 1]])
 
         self.critical.intervals()
 
@@ -126,66 +123,47 @@ class Slicer:
             raise TypeError
 
     def convert_data(self):
-        """Converts the data info librosa-compatible format."""
-        data_raw_stereo = numpy.array(
-            self.base_seg.get_array_of_samples()
-        )
+        """Converts the data info librosa-compatible format"""
 
+        data_raw_stereo = numpy.array(self.base_seg.get_array_of_samples())
         data_raw_left = data_raw_stereo[::2]
-
         data_raw_right = data_raw_stereo[1::2]
-
-        data_raw_mono = (
-                                data_raw_left + data_raw_right
-                        ) / 2
+        data_raw_mono = (data_raw_left + data_raw_right) / 2
 
         # Convert int16 or int32 data to float (-1. ~ 1.)
-        self.data = data_raw_mono / (1 << (
-                self.base_seg.sample_width * 8
-        ) - 1)
+        self.data = data_raw_mono / (1 << (self.base_seg.sample_width * 8) - 1)
 
     def execute_slicing(self):
-        """Execute slicing."""
+        """
+        Execute slicing
+        """
 
         for i in self.critical.interval:
-            self.clips.append(
-                self.base_seg[i[0]:i[1]]
-            )
+            self.clips.append(self.base_seg[i[0]:i[1]])
 
         return self
 
     def slice_at_random(self):
         """
         Create slices at random.
-        This slicer method is meant to be a template
-        for the creation of other slicer methods.
+        This slicer method is meant to be a template for the creation of other slicer methods.
         """
 
         # Access data, equivalent to data=librosa.load()
         # Alternatively, self.data can be used in place
         # of 'data' directly.
-        data = self.data  # pylint: disable=unused-variable
 
-        # The total amount of clips desired is stored
-        # in self.count. Loop for self.count.
-        for index in range(self.count):  # pylint: disable=unused-variable
+        # The total amount of clips desired is stored in self.count
 
+        for index in range(self.count):
             # Calculate random range.
-            duration_ms = int(
-                self.base_seg.duration_seconds * 1000
-            )
-
-            start_ms = random.randint(
-                0, duration_ms - 1000
-            )
-
-            end_ms = start_ms + random.randint(
-                1000, 10000  # 1 to 10 seconds long.
-            )
+            duration_ms = int(self.base_seg.duration_seconds * 1000)
+            start_ms = random.randint(0, duration_ms - 1000)
+            end_ms = start_ms + random.randint(1000, 10000)  # 1 to 10 seconds long.
 
             # Append clip ranges to self.intervals.
 
-            raise SyntaxError("PENDING CHANGE: Append to self.critical instead of self.intervals.")
+            raise SyntaxError("PENDING CHANGE: Append to self.critical instead of self.intervals")
 
             # e.g.
             #   self.critical.append({
@@ -194,7 +172,6 @@ class Slicer:
             #       "weight": _weight
             #   })
 
-        # Mandatory return-self.
         return self
 
     def slice_at_volume_change(self):
