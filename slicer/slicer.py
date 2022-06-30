@@ -1,13 +1,5 @@
 """
-    Slicer module's homonymous submodule.
-
-    Note: This file is incredibly messy currently
-    since multiple people rushed to work on it on
-    Friday the 4th of June, 2022.
-
-    Contact Zack Wang at wang5511@purdue.edu for an
-    explanation of how this file should eventually
-    be structured.
+Slicer module
 """
 
 import random
@@ -19,51 +11,13 @@ from pydub.utils import register_pydub_effect
 
 from .critical import CriticalTimeIndexes
 from .voice import VoiceSlicer
-
-
-class VolumeChangeDetector:
-    """A handler that hosts the volume change slicer."""
-
-    def __init__(self, data):
-        self.data = data
-        self.parse_data()
-        self.filtered = None
-
-    @staticmethod
-    def angled_lp_filter(db_profile, weight=0.1):
-        """Filter out unusually high and short volume spikes."""
-
-        buoy = -20.
-
-        for volume in db_profile:
-            if buoy < volume <= buoy + weight:
-                buoy = volume
-
-            elif buoy + weight < volume:
-                buoy += weight
-
-        return buoy
-
-    def parse_data(self, filter_width=441):
-        """Extract data and convert it to desired formats"""
-
-        # Convert and filter each section of the data
-        self.filtered = [
-            self.angled_lp_filter(db_profile)
-            for db_profile in numpy.pad(librosa.amplitude_to_db(self.data), (0, len(self.data) % filter_width))
-                .reshape((len(self.data) - 1) // filter_width + 1, filter_width)
-        ]
-
-    def write_critical_time(self, cti):
-        """Writes volume change information to CTI."""
-        """Trying to append the volume spikes onto cti but I'm not sure if it is appending one buoy or multiple 
-        volume changes """
-        for i in range(0, len(self.data)):
-            cti.append(self.angled_lp_filter(self.data))
+from .volume import VolumeChangeDetector
 
 
 class Slicer:
-    """The primary object of the slicer module."""
+    """
+    The primary object of the slicer module
+    """
 
     def __init__(self, sample_rate, duration, threshold, base_seg, count):
         self.sample_rate = sample_rate
@@ -73,28 +27,24 @@ class Slicer:
         self.count = count
 
         self.data = None
-        self.convert_data()
+        self.normalize_amplitudes()
 
         self.critical = CriticalTimeIndexes()
         self.clips = []
 
     def generate_from_beats(self):
         """
-        Author Johnson Lin | Get every beat in a song and use that to input a bar of beats
-        as critical times
+        Get every beat in a song and use that to input a bar of beats as critical times
         """
 
-        # Convert the data to appropriate formatting
-        self.convert_data()
-
-        beat = librosa.beat.beat_track(y=self.data, sr=self.sample_rate)[1]
+        frames = librosa.beat.beat_track(y=self.data, sr=self.sample_rate)[1]
 
         # Change the beats from frames to time (ms)
-        beat_time = librosa.frames_to_time(beat, sr=self.sample_rate) * 1000
+        duration = librosa.frames_to_time(frames, sr=self.sample_rate) * 1000
 
         # Get every fourth beat and use append class method to append it to CTI
-        for i in range(1, len(beat)):
-            self.critical.append(item=[beat_time[i], beat_time[i - 1]])
+        for i in range(1, len(frames)):
+            self.critical.append(item=[duration[i], duration[i - 1]])
 
         self.critical.intervals()
 
@@ -103,8 +53,7 @@ class Slicer:
     @classmethod
     def invoke_slicers(cls, slicer_methods):
         """
-        A method invoker that wraps and registers a
-        custom slicer method in pydub's effects list.
+        A method invoker that wraps and registers a custom slicer method in pydub's effects list
         """
 
         if isinstance(slicer_methods, dict):
@@ -116,30 +65,32 @@ class Slicer:
 
             @pydub.utils.register_pydub_effect(name)
             def slicer_method_wrap(sample_rate, duration, threshold, seg, count, *args, **kwargs):
-                return getattr(cls(sample_rate, duration, threshold, seg, count), method)(*args, **kwargs). \
-                    execute_slicing().clips
+                return getattr(cls(sample_rate, duration, threshold, seg, count), method)(*args, **kwargs).generate_clips().clips
 
         else:
             raise TypeError
 
-    def convert_data(self):
-        """Converts the data info librosa-compatible format"""
+    def normalize_amplitudes(self):
+        """
+        Converts the track values into librosa-compatible format
+        int16 or int32 values to float values between -1. and 1.
+        """
 
-        data_raw_stereo = numpy.array(self.base_seg.get_array_of_samples())
-        data_raw_left = data_raw_stereo[::2]
-        data_raw_right = data_raw_stereo[1::2]
-        data_raw_mono = (data_raw_left + data_raw_right) / 2
+        stereo_track = numpy.array(self.base_seg.get_array_of_samples())
+        left_track = stereo_track[::2]
+        right_track = stereo_track[1::2]
+        mono_track = (left_track + right_track) / 2
 
         # Convert int16 or int32 data to float (-1. ~ 1.)
-        self.data = data_raw_mono / (1 << (self.base_seg.sample_width * 8) - 1)
+        self.data = mono_track / (1 << (self.base_seg.sample_width * 8) - 1)
 
-    def execute_slicing(self):
+    def generate_clips(self):
         """
-        Execute slicing
+        Slicing the source audio file into clips
         """
 
-        for i in self.critical.interval:
-            self.clips.append(self.base_seg[i[0]:i[1]])
+        for interval in self.critical.interval:
+            self.clips.append(self.base_seg[interval[0]:interval[1]])
 
         return self
 
