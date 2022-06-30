@@ -5,7 +5,7 @@ The main audio processing module
 import pydub
 from pydub.utils import mediainfo
 
-from configuration import WAV_FILE_NAME
+from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME
 from .replaygain import ReplayGain
 
 
@@ -64,7 +64,6 @@ class AudioProcessor:
         """
 
         for index, clip in enumerate(self.clips):
-            print(mediainfo(WAV_FILE_NAME))
-            clip.export(f"cache/export/{index}.wav", tags=mediainfo(WAV_FILE_NAME))
+            clip.export(f"cache/export/{index}.wav", tags=mediainfo(CACHE_WAV_FILE_NAME)['TAG'])
 
         return self
