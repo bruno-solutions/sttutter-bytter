@@ -2,25 +2,28 @@ from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 import math
 
+from app import CACHE_WAV_FILE_NAME
+
 
 class VoiceSlicer:
     """The object for slicing due to the vocals"""
 
     def __init__(self, sample_rate, duration, threshold):
-        self.stem_waveforms = None
-        self.separator()
         self.sample_rate = sample_rate
         self.duration = duration
         self.threshold = threshold
+        self.stem_waveforms = None
+        self.separator()
 
     def separator(self):
-        """Use Spleeter's library to seperate wav file into a dict. of amplitudes of its components"""
+        """
+        Use Spleeter's library to seperate wav file into a dict. of amplitudes of its components
+        """
         separator = Separator('spleeter:2stems', multiprocess=False)
-        file = "./cache/ytdl-fullsong.wav"
         audio_loader = AudioAdapter.default()
         sample_rate = 44100
-        waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
-        self.stem_waveforms = separator.separate(waveform, file)
+        waveform, _ = audio_loader.load(CACHE_WAV_FILE_NAME, sample_rate=sample_rate)
+        self.stem_waveforms = separator.separate(waveform, CACHE_WAV_FILE_NAME)
 
     @staticmethod
     def get_var(duration, base_sample_index):

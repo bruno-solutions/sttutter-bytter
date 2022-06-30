@@ -28,9 +28,22 @@ class Slicer:
 
         self.data = None
         self.normalize_amplitudes()
-
         self.critical = CriticalTimeIndexes()
         self.clips = []
+
+    def normalize_amplitudes(self):
+        """
+        Converts the track values into librosa-compatible format
+        int16 or int32 values to float values between -1. and 1.
+        """
+
+        stereo_track = numpy.array(self.base_seg.get_array_of_samples())
+        left_track = stereo_track[::2]
+        right_track = stereo_track[1::2]
+        mono_track = (left_track + right_track) / 2
+
+        # Convert int16 or int32 data to float (-1. ~ 1.)
+        self.data = mono_track / (1 << (self.base_seg.sample_width * 8) - 1)
 
     def generate_from_beats(self):
         """
@@ -69,20 +82,6 @@ class Slicer:
 
         else:
             raise TypeError
-
-    def normalize_amplitudes(self):
-        """
-        Converts the track values into librosa-compatible format
-        int16 or int32 values to float values between -1. and 1.
-        """
-
-        stereo_track = numpy.array(self.base_seg.get_array_of_samples())
-        left_track = stereo_track[::2]
-        right_track = stereo_track[1::2]
-        mono_track = (left_track + right_track) / 2
-
-        # Convert int16 or int32 data to float (-1. ~ 1.)
-        self.data = mono_track / (1 << (self.base_seg.sample_width * 8) - 1)
 
     def generate_clips(self):
         """
