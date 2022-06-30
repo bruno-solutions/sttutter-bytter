@@ -1,9 +1,11 @@
-"""The main processor of audioprocess module"""
+"""
+The main audio processing module
+"""
 
 import pydub
 from pydub.utils import mediainfo
 
-from app import WAV_FILE_NAME
+from configuration import WAV_FILE_NAME
 from .replaygain import ReplayGain
 
 

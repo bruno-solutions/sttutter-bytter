@@ -1,6 +1,6 @@
 import logging
 
-from app import DEBUG_VERBOSE
+from configuration import DEBUG_VERBOSE
 
 LOGGING_MESSAGE_TEMPLATE = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 

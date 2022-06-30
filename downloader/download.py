@@ -11,8 +11,7 @@ from __future__ import unicode_literals
 import taglib
 import youtube_dl
 
-from app import CACHE_FILE_NAME, CACHE_WAV_FILE_NAME
-from app import DEBUG_SKIP_YTDL_POST_PROCESSING
+from configuration import DEBUG_SKIP_YTDL_POST_PROCESSING, CACHE_FILE_NAME, CACHE_WAV_FILE_NAME
 from downloader.logger import Logger
 
 

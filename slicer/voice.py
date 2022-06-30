@@ -2,7 +2,7 @@ from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 import math
 
-from app import CACHE_WAV_FILE_NAME
+from configuration import CACHE_WAV_FILE_NAME
 
 
 class VoiceSlicer:
