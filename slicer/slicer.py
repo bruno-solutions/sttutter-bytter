@@ -10,89 +10,14 @@
     be structured.
 """
 
-import math
 import random
 
 import librosa
 import numpy
 import pydub
 from pydub.utils import register_pydub_effect
-from spleeter.audio.adapter import AudioAdapter
-from spleeter.separator import Separator
-
-
-class CriticalTimeIndexes:
-    """Saves, mixes, and convert critical time indexes into intervals."""
-
-    def __init__(self):
-        self.host = None
-        # self.cti = {}
-        # self.interval = {}
-        self.cti = []
-        self.interval = []
-
-    @staticmethod
-    def abs_derivative(data):
-        """Get the absolute value of the rate of change of each point."""
-        raise SyntaxError("Not implemented.")
-
-    def append(self, item):
-        """Appends a critical time to the list of CTIs."""
-        self.cti.append(item)
-
-    def intervals(self):
-        """Generate critical intervals from the critical time indexes."""
-        for i in range(0, len(self.cti)):
-            self.interval.append([self.cti[i][0], self.cti[i][1]])
-
-    def get_start_point(self, x, arr):
-        """
-        A binary search to find the nearby point of the target x in array arr
-        input:
-            x: target number
-            arr: target array
-        output:
-            [low, mid, high]
-            if any of these points is not exsit in the range of 0.1, -1 will be returned.
-            Otherwise an index will be returned.
-        """
-        if len(arr) == 0:
-            return -1
-
-        low = 0
-        mid = 0
-        high = len(arr) - 1
-        is_found = False
-
-        while low <= high:
-
-            mid = (high + low) // 2
-
-            if arr[mid] < x:
-                low = mid + 1
-
-            elif arr[mid] > x:
-                high = mid - 1
-
-            else:
-                is_found = True
-                break
-
-        high += 1
-
-        if is_found:  # x is exist on the arr
-            if x == arr[low] or x - arr[low] > 0.1:
-                low = -1
-            if x == arr[high] or arr[high] - x > 0.1:
-                high = -1
-        else:  # x is not exist on the arr
-            if low != 0 and x - arr[low - 1] > 0.1:
-                low = -1
-            if high == len(arr) or arr[high + 1] - x > 0.1:
-                high = -1
-            mid = -1
-
-        return low, mid, high
+from .critical import CriticalTimeIndexes
+from .voice import VoiceSlicer
 
 
 class VolumeChangeDetector:
@@ -140,115 +65,13 @@ class VolumeChangeDetector:
             cti.append(self.angled_lp_filter(self.data))
 
 
-class VoiceSlicer:
-    """The object for slicing due to the vocals"""
-
-    def __init__(self, sample_rate):
-        self.stem_waveforms = None
-        self.separator()
-        self.sample_rate = sample_rate
-
-    def separator(self):
-        """Use Spleeter's library to seperate wav file into a dict. of amplitudes of its components"""
-        separator = Separator('spleeter:2stems', multiprocess=False)
-        file = "./cache/ytdl-fullsong.wav"
-        audio_loader = AudioAdapter.default()
-        sample_rate = 44100
-        waveform, _ = audio_loader.load(file, sample_rate=sample_rate)
-        self.stem_waveforms = separator.separate(waveform, file)
-
-    def get_var(self, duration, base_sample_index):
-        """Return the needed variables for write_critical_time:
-            end_sample_next_index: Starting at end_sample_index, get the next sample to see if it has a vol. of 0.
-
-            add_time: How much time we go forward if we successfully get CTI's.
-
-            end_sample_starting_index: Where end_sample_index (the end-point for the CTI) will start at.
-
-            end_sample_last_possible_index: The last possible sample index we can search till.
-
-            add_time_to_test_sample: If the initial base_sample_index value doesn't work, we go forward some samples
-            with this variable.
-        """
-
-        slicing_factors = {1: {"end_sample_next_index": self.sample_rate // 4,
-                               "add_time": self.sample_rate * 1,
-                               "end_sample_starting_index": self.sample_rate // 6,
-                               "end_sample_last_possible_index": self.sample_rate,
-                               "add_time_to_test_sample": self.sample_rate // 3},
-                           3: {"end_sample_next_index": self.sample_rate // 4,
-                               "add_time": self.sample_rate * 2,
-                               "end_sample_starting_index": self.sample_rate + 1,
-                               "end_sample_last_possible_index": self.sample_rate - 1,
-                               "add_time_to_test_sample": self.sample_rate // 3},
-                           9: {"end_sample_next_index": self.sample_rate // 4,
-                               "add_time": self.sample_rate * 3,
-                               "end_sample_starting_index": self.sample_rate + 1,
-                               "end_sample_last_possible_index": self.sample_rate - 1,
-                               "add_time_to_test_sample": self.sample_rate // 4},
-                           27: {"end_sample_next_index": self.sample_rate // 4,
-                                "add_time": self.sample_rate * 3,
-                                "end_sample_starting_index": self.sample_rate + 1,
-                                "end_sample_last_possible_index": self.sample_rate - 1,
-                                "add_time_to_test_sample": self.sample_rate // 4}
-                           }
-
-        if duration not in slicing_factors:
-            raise ValueError("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
-
-        slicing_factor = slicing_factors[duration]
-        end_sample_next_index = slicing_factor["end_sample_next_index"]
-        add_time = slicing_factor["add_time"]
-        end_sample_starting_index = base_sample_index + self.sample_rate * duration - slicing_factor[
-            "end_sample_starting_index"]
-        end_sample_last_possible_index = base_sample_index + slicing_factor["end_sample_last_possible_index"]
-        add_time_to_test_sample = slicing_factor["add_time_to_test_sample"]
-
-        return end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample
-
-    def write_critical_time(self, cti):
-        """Makes critical time array using the vocal dict. component of Spleeter's seperation function
-            Input: Empty CTI array
-            Output: Full CTI array of time arrays [[base_sample_index time value, end_sample_index time value], ....]
-        """
-        threshold = 0.01
-        # Going to have to make this an input variable in the app.py
-        duration = 27
-        total_samples = self.stem_waveforms['vocals'].shape[0]
-        base_sample_index = 0
-
-        while not base_sample_index > total_samples:
-            end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample = self.get_var(
-                duration, base_sample_index)
-
-            if math.fabs(self.stem_waveforms['vocals'][base_sample_index][0]) <= threshold:
-                if base_sample_index + self.sample_rate * duration + self.sample_rate // 2 <= total_samples:
-                    end_sample_index = end_sample_starting_index  # to use as starting point for end_sample_index
-                else:
-                    break
-
-                # So if the current time has vol. of 0 then search for 0 vol. by adding time parameter to current
-                # time position
-                while self.stem_waveforms['vocals'][end_sample_index][0] != \
-                        self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
-                    if self.stem_waveforms['vocals'][end_sample_index][0] <= threshold:
-                        cti.append(
-                            [base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
-                        break
-                    else:
-                        # Go forward some samples from end_sample_index to test again for 0 vol.
-                        end_sample_index += end_sample_next_index
-                base_sample_index += add_time
-            else:
-                # From base_sample_index go forward some samples to get to next value to test for 0 vol.
-                base_sample_index += add_time_to_test_sample
-
-
 class Slicer:
     """The primary object of the slicer module."""
 
-    def __init__(self, sample_rate, base_seg, count):
+    def __init__(self, sample_rate, duration, threshold, base_seg, count):
         self.sample_rate = sample_rate
+        self.duration = duration
+        self.threshold = threshold
         self.base_seg = base_seg
         self.count = count
 
@@ -267,17 +90,14 @@ class Slicer:
         # Convert the data to appropriate formatting
         self.convert_data()
 
-        # The duration of time (we can also make it an argument)
-        time_duration = 21
-
         beat = librosa.beat.beat_track(y=self.data, sr=self.sample_rate)[1]
 
         # Change the beats from frames to time (ms)
         beat_time = librosa.frames_to_time(beat, sr=self.sample_rate) * 1000
 
         # Get every fourth beat and use append class method to append it to CTI
-        for i in range(0, len(beat), time_duration):
-            self.critical.append(item=beat_time[i])
+        for i in range(1, len(beat)):
+            self.critical.append(item=[beat_time[i], beat_time[i-1]])
 
         self.critical.intervals()
 
@@ -298,8 +118,8 @@ class Slicer:
             name, method = slicer_methods
 
             @pydub.utils.register_pydub_effect(name)
-            def slicer_method_wrap(sample_rate, seg, count, *args, **kwargs):
-                return getattr(cls(sample_rate, seg, count), method)(*args, **kwargs). \
+            def slicer_method_wrap(sample_rate, duration, threshold, seg, count, *args, **kwargs):
+                return getattr(cls(sample_rate, duration, threshold, seg, count), method)(*args, **kwargs). \
                     execute_slicing().clips
 
         else:
@@ -384,7 +204,7 @@ class Slicer:
 
     def slice_at_voice(self):
         """Slice the audio according to the vocals of a song"""
-        VoiceSlicer(self.sample_rate).write_critical_time(self.critical.cti)
+        VoiceSlicer(self.sample_rate, self.duration, self.threshold).write_critical_time(self.critical.cti)
         self.critical.intervals()
         return self
 

@@ -33,11 +33,11 @@ class AudioProcessor:
             .normalize(self.base_seg)
         return self
 
-    def apply_slicer(self, sample_rate, slicer=None, count=10):
+    def apply_slicer(self, sample_rate, duration, threshold, slicer=None, count=10):
         """Loads and executes the slicer module."""
         if not slicer:
             raise RuntimeError("Default slicer loader not implemented.")
-        self.clips = slicer(sample_rate, self.base_seg, count)
+        self.clips = slicer(sample_rate, duration, threshold, self.base_seg, count)
         return self
 
     def postprocess(self, fadein_duration=500, fadeout_duration=500, export_path="cache"):
