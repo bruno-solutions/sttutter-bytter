@@ -6,7 +6,7 @@ import pydub
 
 import downloader
 from audioprocess import AudioProcessor
-from configuration import DEBUG_AUTO_CLEAN_CACHE, DURATION, THRESHOLD, SAMPLE_RATE, CACHE_WAV_FILE_NAME, CACHE_WEBM_FILE_NAME
+from configuration import DEBUG_AUTO_CLEAN_CACHE, DURATION, THRESHOLD, SAMPLE_RATE, CACHE_WAV_FILE_NAME, CACHE_WEBM_FILE_NAME, URL
 from slicer import Slicer
 
 downloader.getsong("https://www.youtube.com/watch?v=dQw4w9WgXcQ")

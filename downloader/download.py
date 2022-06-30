@@ -66,7 +66,7 @@ def getsong_with_ytdl(url, logger=None, external_downloader=None):
 
             # Add source URL to the audio file metadata
             audio = taglib.File(CACHE_WAV_FILE_NAME)
-            audio.tags["WPUB"] = [url]  # https://id3.org/id3v2.3.0#URL_link_frames
+            audio.tags["WOAS"] = [url]  # https://id3.org/id3v2.3.0#URL_link_frames
             audio.save()
         except youtube_dl.DownloadError as error:
             Logger.error(message=str(error))

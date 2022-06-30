@@ -5,7 +5,7 @@ The main audio processing module
 import pydub
 from pydub.utils import mediainfo
 
-from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME
+from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME, URL
 from .replaygain import ReplayGain
 
 
@@ -63,7 +63,12 @@ class AudioProcessor:
         Export the sliced audio clips into the desired directory
         """
 
+        info_dict = mediainfo(CACHE_WAV_FILE_NAME)['TAG']
+        if 'comment' in info_dict:
+            info_dict.pop('comment')
+        info_dict['comment'] = URL
+        # info_dict.update({"comments": URL})
         for index, clip in enumerate(self.clips):
-            clip.export(f"cache/export/{index}.wav", tags=mediainfo(CACHE_WAV_FILE_NAME)['TAG'])
+            clip.export(f"cache/export/{index}.wav", tags=info_dict)
 
         return self
