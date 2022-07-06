@@ -4,7 +4,6 @@ The main audio processing module
 
 import pydub
 import taglib
-from pydub.utils import mediainfo
 
 from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME, URL
 
