@@ -65,25 +65,12 @@ class AudioProcessor:
         Export the sliced audio clips into the desired directory
         """
 
-        # Create dict. of metadata using mediainfo api and add URL into comments
-        # if 'comment' in info_dict:
-        #     info_dict.pop('comment')
-        # info_dict['comment'] = URL
-        # info_dict["ID3"] = {'WOAS': URL}
-
-        o_audio = taglib.File(CACHE_WAV_FILE_NAME)
-        info_dict = o_audio.tags
-        # print(info_dict)
-
         for index, clip in enumerate(self.clips):
             clip.export(out_f=f"cache/export/{index}.wav", format='wav')
 
+            # Use original metadata as dict. for taglib to use for new exported clips
             audio = taglib.File(f"cache/export/{index}.wav")
-            audio.tags["URL"] = [URL]
-            audio.tags["ARTIST"] = [str(info_dict['ARTIST']).strip("[]")]
-            audio.tags["COMMENT"] = [str(info_dict['COMMENT']).strip("[]")]
-            audio.tags["DATE"] = [str(info_dict['DATE']).strip("[]")]
-            audio.tags["TITLE"] = [str(info_dict['TITLE']).strip("[]")]
+            audio.tags = taglib.File(CACHE_WAV_FILE_NAME).tags
             audio.save()
 
         return self
