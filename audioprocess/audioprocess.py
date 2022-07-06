@@ -3,9 +3,11 @@ The main audio processing module
 """
 
 import pydub
+import taglib
 from pydub.utils import mediainfo
 
 from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME, URL
+
 from .replaygain import ReplayGain
 
 
@@ -64,12 +66,24 @@ class AudioProcessor:
         """
 
         # Create dict. of metadata using mediainfo api and add URL into comments
-        info_dict = mediainfo(CACHE_WAV_FILE_NAME)['TAG']
-        if 'comment' in info_dict:
-            info_dict.pop('comment')
-        info_dict['comment'] = URL
+        # if 'comment' in info_dict:
+        #     info_dict.pop('comment')
+        # info_dict['comment'] = URL
+        # info_dict["ID3"] = {'WOAS': URL}
+
+        o_audio = taglib.File(CACHE_WAV_FILE_NAME)
+        info_dict = o_audio.tags
+        # print(info_dict)
 
         for index, clip in enumerate(self.clips):
-            clip.export(f"cache/export/{index}.wav", tags=info_dict)
+            clip.export(out_f=f"cache/export/{index}.wav", format='wav')
+
+            audio = taglib.File(f"cache/export/{index}.wav")
+            audio.tags["URL"] = [URL]
+            audio.tags["ARTIST"] = [str(info_dict['ARTIST']).strip("[]")]
+            audio.tags["COMMENT"] = [str(info_dict['COMMENT']).strip("[]")]
+            audio.tags["DATE"] = [str(info_dict['DATE']).strip("[]")]
+            audio.tags["TITLE"] = [str(info_dict['TITLE']).strip("[]")]
+            audio.save()
 
         return self
