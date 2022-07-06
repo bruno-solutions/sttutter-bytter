@@ -9,7 +9,7 @@ from audioprocess import AudioProcessor
 from configuration import DEBUG_AUTO_CLEAN_CACHE, DURATION, THRESHOLD, SAMPLE_RATE, CACHE_WAV_FILE_NAME, CACHE_WEBM_FILE_NAME, URL
 from slicer import Slicer
 
-downloader.getsong("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+downloader.getsong(URL)
 
 Slicer.invoke_slicers({"voice": "slice_at_voice"})
 

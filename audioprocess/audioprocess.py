@@ -63,11 +63,12 @@ class AudioProcessor:
         Export the sliced audio clips into the desired directory
         """
 
+        # Create dict. of metadata using mediainfo api and add URL into comments
         info_dict = mediainfo(CACHE_WAV_FILE_NAME)['TAG']
         if 'comment' in info_dict:
             info_dict.pop('comment')
         info_dict['comment'] = URL
-        # info_dict.update({"comments": URL})
+
         for index, clip in enumerate(self.clips):
             clip.export(f"cache/export/{index}.wav", tags=info_dict)
 
