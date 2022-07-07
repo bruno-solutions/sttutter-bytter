@@ -15,17 +15,17 @@ class AudioProcessor:
     """
 
     def __init__(self, filename, sample_rate):
-        self.clips = list()
-        self.audio_segment = None
+        self.source_audio_segment = None
+        self.sliced_audio_segments = list()
 
         self.load_audio_segment(filename, sample_rate)
 
     def load_audio_segment(self, filename, sample_rate):
         """
-        Loads a wave file as AudioSegmant object
+        Loads a file as a pydub AudioSegmant object
         """
 
-        self.audio_segment = pydub.AudioSegment.from_file(file=filename).set_frame_rate(sample_rate)
+        self.source_audio_segment = pydub.AudioSegment.from_file(filename).set_frame_rate(sample_rate)
         return self
 
     def preprocess(self, handler=ReplayGain):
@@ -33,7 +33,7 @@ class AudioProcessor:
         Execute audio normalization
         """
 
-        self.audio_segment = handler().normalize(self.audio_segment)
+        self.source_audio_segment = handler().normalize(self.source_audio_segment)
         return self
 
     def apply_slicer(self, sample_rate, duration, threshold, slicer=None, count=10):
@@ -44,7 +44,7 @@ class AudioProcessor:
         if not slicer:
             raise RuntimeError("Default slicer loader not implemented.")
 
-        self.clips = slicer(sample_rate, duration, threshold, self.audio_segment, count)
+        self.sliced_audio_segments = slicer(sample_rate, duration, threshold, self.source_audio_segment, count)
         return self
 
     def postprocess(self, tags, fadein_duration=500, fadeout_duration=500, export_root=EXPORT_ROOT):
@@ -52,8 +52,8 @@ class AudioProcessor:
         Append fade-in and fade-out
         """
 
-        for index, clip in enumerate(self.clips):
-            self.clips[index] = clip.fade_in(fadein_duration).fade_out(fadeout_duration)
+        for index, clip in enumerate(self.sliced_audio_segments):
+            self.sliced_audio_segments[index] = clip.fade_in(fadein_duration).fade_out(fadeout_duration)
 
         self.export(tags, export_root)
         return self
@@ -63,7 +63,7 @@ class AudioProcessor:
         Export the sliced audio clips into the desired directory
         """
 
-        for index, clip in enumerate(self.clips):
+        for index, clip in enumerate(self.sliced_audio_segments):
             filename = f"{export_root}/{index}.{EXPORT_FILE_TYPE}"
             clip.export(filename, format=EXPORT_FILE_TYPE)
             write_tags(filename, tags)

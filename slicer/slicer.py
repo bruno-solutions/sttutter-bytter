@@ -60,7 +60,7 @@ class Slicer:
 
             @pydub.utils.register_pydub_effect(name)
             def slicer_method_wrap(sample_rate, duration, threshold, seg, count, *args, **kwargs):
-                return getattr(cls(sample_rate, duration, threshold, seg, count), method)(*args, **kwargs).generate_clips().clips
+                return getattr(cls(sample_rate, duration, threshold, seg, count), method)(*args, **kwargs).generate_clips().sliced_audio_segments
 
         else:
             raise TypeError
