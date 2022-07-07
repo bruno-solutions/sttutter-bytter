@@ -8,14 +8,16 @@
 
 from __future__ import unicode_literals
 
+import json
+
 import youtube_dl
 
-from configuration import DEBUG_SKIP_YTDL_POST_PROCESSING, CACHE_FILE_NAME, CACHE_WAV_FILE_NAME
+from configuration import DEBUG_SKIP_YTDL_POST_PROCESSING, CACHE_FILE_NAME, YOUTUBE_DL_INFO_FILE_NAME, CACHE_WAV_FILE_NAME, EXPORT_FILE_TYPE
 from downloader.logger import Logger
-from metadata import write_metadata
+from tags import write_tags, parse_metadata
 
 
-def getsong_with_aria2c(*args, **kwargs):
+def getsong(*args, **kwargs):
     """
     A faster version of getsong_with_ytdl() that utilizes external aria2c library
     """
@@ -45,13 +47,9 @@ def getsong_with_ytdl(url, logger=None, external_downloader=None):
         'postprocessors': [
             {
                 'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
+                'preferredcodec': EXPORT_FILE_TYPE,
                 'preferredquality': '192',
             }
-            # ,
-            # {
-            #     'key': 'FFmpegMetadata'
-            # }
         ],
         'logger': Logger() if logger is None else logger,
         'progress_hooks': [my_hook],
@@ -65,7 +63,12 @@ def getsong_with_ytdl(url, logger=None, external_downloader=None):
         try:
             downloader.cache.remove()
             downloader.download([url])
-            # Write metadata from info json file
-            write_metadata(CACHE_WAV_FILE_NAME)
+
+            with open(YOUTUBE_DL_INFO_FILE_NAME) as json_file:
+                tags = parse_metadata(json.load(json_file))  # Get YoutubeDL content metadata from json file
+
+            write_tags(CACHE_WAV_FILE_NAME, tags)
         except youtube_dl.DownloadError as error:
             Logger.error(message=str(error))
+
+    return tags

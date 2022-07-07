@@ -18,7 +18,7 @@ class VoiceSlicer:
 
     def separator(self):
         """
-        Use Spleeter's library to seperate wav file into a dict. of amplitudes of its components
+        Use Spleeter's library to seperate wav file into a dictionary of amplitudes of its components
         """
         separator = Separator('spleeter:2stems', multiprocess=False)
         audio_loader = AudioAdapter.default()

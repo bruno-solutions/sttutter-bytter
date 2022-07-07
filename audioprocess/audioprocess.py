@@ -4,9 +4,8 @@ The main audio processing module
 
 import pydub
 
-from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME, URL
-from metadata import write_metadata
-
+from configuration import EXPORT_ROOT, EXPORT_FILE_TYPE
+from tags import write_tags
 from .replaygain import ReplayGain
 
 
@@ -48,7 +47,7 @@ class AudioProcessor:
         self.clips = slicer(sample_rate, duration, threshold, self.audio_segment, count)
         return self
 
-    def postprocess(self, fadein_duration=500, fadeout_duration=500, export_path="cache"):
+    def postprocess(self, tags, fadein_duration=500, fadeout_duration=500, export_root=EXPORT_ROOT):
         """
         Append fade-in and fade-out
         """
@@ -56,19 +55,17 @@ class AudioProcessor:
         for index, clip in enumerate(self.clips):
             self.clips[index] = clip.fade_in(fadein_duration).fade_out(fadeout_duration)
 
-        self.export()
+        self.export(tags, export_root)
         return self
 
-    def export(self):
+    def export(self, tags, export_root):
         """
         Export the sliced audio clips into the desired directory
         """
 
         for index, clip in enumerate(self.clips):
-            file = f"cache/export/{index}.wav"
-            clip.export(out_f=file, format='wav')
-
-            # Write metadata from info json file
-            write_metadata(file)
+            filename = f"{export_root}/{index}.{EXPORT_FILE_TYPE}"
+            clip.export(filename, format=EXPORT_FILE_TYPE)
+            write_tags(filename, tags)
 
         return self
