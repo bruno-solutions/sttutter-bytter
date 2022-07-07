@@ -8,11 +8,11 @@
 
 from __future__ import unicode_literals
 
-import taglib
 import youtube_dl
 
 from configuration import DEBUG_SKIP_YTDL_POST_PROCESSING, CACHE_FILE_NAME, CACHE_WAV_FILE_NAME
 from downloader.logger import Logger
+from metadata import write_metadata
 
 
 def getsong_with_aria2c(*args, **kwargs):
@@ -40,16 +40,18 @@ def getsong_with_ytdl(url, logger=None, external_downloader=None):
     ydl_args = {
         'outtmpl': CACHE_FILE_NAME + '.%(ext)s',
         'format': 'bestaudio/best',
+        'writeinfojson': True,
         'external_downloader': external_downloader,
         'postprocessors': [
             {
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
                 'preferredquality': '192',
-            },
-            {
-                'key': 'FFmpegMetadata'
             }
+            # ,
+            # {
+            #     'key': 'FFmpegMetadata'
+            # }
         ],
         'logger': Logger() if logger is None else logger,
         'progress_hooks': [my_hook],
@@ -63,10 +65,7 @@ def getsong_with_ytdl(url, logger=None, external_downloader=None):
         try:
             downloader.cache.remove()
             downloader.download([url])
-
-            # Add source URL to the audio file metadata
-            audio = taglib.File(CACHE_WAV_FILE_NAME)
-            audio.tags["WOAS"] = [url]  # https://id3.org/id3v2.3.0#URL_link_frames
-            audio.save()
+            # Write metadata from info json file
+            write_metadata(CACHE_WAV_FILE_NAME)
         except youtube_dl.DownloadError as error:
             Logger.error(message=str(error))

@@ -3,9 +3,9 @@ The main audio processing module
 """
 
 import pydub
-import taglib
 
 from configuration import CACHE_WAV_FILE_NAME, WAV_FILE_NAME, URL
+from metadata import write_metadata
 
 from .replaygain import ReplayGain
 
@@ -65,11 +65,10 @@ class AudioProcessor:
         """
 
         for index, clip in enumerate(self.clips):
-            clip.export(out_f=f"cache/export/{index}.wav", format='wav')
+            file = f"cache/export/{index}.wav"
+            clip.export(out_f=file, format='wav')
 
-            # Use original metadata as dict. for taglib to use for new exported clips
-            audio = taglib.File(f"cache/export/{index}.wav")
-            audio.tags = taglib.File(CACHE_WAV_FILE_NAME).tags
-            audio.save()
+            # Write metadata from info json file
+            write_metadata(file)
 
         return self
