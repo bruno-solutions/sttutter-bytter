@@ -1,3 +1,3 @@
 """A minimum download module for getting songs from outside sources"""
 
-from .download import getsong
+from downloader import get_song_aria2c

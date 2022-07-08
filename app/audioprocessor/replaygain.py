@@ -9,7 +9,7 @@ import pydub
 
 class ReplayGain:
     """
-    The class that implements ReplayGain.
+    The class that implements ReplayGain
     """
 
     def __init__(self):
@@ -20,16 +20,14 @@ class ReplayGain:
 
     def normalize(self, audio):
         """
-        The normalizer access point.
+        The volume normalizer
         Args:
             audio --> pydub.AudioSegment | *
         """
         self.audio_seg = audio
 
-        # If replaygain_calc() returns REPLAYGAIN_NOT_IMPLEMENTED
         if self.smart_normalization() == -3:
-            # Use peak normalization instead
-            self.peak_normalization()
+            self.peak_normalization()  # When replaygain_calc() returns REPLAYGAIN_NOT_IMPLEMENTED
 
         return self.audio_seg
 
@@ -46,5 +44,4 @@ class ReplayGain:
         smart_normalization() finishes implementation.
         """
 
-        self.audio_seg = pydub.AudioSegment \
-            .normalize(self.audio_seg)  # pylint: disable=no-member
+        self.audio_seg = pydub.AudioSegment.normalize(self.audio_seg)  # pylint: disable=no-member

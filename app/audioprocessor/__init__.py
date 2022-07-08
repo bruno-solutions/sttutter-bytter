@@ -7,4 +7,4 @@ The audioprocess module handles general audio processing including:
     - Postprocess / Fade-in, Fade-out
 """
 
-from .audioprocess import AudioProcessor
+from audioprocessor import AudioProcessor

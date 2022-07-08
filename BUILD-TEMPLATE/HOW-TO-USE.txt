@@ -1,7 +1,0 @@
-Move "c_cpp_properties.json", "launch.json", "tasks.json" into ".vscode"
-Edit the files where needed (insert local PATHS)
-
-Test Launch Profile. Ask me if PROBLEMS.
-
-Use pip install -r requirements.txt to install all needed dependencies
-Use pip freeze requirements.txt to update the requirements.txt to update automatically

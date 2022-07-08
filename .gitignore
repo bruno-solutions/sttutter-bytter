@@ -1,5 +1,6 @@
 #IntelliJ PyCharm or IDEA
 /.idea
+*.iml
 
 #VSCode Local Configurations
 .vscode/*
@@ -22,3 +23,4 @@
 
 #Spleeter's pre-trained models
 /pretrained_models/
+/out/
