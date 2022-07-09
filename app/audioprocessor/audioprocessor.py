@@ -1,6 +1,7 @@
 """
 The main audio processing module
 """
+from pathlib import Path
 
 import pydub
 
@@ -57,6 +58,7 @@ class AudioProcessor:
         Export the sliced audio clips into the desired directory
         """
         for index, clip in enumerate(self.clips):
+            Path(directory).mkdir(parents=True, exist_ok=True)
             filename = f"{directory}\\{index}.{EXPORT_FILE_TYPE}"
             file_object = clip.export(filename, format=EXPORT_FILE_TYPE)
             file_object.close()
