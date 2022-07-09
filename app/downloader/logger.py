@@ -1,8 +1,6 @@
 import logging
 
-from configuration import DEBUG_VERBOSE
-
-LOGGING_MESSAGE_TEMPLATE = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+from configuration import LOG_FILE, LOG_TO_CONSOLE, LOG_DEBUG, LOG_WARNING, LOG_ERROR
 
 
 class Logger:
@@ -13,24 +11,35 @@ class Logger:
     @staticmethod
     def debug(message):
         """
-        Write debug message to debug.log
+        Log a debug message (when Debug is active)
         """
-        if DEBUG_VERBOSE:
-            logging.basicConfig(filename='debug.log', filemode='w', format=LOGGING_MESSAGE_TEMPLATE)
-            logging.exception("[DEBUG]" + message)
+        if LOG_DEBUG:
+            Logger.log(f"[DEBUG] : {message}")
 
     @staticmethod
     def warning(message):
         """
-        Print warning message to stdout
+        Log a warning
         """
-        print("[WARN]: " + message)
+        if LOG_WARNING:
+            Logger.log(f"[WARNING]: {message}")
 
     @staticmethod
     def error(message):
         """
-        Write error message to error.log
+        Log an error
         """
+        if LOG_ERROR:
+            Logger.log(f"[ERROR]: {message}")
 
-        logging.basicConfig(filename='error.log', filemode='w', format=LOGGING_MESSAGE_TEMPLATE)
-        logging.exception("[ERROR]: " + message)
+    @staticmethod
+    def log(message):
+        """
+        Log a message
+        """
+        if LOG_TO_CONSOLE:
+            print(message)
+
+        if LOG_FILE is not None:
+            logging.basicConfig(filename=LOG_FILE, filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            logging.exception(message)

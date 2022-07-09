@@ -17,7 +17,8 @@ class Tagger:
 
         for key in keys:
             if key in metadata:
-                tags[key.replace('_', ' ')] = metadata[key]
+                if metadata[key] is not None:
+                    tags[key.replace('_', ' ')] = metadata[key] if metadata[key] is str else str(metadata[key])
 
         keys = ['categories', 'tags']
         key2tag = {'categories': 'category', 'tags': 'tag'}
@@ -25,9 +26,11 @@ class Tagger:
         for key in keys:
             if key in metadata:
                 for index, value in enumerate(metadata[key]):
+                    value = ' '.join([word.title() if word not in "a an and as but by for in if nor of off on onto or out so the to up with yet" else word for word in value.capitalize().split(' ')])
                     if key2tag[key] in tags:
-                        tags[key2tag[key]] += ' | '
-                    tags[key2tag[key]] += value
+                        tags[key2tag[key]] += ' | ' + value
+                    else:
+                        tags[key2tag[key]] = value
 
         return tags
 

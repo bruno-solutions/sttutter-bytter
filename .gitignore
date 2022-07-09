@@ -9,16 +9,12 @@
 *.pyc
 *.pyo
 
-#C-build Stages
-*.o
-*.dll
-
-#Allow VScode Build Template Share
-!BUILD-TEMPLATE/tasks.json
-/environment
-/sttutter-youtube-audiobot.iml
-/cache/
-
 #Spleeter's pre-trained models
 /pretrained_models/
 /out/
+
+#application generated files
+*.log
+/app/cache/
+/app/pretrained_models/
+/app/exports/

@@ -3,7 +3,7 @@ import math
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 
-from configuration import CACHE_WAV_FILE_NAME
+from configuration import CACHE_WAV_FILE_NAME, DEFAULT_SAMPLE_RATE
 
 
 class VoiceSlicer:
@@ -24,8 +24,7 @@ class VoiceSlicer:
         """
         separator = Separator('spleeter:2stems', multiprocess=False)
         audio_loader = AudioAdapter.default()
-        sample_rate = 44100
-        waveform, _ = audio_loader.load(CACHE_WAV_FILE_NAME, sample_rate=sample_rate)
+        waveform, _ = audio_loader.load(CACHE_WAV_FILE_NAME, sample_rate=DEFAULT_SAMPLE_RATE)
         self.stem_waveforms = separator.separate(waveform, CACHE_WAV_FILE_NAME)
 
     @staticmethod
@@ -88,7 +87,7 @@ class VoiceSlicer:
                 # When the current volume is 0 then search for a 0 volume by adding time parameter to current time position
                 while self.stem_waveforms['vocals'][end_sample_index][0] != self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
                     if self.stem_waveforms['vocals'][end_sample_index][0] <= self.threshold:
-                        cti.append(cti=[base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
+                        cti.append([base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
                         break
                     else:
                         # Go forward some samples from end_sample_index to test again for a 0 volume

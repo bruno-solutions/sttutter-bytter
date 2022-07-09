@@ -5,12 +5,11 @@
         get_song_with_aria2c(url, outfile_name, logger) --> None:
         get_song_with_ytdl(url, outfile_name, logger) --> None:
 """
-
 import json
 
 import youtube_dl
 
-from configuration import DEFAULT_SAMPLE_RATE, EXPORT_FILE_TYPE, CACHE_FILE_NAME, CACHE_WAV_FILE_NAME, YOUTUBE_DOWNLOAD_INFO_FILE_NAME
+from configuration import DEFAULT_SAMPLE_RATE, EXPORT_FILE_TYPE, CACHE_FILE_NAME, CACHE_WAV_FILE_NAME, YOUTUBE_DOWNLOAD_INFO_FILE_NAME, CACHE_ROOT
 from configuration import DISABLE_YOUTUBE_DOWNLOAD_POST_PROCESSING
 from logger import Logger
 from tagger import Tagger
@@ -33,32 +32,41 @@ def get_song_with_ytdl(url, logger=None, external_downloader=None):
     """
 
     def my_hook(attributes):
-        if 'finished' == attributes['status']:
-            print("[YouTube download]: Success")
+        if 'downloading' == attributes['status']:
+            print(f".", end='', flush=True)
+        else:
+            print(f"\nDownload: {attributes['status']}")
+
+    # https://github.com/ytdl-org/youtube-dl/blob/3e4cedf9e8cd3157df2457df7274d0c842421945/youtube_dl/YoutubeDL.py#L137-L312
 
     parameters = {
+        'cachedir': CACHE_ROOT,
         'outtmpl': CACHE_FILE_NAME + '.%(ext)s',
         'format': 'bestaudio/best',
         'sr': DEFAULT_SAMPLE_RATE,
         'external_downloader': external_downloader,
         'writeinfojson': True,
+        'prefer_ffmpeg': True,
         'logger': Logger() if logger is None else logger,
         'progress_hooks': [my_hook]
+        #  'verbose': True
     }
 
     if not DISABLE_YOUTUBE_DOWNLOAD_POST_PROCESSING:
         parameters['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
-            'preferredcodec': EXPORT_FILE_TYPE,
-            'preferredquality': '192',
+            'preferredcodec': EXPORT_FILE_TYPE,  # see ffmpeg -f and -bsf options
+            'preferredquality': '192',           # see ffmpeg -b -q options
         }]
 
     with youtube_dl.YoutubeDL(parameters) as downloader:
         try:
             downloader.cache.remove()
+            print("Download: started")
             downloader.download([url])
         except youtube_dl.DownloadError as error:
             Logger.error(message=str(error))
+            raise error
 
         with open(YOUTUBE_DOWNLOAD_INFO_FILE_NAME) as json_file:
             tagger = Tagger(json.load(json_file))

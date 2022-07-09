@@ -57,7 +57,8 @@ class AudioProcessor:
         Export the sliced audio clips into the desired directory
         """
         for index, clip in enumerate(self.clips):
-            filename = f"{directory}/{index}.{EXPORT_FILE_TYPE}"
-            clip.export(filename, format=EXPORT_FILE_TYPE)
+            filename = f"{directory}\\{index}.{EXPORT_FILE_TYPE}"
+            file_object = clip.export(filename, format=EXPORT_FILE_TYPE)
+            file_object.close()
             self.tagger.write_tags(filename)
         return self

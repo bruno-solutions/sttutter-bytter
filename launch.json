@@ -2,20 +2,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "preLaunchTask":"Build-all",
             "name": "Launch App",
             "type": "python",
             "request": "launch",
             "program": "app.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "preLaunchTask":"Build-all"
         },
         {
-            "preLaunchTask":"Build-all",
             "name": "Launch Test App",
             "type": "python",
             "request": "launch",
             "program": "test_app.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "preLaunchTask":"Build-all"
         },
         {
             "name": "NO-BUILD Fast Launch Test",
