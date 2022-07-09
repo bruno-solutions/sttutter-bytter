@@ -15,9 +15,7 @@
 
 #Allow VScode Build Template Share
 !BUILD-TEMPLATE/tasks.json
-/environment/Scripts/python.exe
-/environment/Scripts/pythonw.exe
-/environment/pyvenv.cfg
+/environment
 /sttutter-youtube-audiobot.iml
 /cache/
 
