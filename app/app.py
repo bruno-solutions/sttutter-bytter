@@ -7,7 +7,9 @@ from file import refresh_roots
 
 refresh_roots(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT)
 
-AudioProcessor(EXAMPLE_URL, slicer_name="voice", slicer_method="slice_at_voice") \
+slicers = {'voice': 'slice_at_voice', 'volume': 'slice_at_volume_change'}
+
+AudioProcessor(EXAMPLE_URL, slicers) \
     .download() \
     .metadata() \
     .normalize() \
