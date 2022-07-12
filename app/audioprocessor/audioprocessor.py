@@ -1,47 +1,61 @@
 """
 The main audio processing module
 """
+import json
 from pathlib import Path
 
 import pydub
 
 import downloader
-from configuration import EXPORT_FILE_TYPE
+from configuration import EXTERNAL_DOWNLOADER, DOWNLOADED_AUDIO_FILE_NAME, EXPORT_FILE_TYPE, DURATION, THRESHOLD, CLIP_LIMIT, DEFAULT_SAMPLE_RATE, METADATA_FILE_NAME
 from replaygain import ReplayGain
 from slicer import Slicer
+from tagger import Tagger
 
 
 class AudioProcessor:
     """
-    The class that handles overall audio processing
+    The class that orchestrates the audio processing methods
     """
 
-    def __init__(self, url, filename, sample_rate, slicer_name, slicer_method):
-        self.tagger = downloader.get_song_aria2c(url)
+    def __init__(self, url, slicer_name, slicer_method, downloaded_audio_file_name=DOWNLOADED_AUDIO_FILE_NAME, sample_rate=DEFAULT_SAMPLE_RATE, external_downloader=EXTERNAL_DOWNLOADER, logger=None):
+        self.url = url
 
+        self.downloaded_audio_file_name = downloaded_audio_file_name
         self.sample_rate = sample_rate
-        self.recording = None
-        self.clips = list()
-        self.load(filename)
         self.slicer_name = slicer_name
+
+        self.external_downloader = external_downloader
+        self.logger = logger
+        self.recording = None
+        self.tagger = None
 
         Slicer.register({slicer_name: slicer_method}, self.tagger)
 
-    def load(self, filename):
+        self.clips = list()
+
+    def download(self):
         """
-        Loads a file as a pydub AudioSegmant object
+        Downloads a file and converts it into a pydub AudioSegmant object
         """
-        self.recording = pydub.AudioSegment.from_file(filename).set_frame_rate(self.sample_rate)
+        downloader.download(self.url, logger=self.logger, external_downloader=self.external_downloader)
+        self.recording = pydub.AudioSegment.from_file(self.downloaded_audio_file_name).set_frame_rate(self.sample_rate)
         return self
 
-    def preprocess(self, handler=ReplayGain):
+    def metadata(self):
+        with open(METADATA_FILE_NAME) as json_file:
+            self.tagger = Tagger(json.load(json_file))
+            self.tagger.write_tags(self.downloaded_audio_file_name)
+        return self
+
+    def normalize(self, handler=ReplayGain):
         """
         Execute audio normalization
         """
         self.recording = handler().normalize(self.recording)
         return self
 
-    def slice(self, duration, threshold, count=10):
+    def slice(self, duration=DURATION, threshold=THRESHOLD, clip_limit=CLIP_LIMIT):
         """
         Loads and executes the slicer module
         """
@@ -50,10 +64,10 @@ class AudioProcessor:
         if not slicer:
             raise RuntimeError("Slicer not configured")
 
-        self.clips = slicer(self.sample_rate, duration, threshold, self.recording, count)
+        self.clips = slicer(self.sample_rate, duration, threshold, self.recording, clip_limit)
         return self
 
-    def postprocess(self, fadein_duration=500, fadeout_duration=500):
+    def fade(self, fadein_duration=500, fadeout_duration=500):
         """
         Append fade-in and fade-out
         """
@@ -68,7 +82,6 @@ class AudioProcessor:
         for index, clip in enumerate(self.clips):
             Path(directory).mkdir(parents=True, exist_ok=True)
             filename = f"{directory}\\{index}.{EXPORT_FILE_TYPE}"
-            file_object = clip.export(filename, format=EXPORT_FILE_TYPE)
-            file_object.close()
+            clip.export(filename, format=EXPORT_FILE_TYPE).close()
             self.tagger.write_tags(filename)
         return self

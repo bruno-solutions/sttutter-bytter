@@ -3,7 +3,7 @@ import math
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 
-from configuration import CACHE_WAV_FILE_NAME, DEFAULT_SAMPLE_RATE
+from configuration import DOWNLOADED_AUDIO_FILE_NAME, DEFAULT_SAMPLE_RATE
 
 
 class VoiceSlicer:
@@ -24,8 +24,8 @@ class VoiceSlicer:
         """
         separator = Separator('spleeter:2stems', multiprocess=False)
         audio_loader = AudioAdapter.default()
-        waveform, _ = audio_loader.load(CACHE_WAV_FILE_NAME, sample_rate=DEFAULT_SAMPLE_RATE)
-        self.stem_waveforms = separator.separate(waveform, CACHE_WAV_FILE_NAME)
+        waveform, _ = audio_loader.load(DOWNLOADED_AUDIO_FILE_NAME, sample_rate=DEFAULT_SAMPLE_RATE)
+        self.stem_waveforms = separator.separate(waveform, DOWNLOADED_AUDIO_FILE_NAME)
 
     @staticmethod
     def get_var(duration, base_sample_index):
