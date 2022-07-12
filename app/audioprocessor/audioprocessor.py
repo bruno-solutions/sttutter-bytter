@@ -8,7 +8,7 @@ import pydub
 
 import downloader
 from configuration import EXTERNAL_DOWNLOADER, DOWNLOADED_AUDIO_FILE_NAME, EXPORT_FILE_TYPE, DURATION, THRESHOLD, CLIP_LIMIT, DEFAULT_SAMPLE_RATE, METADATA_FILE_NAME
-from replaygain import ReplayGain
+from normalizer import Normalizer
 from slicer import Slicer
 from tagger import Tagger
 
@@ -26,6 +26,7 @@ class AudioProcessor:
         self.slicer_name = slicer_name
 
         self.external_downloader = external_downloader
+        self.normalizer = Normalizer()
         self.logger = logger
         self.recording = None
         self.tagger = None
@@ -48,11 +49,11 @@ class AudioProcessor:
             self.tagger.write_tags(self.downloaded_audio_file_name)
         return self
 
-    def normalize(self, handler=ReplayGain):
+    def normalize(self):
         """
-        Execute audio normalization
+        Normalize recording volume
         """
-        self.recording = handler().normalize(self.recording)
+        self.recording = self.normalizer.normalize(self.recording)
         return self
 
     def slice(self, duration=DURATION, threshold=THRESHOLD, clip_limit=CLIP_LIMIT):
