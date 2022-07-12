@@ -5,8 +5,10 @@ from pathlib import Path
 
 import pydub
 
+import downloader
 from configuration import EXPORT_FILE_TYPE
 from replaygain import ReplayGain
+from slicer import Slicer
 
 
 class AudioProcessor:
@@ -14,12 +16,16 @@ class AudioProcessor:
     The class that handles overall audio processing
     """
 
-    def __init__(self, filename, sample_rate, tagger):
+    def __init__(self, url, filename, sample_rate, slicer_name, slicer_method):
+        self.tagger = downloader.get_song_aria2c(url)
+
         self.sample_rate = sample_rate
-        self.tagger = tagger
         self.recording = None
         self.clips = list()
         self.load(filename)
+        self.slicer_name = slicer_name
+
+        Slicer.register({slicer_name: slicer_method}, self.tagger)
 
     def load(self, filename):
         """
@@ -35,14 +41,16 @@ class AudioProcessor:
         self.recording = handler().normalize(self.recording)
         return self
 
-    def slice(self, sample_rate, duration, threshold, slicer=None, count=10):
+    def slice(self, duration, threshold, count=10):
         """
         Loads and executes the slicer module
         """
-        if not slicer:
-            raise RuntimeError("Default slicer not implemented")
+        slicer = getattr(pydub.AudioSegment, self.slicer_name)
 
-        self.clips = slicer(sample_rate, duration, threshold, self.recording, count)
+        if not slicer:
+            raise RuntimeError("Slicer not configured")
+
+        self.clips = slicer(self.sample_rate, duration, threshold, self.recording, count)
         return self
 
     def postprocess(self, fadein_duration=500, fadeout_duration=500):
