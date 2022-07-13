@@ -3,15 +3,14 @@ import math
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 
-from configuration import DOWNLOADED_AUDIO_FILE_NAME, DEFAULT_SAMPLE_RATE
-
 
 class VoiceSlicer:
     """
     Slice source audio file using vocal cues
     """
 
-    def __init__(self, sample_rate, duration, threshold):
+    def __init__(self, filename, sample_rate, duration, threshold):
+        self.filename = filename
         self.sample_rate = sample_rate
         self.duration = duration
         self.threshold = threshold
@@ -22,10 +21,8 @@ class VoiceSlicer:
         """
         Use Spleeter to split the wav file into a dictionary of component amplitudes
         """
-        separator = Separator('spleeter:2stems', multiprocess=False)
-        audio_loader = AudioAdapter.default()
-        waveform, _ = audio_loader.load(DOWNLOADED_AUDIO_FILE_NAME, sample_rate=DEFAULT_SAMPLE_RATE)
-        self.stem_waveforms = separator.separate(waveform, DOWNLOADED_AUDIO_FILE_NAME)
+        waveform, _ = AudioAdapter.default().load(self.filename, sample_rate=self.sample_rate)
+        self.stem_waveforms = Separator('spleeter:2stems', multiprocess=False).separate(waveform, self.filename)
 
     @staticmethod
     def get_var(duration, base_sample_index):
@@ -37,7 +34,6 @@ class VoiceSlicer:
         end_sample_last_possible_index: The last possible sample index we can search till
         add_time_to_test_sample: If the initial base_sample_index value doesn't work, we go forward some samples with this variable
         """
-
         if 1 == duration:
             end_sample_next_index = 44100 // 4
             add_time = 44100 * 1

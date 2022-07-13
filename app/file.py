@@ -1,20 +1,27 @@
 import os
 import shutil
 
-from configuration import DEFAULT_EXPORT_ROOT, DEFAULT_CACHE_ROOT
+from configuration import EXPORT_ROOT, CACHE_ROOT, LOG_ROOT
+from logger import Logger
 
 
-def refresh_roots(cache_root=DEFAULT_CACHE_ROOT, export_root=DEFAULT_EXPORT_ROOT):
-    def refresh_root(root, name):
-        try:
-            shutil.rmtree(root)
-            os.mkdir(root)
-        except FileNotFoundError:
-            print(f"[NOTICE]: {root} directory does not exist (but that's OK, I'll make it for you)")
-            pass
-        except OSError as error:
-            print(f"[FATAL]: {name} {root} is malformed or inaccessible")
-            raise error
+def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT):
+    logger = Logger()
 
-    refresh_root(cache_root, 'cache root')
-    refresh_root(export_root, 'export root')
+    def cleanup_root(root, name):
+        if root is not None:
+            try:
+                shutil.rmtree(root)
+            except FileNotFoundError:
+                logger.debug(f"[NOTICE]: {root} directory does not exist (that's OK, I'll create it for you)")
+                pass
+
+            try:
+                os.mkdir(root)
+            except OSError as error:
+                logger.error(f"[FATAL]: {name} cannot be created. I suspect that {root} is malformed or inaccessible")
+                raise error
+
+    cleanup_root(cache_root, 'Cache root')
+    cleanup_root(export_root, 'Export root')
+    cleanup_root(log_root, 'Log root')

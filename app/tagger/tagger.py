@@ -10,7 +10,6 @@ class Tagger:
         """
         Convert a downloaded file's information dictionary into Sttutter audio file tags
         """
-
         tags = {}
 
         keys = ['id', 'title', 'description', 'uploader', 'upload_date', 'channel', 'channel_id', 'channel_url', 'playlist', 'playlist_index', 'age_limit', 'is_live', 'view_count', 'like_count', 'thumbnail', 'webpage_url']
@@ -33,6 +32,12 @@ class Tagger:
                         tags[key2tag[key]] = value
 
         return tags
+
+    def list(self):
+        """
+        Retrieve the list of tag keys
+        """
+        return list(self.tags.keys())
 
     def add(self, tag, value):
         """

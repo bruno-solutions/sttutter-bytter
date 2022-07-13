@@ -16,7 +16,9 @@ class Slicer:
     """
     The primary object of the slicer module
     """
-    def __init__(self, sample_rate, duration, threshold, samples, count, tagger):
+
+    def __init__(self, filename, sample_rate, duration, threshold, samples, count, tagger):
+        self.filename = filename
         self.sample_rate = sample_rate
         self.duration = duration
         self.threshold = threshold
@@ -47,9 +49,11 @@ class Slicer:
         """
         Slice the source audio file into clips
         """
+        print(f"slicer.py slice() sample rate: {self.sample_rate}")
+        print(f"slicer.py slice() frame rate: {self.samples.frame_rate}")
+        print(f"slicer.py slice() samples: {len(self.samples)} =:= {len(self.samples) / self.sample_rate} seconds")
         for interval in self.critical.interval:
-            self.clips.append(self.samples[interval[0]:interval[1]])
-
+            self.clips.append({'samples': self.samples[interval[0]:interval[1]], 'from': interval[0] / self.sample_rate, 'to': interval[1] / self.sample_rate})
         return self
 
     def slice_at_random(self):
@@ -69,16 +73,17 @@ class Slicer:
 
     def slice_at_volume_change(self):
         """
-        Slice the audio at moments of rapid volume changes
+        Slice on rapid volume changes
         """
         VolumeSlicer(self.monaural_samples).write_critical_time(self.critical.cti)
+        self.critical.intervals()
         return self
 
     def slice_at_voice(self):
         """
-        Slice the audio according to the vocals of a song
+        Slice on vocal cues
         """
-        VoiceSlicer(self.sample_rate, self.duration, self.threshold).write_critical_time(self.critical.cti)
+        VoiceSlicer(self.filename, self.sample_rate, self.duration, self.threshold).write_critical_time(self.critical.cti)
         self.critical.intervals()
         return self
 
