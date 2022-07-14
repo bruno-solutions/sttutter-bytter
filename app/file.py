@@ -8,7 +8,7 @@ from logger import Logger
 def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT):
     logger = Logger()
 
-    def cleanup_root(root, name):
+    def recreate_root(root, name):
         if root is not None:
             try:
                 shutil.rmtree(root)
@@ -22,6 +22,6 @@ def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT):
                 logger.error(f"[FATAL]: {name} cannot be created. I suspect that {root} is malformed or inaccessible")
                 raise error
 
-    cleanup_root(cache_root, 'Cache root')
-    cleanup_root(export_root, 'Export root')
-    cleanup_root(log_root, 'Log root')
+    recreate_root(cache_root, 'Cache root')
+    recreate_root(export_root, 'Export root')
+    recreate_root(log_root, 'Log root')

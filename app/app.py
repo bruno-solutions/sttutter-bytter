@@ -12,6 +12,6 @@ AudioProcessor(preserve_cache=True) \
     .download(tester.url(6)) \
     .metadata() \
     .normalize() \
-    .slice(slicers) \
+    .get_clips(slicers) \
     .fade() \
     .export()

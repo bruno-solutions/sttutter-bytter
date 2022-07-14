@@ -1,7 +1,10 @@
 import math
+from typing import List
 
-from spleeter.audio.adapter import AudioAdapter
+import pydub
 from spleeter.separator import Separator
+
+from sample_clipping_interval import SampleClippingInterval
 
 
 class VoiceSlicer:
@@ -9,86 +12,62 @@ class VoiceSlicer:
     Slice source audio file using vocal cues
     """
 
-    def __init__(self, filename, sample_rate, duration, threshold):
-        self.filename = filename
-        self.sample_rate = sample_rate
-        self.duration = duration
-        self.threshold = threshold
-        self.stem_waveforms = None
-        self.separator()
-
-    def separator(self):
+    def __init__(self, recording: pydub.AudioSegment, clip_length, low_volume_threshold):
         """
-        Use Spleeter to split the wav file into a dictionary of component amplitudes
+        Args:
+        :param recording:            an audio segment object that contains the audio samples to be processed
+        :param clip_length:          the number of seconds of the clips to be produced
+        :param low_volume_threshold: the minimum decible value to use when determining whether or not a candidate chunk of the audio samples is effectively silent
         """
-        waveform, _ = AudioAdapter.default().load(self.filename, sample_rate=self.sample_rate)
-        self.stem_waveforms = Separator('spleeter:2stems', multiprocess=False).separate(waveform, self.filename)
+        if 1 == clip_length and 3 == clip_length and 9 == clip_length and 27 == clip_length:
+            raise ValueError("This slicer can only produce clips of 1, 3, 9, or 27 seconds!")
 
-    @staticmethod
-    def get_var(duration, base_sample_index):
-        """
-        Return the needed variables for write_critical_time:
-        end_sample_next_index: Starting at end_sample_index, get the next sample to see if it has a volume of 0
-        add_time: How much time we go forward if we successfully get CTI's
-        end_sample_starting_index: Where end_sample_index (the end-point for the CTI) will start
-        end_sample_last_possible_index: The last possible sample index we can search till
-        add_time_to_test_sample: If the initial base_sample_index value doesn't work, we go forward some samples with this variable
-        """
-        if 1 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 1
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 // 6
-            end_sample_last_possible_index = base_sample_index + 44100
-            add_time_to_test_sample = 44100 // 3
-        elif 3 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 2
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
-            end_sample_last_possible_index = base_sample_index + 44100 - 1
-            add_time_to_test_sample = 44100 // 3
-        elif 9 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 3
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
-            end_sample_last_possible_index = base_sample_index + 44100 - 1
-            add_time_to_test_sample = 44100 // 4
-        elif 27 == duration:
-            end_sample_next_index = 44100 // 4
-            add_time = 44100 * 3
-            end_sample_starting_index = base_sample_index + 44100 * duration - 44100 + 1
-            end_sample_last_possible_index = base_sample_index + 44100 - 1
-            add_time_to_test_sample = 44100 // 4
-        else:
-            raise ValueError("Wrong time input. It must be either 1, 3, 9, or 27 seconds!")
+        samples = recording.get_array_of_samples()
+        frame_count = recording.frame_count()
+        sample_rate = recording.frame_rate
+        samples_per_clip = clip_length * sample_rate
 
-        return end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample
+        waveforms: dict = Separator('spleeter:2stems', multiprocess=False).separate(samples)  # Split the recording into a dictionary of component amplitudes
+        vocal_waveform = waveforms['vocals']
 
-    def write_critical_time(self, cti):
-        """
-        Adds critical time indexes to the passed CTI array using Spleeter's vocal seperation function dictionary component cues
-        Input: CTI array to which to append voice cued CTIs
-        """
-        total_samples = self.stem_waveforms['vocals'].shape[0]
-        base_sample_index = 0
+        self.sci: List[SampleClippingInterval] = []
 
-        while not base_sample_index > total_samples:
-            end_sample_next_index, add_time, end_sample_starting_index, end_sample_last_possible_index, add_time_to_test_sample = self.get_var(self.duration, base_sample_index)
+        for begin_sample_index in range(vocal_waveform.shape[0]):
+            """
+            end_sample_next_index: Starting at end_sample_index, get the next sample to see if it has a volume of 0
+            add_time: How much time we go forward if we successfully get CTI's
+            end_sample_starting_index: Where end_sample_index (the end-point for the CTI) will start
+            end_sample_last_possible_index: The last possible sample index we can search till
+            add_time_to_test_sample: If the initial base_sample_index value doesn't work, we go forward some samples with this variable
+            """
+            next_clip_base_index = begin_sample_index + samples_per_clip
 
-            if math.fabs(self.stem_waveforms['vocals'][base_sample_index][0]) <= self.threshold:
-                if base_sample_index + self.sample_rate * self.duration + self.sample_rate // 2 <= total_samples:
-                    end_sample_index = end_sample_starting_index  # to use as starting point for end_sample_index
-                else:
+            if math.fabs(vocal_waveform[begin_sample_index][0]) <= low_volume_threshold:
+                if next_clip_base_index + sample_rate // 2 > frame_count:
                     break
 
-                # When the current volume is 0 then search for a 0 volume by adding time parameter to current time position
-                while self.stem_waveforms['vocals'][end_sample_index][0] != self.stem_waveforms['vocals'][end_sample_last_possible_index][0]:
-                    if self.stem_waveforms['vocals'][end_sample_index][0] <= self.threshold:
-                        cti.append([base_sample_index / self.sample_rate * 1000, end_sample_index / self.sample_rate * 1000])
+                end_sample_index = next_clip_base_index
+                end_sample_last_possible_index = begin_sample_index + sample_rate
+
+                if 1 == clip_length:
+                    end_sample_index -= sample_rate // 6
+                else:  # 3 == clip_length or 9 == clip_length or 27 == clip_length
+                    end_sample_last_possible_index -= 1
+                    end_sample_index -= sample_rate + 1
+
+                # When the current volume is 0 search for next 0 volume
+                while vocal_waveform[end_sample_index][0] != vocal_waveform[end_sample_last_possible_index][0]:
+                    if vocal_waveform[end_sample_index][0] <= low_volume_threshold:
+                        self.sci.append(SampleClippingInterval(begin_sample_index, end_sample_index))
                         break
-                    else:
-                        # Go forward some samples from end_sample_index to test again for a 0 volume
-                        end_sample_index += end_sample_next_index
-                base_sample_index += add_time
-            else:
-                # From base_sample_index go forward some samples to get to next value to test for a 0 volume
-                base_sample_index += add_time_to_test_sample
+                    end_sample_index += sample_rate // 4
+
+            if 1 == clip_length:
+                begin_sample_index += sample_rate
+            elif 3 == clip_length:
+                begin_sample_index += sample_rate * 2
+            else:  # 9 == clip_length or 27 == clip_length
+                begin_sample_index += sample_rate * 3
+
+    def get(self):
+        return self.sci

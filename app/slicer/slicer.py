@@ -1,13 +1,16 @@
 """
 Slicer module
 """
-
-import random
+from typing import List
 
 import librosa
-import numpy
+import pydub
 
-from .critical import CriticalTimeIndexes
+from beat import BeatSlicer
+from chaos import ChaosSlicer
+from logger import Logger
+from normalizer import Normalizer
+from sample_clipping_interval import SampleClippingInterval
 from .voice import VoiceSlicer
 from .volume import VolumeSlicer
 
@@ -17,94 +20,62 @@ class Slicer:
     The primary object of the slicer module
     """
 
-    def __init__(self, filename, sample_rate, duration, threshold, samples, count, tagger):
-        self.filename = filename
-        self.sample_rate = sample_rate
-        self.duration = duration
-        self.threshold = threshold
-        self.samples = samples
-        self.count = count
+    def __init__(self, recording: pydub.AudioSegment, low_volume_threshold, min_miliseconds, max_miliseconds, max_clips, tagger, logger=Logger()):
+        self.recording = recording
+        self.low_volume_threshold = low_volume_threshold
+        self.min_miliseconds = min_miliseconds
+        self.max_miliseconds = max_miliseconds
+        self.max_clips = max_clips
+        self.tagger = tagger
+        self.logger = logger
 
-        self.critical = CriticalTimeIndexes()
+        self.sci: List[SampleClippingInterval] = []
         self.clips = []
 
-        self.tagger = tagger
-
-        def monaural_normalization():
-            """
-            Converts the track values into librosa-compatible format
-            int16 or int32 values to float values between -1. and 1.
-            """
-            stereo = numpy.array(self.samples.get_array_of_samples())
-            left_channel = stereo[::2]
-            right_channel = stereo[1::2]
-            monaural = (left_channel + right_channel) / 2
-
-            # Convert int16 or int32 data to float (-1. ~ 1.)
-            return monaural / (1 << (self.samples.sample_width * 8) - 1)
-
-        self.monaural_samples = monaural_normalization()
-
-    def slice(self):
+    def get_clips(self):
         """
         Slice the source audio file into clips
         """
-        print(f"slicer.py slice() sample rate: {self.sample_rate}")
-        print(f"slicer.py slice() frame rate: {self.samples.frame_rate}")
-        print(f"slicer.py slice() samples: {len(self.samples)} =:= {len(self.samples) / self.sample_rate} seconds")
-        for interval in self.critical.interval:
-            self.clips.append({'samples': self.samples[interval[0]:interval[1]], 'from': interval[0] / self.sample_rate, 'to': interval[1] / self.sample_rate})
-        return self
+        self.logger.characteristics(self.recording)
+
+        samples = self.recording.get_array_of_samples()
+        frame_rate = self.recording.frame_rate
+
+        for sci in self.sci:
+            self.clips.append({'samples': samples[sci.begin:sci.end], 'sci': sci, 'begin': sci.begin / frame_rate, 'end': sci.end / frame_rate})
+
+        return self.clips
 
     def slice_at_random(self):
         """
-        Create slices at random
-        This slicer method is meant to be a template for the creation of other slicer methods
+        Slices randomly (fun?!?...)
         """
-        # Access data, equivalent to data=librosa.load()
-        # Alternatively, self.data can be used in place of 'data' directly
-
-        for index in range(self.count):
-            source_duration_ms = int(self.samples.duration_seconds * 1000)
-            clip_start_ms = random.randint(0, source_duration_ms - 250)  # the start of source to 250ms before the end of source
-            clip_end_ms = clip_start_ms + random.randint(250, source_duration_ms - clip_start_ms)  # 250ms up to the (source duration - the start of the clip)
-
+        self.logger.characteristics(self.recording)
+        self.sci.append(ChaosSlicer(self.recording).get())
         return self
 
     def slice_at_volume_change(self):
         """
-        Slice on rapid volume changes
+        Slice on rapid volume changes (measuring every 10ms)
         """
-        VolumeSlicer(self.monaural_samples).write_critical_time(self.critical.cti)
-        self.critical.intervals()
+        self.logger.characteristics(self.recording)
+        self.sci.append(VolumeSlicer(self.recording, chunk_size=self.recording.frame_rate // 100).get())
         return self
 
-    def slice_at_voice(self):
+    def slice_at_vocal_change(self):
         """
         Slice on vocal cues
         """
-        VoiceSlicer(self.filename, self.sample_rate, self.duration, self.threshold).write_critical_time(self.critical.cti)
-        self.critical.intervals()
+        self.logger.characteristics(self.recording)
+        self.sci.append(VoiceSlicer(self.recording, 3, self.low_volume_threshold).get())
         return self
 
-    def slice_at_beats(self):
+    def slice_at_beat(self):
         """
         Get every beat in a song and use that to input a bar of beats as critical times
         """
-        frames = librosa.beat.beat_track(y=self.monaural_samples, sr=self.sample_rate)[1]
-
-        # Change the beats from frames to time (ms)
-        duration = librosa.frames_to_time(frames, sr=self.sample_rate) * 1000
-
-        # Append every beat to the CTIs
-        for i in range(1, len(frames)):
-            self.critical.append(cti=[duration[i], duration[i - 1]])
-
-        # Append every fourth beat to the CTIs
-        # for i in range(4, len(frames), 8):
-        #     self.critical.append(item=[frames[i - 4], frames[i] + 500])
-
-        self.critical.intervals()
+        self.logger.characteristics(self.recording)
+        self.sci.append(BeatSlicer(self.recording).get())
         return self
 
     #     def slice_at_major_pitch_change(self):
@@ -171,18 +142,23 @@ class Slicer:
     #          return time_from_frame
 
     def debug_get_real_time_tempo(self):
-        onset_env = librosa.onset.onset_strength(y=self.monaural_samples, sr=44100)
+        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        onset_env = librosa.onset.onset_strength(y=monaural_samples, sr=44100)
         return librosa.beat.tempo(onset_envelope=onset_env, sr=44100, aggregate=None)
 
     def debug_get_tempo(self):
-        return librosa.beat.beat_track(y=self.monaural_samples, sr=44100)[0]
+        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        return librosa.beat.beat_track(y=monaural_samples, sr=44100)[0]
 
     def debug_get_beat_time(self):
-        beats = librosa.beat.beat_track(y=self.monaural_samples, sr=44100)[1]
+        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        beats = librosa.beat.beat_track(y=monaural_samples, sr=44100)[1]
         return librosa.frames_to_time(beats, sr=44100)
 
     def debug_get_pitch(self):
-        return librosa.yin(self.monaural_samples, fmin=40, fmax=2200, sr=22050, frame_length=2048)
+        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        return librosa.yin(monaural_samples, fmin=40, fmax=2200, sr=22050, frame_length=2048)
 
     def debug_get_volume(self):
-        return librosa.amplitude_to_db(S=self.monaural_samples, ref=0)
+        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        return librosa.amplitude_to_db(S=monaural_samples, ref=0)
