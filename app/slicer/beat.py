@@ -26,7 +26,7 @@ class BeatSlicer:
         frame_rate = recording.frame_rate
         padding_frames = recording.frame_count(attack_miliseconds)
         monaural_samples = Normalizer.monaural_normalization(recording)
-        frames = librosa.beat.beat_track(y=monaural_samples, sr=frame_rate)
+        frames = librosa.beat.beat_track(y=monaural_samples, sr=frame_rate)[1]
         samples = librosa.frames_to_samples(frames)
 
         for index in range(beat_count, len(samples), beat_count):

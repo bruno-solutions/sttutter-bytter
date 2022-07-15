@@ -29,6 +29,10 @@ class VolumeSlicer:
         """
         samples = librosa.amplitude_to_db(Normalizer.monaural_normalization(recording))
 
+        remainder = len(samples) % detection_chunk_size_miliseconds
+        if 0 != remainder:
+            samples = numpy.pad(samples, (0, detection_chunk_size_miliseconds - remainder))  # pad the samples to a multiple of the chunk size
+
         def determine_chunk_peak_decibles(chunk):
             """
             Determine the peak amplitude in decibels for the audio samples of a chunk
@@ -45,10 +49,6 @@ class VolumeSlicer:
                         peak = sample  # drifting up
 
             return peak
-
-        remainder = len(samples) % detection_chunk_size_miliseconds
-        if 0 != remainder:
-            samples = numpy.pad(samples, (0, detection_chunk_size_miliseconds - remainder))  # pad the samples to a multiple of the chunk size
 
         peak_decibels = [determine_chunk_peak_decibles(chunk) for chunk in samples.reshape(len(samples) // detection_chunk_size_miliseconds, detection_chunk_size_miliseconds)]
 

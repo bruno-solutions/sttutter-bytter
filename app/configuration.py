@@ -5,6 +5,7 @@ METADATA_FILE_TYPE = "info.json"
 AUDIO_FILE_TYPE = "wav"
 
 WORK_ROOT = f"C:\\Users\\John Hart\\Desktop\\{APPLICATION_NAME}"
+TEMP_ROOT = f"{WORK_ROOT}\\temp"
 CACHE_ROOT = f"{WORK_ROOT}\\cache"
 EXPORT_ROOT = f"{WORK_ROOT}\\export"
 

@@ -1,11 +1,11 @@
 import os
 import shutil
 
-from configuration import EXPORT_ROOT, CACHE_ROOT, LOG_ROOT
+from configuration import EXPORT_ROOT, CACHE_ROOT, LOG_ROOT, TEMP_ROOT
 from logger import Logger
 
 
-def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT):
+def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT, temp_root=TEMP_ROOT):
     logger = Logger()
 
     def recreate_root(root, name):
@@ -24,3 +24,4 @@ def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT):
     recreate_root(cache_root, 'Cache root')
     recreate_root(export_root, 'Export root')
     recreate_root(log_root, 'Log root')
+    recreate_root(temp_root, 'Temp root')

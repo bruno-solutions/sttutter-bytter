@@ -13,8 +13,8 @@ class SampleClippingInterval:
         :param begin: the index of the first sample in the interval
         :param end:   the index of the last sample in the interval
         """
-        self.begin = begin
-        self.end = end
+        self.begin = int(begin)
+        self.end = int(end)
 
     def get(self):
         """
