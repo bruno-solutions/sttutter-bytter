@@ -24,6 +24,9 @@ class VoiceSlicer:
         :param max_clips:                        create no more than this many clips from the recording
         """
 
+        # TODO Consider running the source file through Spleeter multiple times
+        # TODO Consider wav subtraction of other stems
+
         # https://github.com/deezer/spleeter
 
         samples = recording.get_array_of_samples()  # 19,535,872 (int16) = 39,071,744 bytes
