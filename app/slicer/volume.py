@@ -13,13 +13,14 @@ class VolumeSlicer:
     Volume change slicer
     """
 
-    def __init__(self, recording: pydub.AudioSegment, chunk_size, base=-20.0, drift=0.1):
+    def __init__(self, recording: pydub.AudioSegment, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, max_clips):
         """
         Args:
-        :param recording:  an audio segment object that contains the audio samples to be processed
-        :param chunk_size: the number of samples of the recording to analyze per chunk
-        :param base:       the minimum decible value to use when determining the peak volume of a chunk
-        :param drift:      the maximum decibles that the peak amplitude can be increased by a sample (limits the effect of spikes)
+        :param recording:                        an audio segment object that contains the audio samples to be processed
+        :param detection_chunk_size_miliseconds: the number of samples of the recording to analyze per chunk
+        :param low_volume_threshold_decibels:    the minimum decible value to use when determining the peak volume of a chunk
+        :param volume_drift_decibels:            the maximum decibles that the peak amplitude can be increased by a sample (limits the effect of spikes)
+        :param max_clips:                        create no more than this many clips from the recording
         """
         self.sci: List[SampleClippingInterval] = []
 
@@ -34,27 +35,30 @@ class VolumeSlicer:
             Args:
                 :param chunk: a portion of an audio recording
             """
-            peak = base
+            peak = low_volume_threshold_decibels
 
             for sample in chunk:
                 if sample > peak:
-                    if sample > peak + drift:
-                        peak += drift  # spiking up (attenuate the peak increase to the decibel drift factor)
+                    if sample > peak + volume_drift_decibels:
+                        peak += volume_drift_decibels  # spiking up (attenuate the peak increase to the decibel drift factor)
                     else:
                         peak = sample  # drifting up
 
             return peak
 
-        remainder = len(samples) % chunk_size
+        remainder = len(samples) % detection_chunk_size_miliseconds
         if 0 != remainder:
-            samples = numpy.pad(samples, (0, chunk_size - remainder))  # pad the samples to a multiple of the chunk size
+            samples = numpy.pad(samples, (0, detection_chunk_size_miliseconds - remainder))  # pad the samples to a multiple of the chunk size
 
-        peak_decibels = [determine_chunk_peak_decibles(chunk) for chunk in samples.reshape(len(samples) // chunk_size, chunk_size)]
+        peak_decibels = [determine_chunk_peak_decibles(chunk) for chunk in samples.reshape(len(samples) // detection_chunk_size_miliseconds, detection_chunk_size_miliseconds)]
 
         """
         From the peak amplitudes determine the sample clipping intervals
         """
-        # TODO turn peak decibels array into sample clipping intervals self.sci.append()
+        # TODO turn peak decibels array into sample clipping intervals self.sci.append
+
+        if len(self.sci) >= max_clips:
+            return
 
     def get(self):
         return self.sci

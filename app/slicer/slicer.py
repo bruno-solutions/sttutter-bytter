@@ -8,6 +8,7 @@ import pydub
 
 from beat import BeatSlicer
 from chaos import ChaosSlicer
+from configuration import DEFAULT_MAX_CLIPS
 from logger import Logger
 from normalizer import Normalizer
 from sample_clipping_interval import SampleClippingInterval
@@ -20,63 +21,96 @@ class Slicer:
     The primary object of the slicer module
     """
 
-    def __init__(self, recording: pydub.AudioSegment, low_volume_threshold, min_miliseconds, max_miliseconds, max_clips, tagger, logger=Logger()):
+    def __init__(self, recording: pydub.AudioSegment, methods=None, tagger=None, logger=Logger()):
         self.recording = recording
-        self.low_volume_threshold = low_volume_threshold
-        self.min_miliseconds = min_miliseconds
-        self.max_miliseconds = max_miliseconds
-        self.max_clips = max_clips
+        self.methods = methods if methods is not None else []
         self.tagger = tagger
         self.logger = logger
 
         self.sci: List[SampleClippingInterval] = []
-        self.clips = []
 
-    def get_clips(self):
+    def set(self, name, value):
+        setattr(self, name, value)
+
+        return self
+
+    def slice(self):
         """
-        Slice the source audio file into clips
+        Apply registered slicer methods to generate the sample clipping intervals of the recording
+        """
+        if 0 == len(self.methods):
+            raise RuntimeError("You didn't provide any slicer methods")
+
+        self.sci = []
+
+        self.logger.debug("Slicing sample clipping intervals from the recording")
+
+        for index, slicer in enumerate(self.methods):
+            try:
+                method = getattr(slicer, 'method')
+            except AttributeError:
+                self.logger.warning(f"Attribute 'method' not defined on slicer[{index}]")
+                self.logger.warning(f"Available methods are:\n - 'slice_on_beat'\n - 'slice_at_random'\n - 'slice_on_vocal_change'\n - 'slice_on_volume_change'")
+                continue
+
+            try:
+                method = getattr(Slicer, method)
+            except AttributeError:
+                self.logger.warning(f"No slicer method named '{method}' is avaialable in the slicer module, referenced in slicer[{index}]")
+                self.logger.warning(f"Available methods are:\n - 'slice_on_beat'\n - 'slice_at_random'\n - 'slice_on_vocal_change'\n - 'slice_on_volume_change'")
+                continue
+
+            arguments = getattr(Slicer, 'arguments', None)
+
+            method(arguments)
+
+        self.logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")
+
+        return self
+
+    def clip(self):
+        """
+        Generate audio segment clips from the recording based upon the sample clipping intervals determined by slice()
         """
         self.logger.characteristics(self.recording)
 
         samples = self.recording.get_array_of_samples()
         frame_rate = self.recording.frame_rate
 
+        clips = []
+
         for sci in self.sci:
-            self.clips.append({'samples': samples[sci.begin:sci.end], 'sci': sci, 'begin': sci.begin / frame_rate, 'end': sci.end / frame_rate})
+            clips.append({'samples': samples[sci.begin:sci.end], 'source': {'begin': {'sample': sci.begin, 'time': sci.begin / frame_rate}, 'end': {'sample': sci.end, 'time': sci.begin / frame_rate}}})
 
-        return self.clips
+        return clips
 
-    def slice_at_random(self):
-        """
-        Slices randomly (fun?!?...)
-        """
-        self.logger.characteristics(self.recording)
-        self.sci.append(ChaosSlicer(self.recording).get())
-        return self
-
-    def slice_at_volume_change(self):
-        """
-        Slice on rapid volume changes (measuring every 10ms)
-        """
-        self.logger.characteristics(self.recording)
-        self.sci.append(VolumeSlicer(self.recording, chunk_size=self.recording.frame_rate // 100).get())
-        return self
-
-    def slice_at_vocal_change(self):
-        """
-        Slice on vocal cues
-        """
-        self.logger.characteristics(self.recording)
-        self.sci.append(VoiceSlicer(self.recording, 3, self.low_volume_threshold).get())
-        return self
-
-    def slice_at_beat(self):
+    def slice_on_beat(self, arguments):
         """
         Get every beat in a song and use that to input a bar of beats as critical times
         """
         self.logger.characteristics(self.recording)
-        self.sci.append(BeatSlicer(self.recording).get())
-        return self
+        self.sci.append(BeatSlicer(self.recording, beat_count=getattr(arguments, 'beat_count', [4]), attack_miliseconds=getattr(arguments, 'attack_miliseconds', 50), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+
+    def slice_at_random(self, arguments):
+        """
+        Slice randomly (fun?!?... or maybe are you a deranged lunatic?)
+        """
+        self.logger.characteristics(self.recording)
+        self.sci.append(ChaosSlicer(self.recording, pad_miliseconds=getattr(arguments, 'pad_miliseconds', 250), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+
+    def slice_on_vocal_change(self, arguments):
+        """
+        Slice on vocal cues
+        """
+        self.logger.characteristics(self.recording)
+        self.sci.append(VoiceSlicer(self.recording, target_clip_length_miliseconds=getattr(arguments, 'target_clip_length_miliseconds', 9000), low_volume_threshold_decibels=getattr(arguments, 'low_volume_threshold_decibels', -20.0), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+
+    def slice_on_volume_change(self, arguments):
+        """
+        Slice on rapid volume changes (measuring every 10ms)
+        """
+        self.logger.characteristics(self.recording)
+        self.sci.append(VolumeSlicer(self.recording, detection_chunk_size_miliseconds=getattr(arguments, 'detection_chunk_size_miliseconds', 10), low_volume_threshold_decibels=getattr(arguments, 'low_volume_threshold_decibels', -20.0), volume_drift_decibels=getattr(arguments, 'volume_drift_decibels', 0.1), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
 
     #     def slice_at_major_pitch_change(self):
     #         """

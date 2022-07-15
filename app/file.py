@@ -14,7 +14,6 @@ def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT):
                 shutil.rmtree(root)
             except FileNotFoundError:
                 logger.debug(f"[NOTICE]: {root} directory does not exist (that's OK, I'll create it for you)")
-                pass
 
             try:
                 os.mkdir(root)
