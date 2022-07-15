@@ -8,7 +8,7 @@ import pydub
 
 from beat import BeatSlicer
 from chaos import ChaosSlicer
-from configuration import DEFAULT_MAX_CLIPS
+from configuration import DEFAULT_MAX_CLIPS, DEFAULT_PAD_DURATION_MILISECONDS, DEFAULT_ATTACK_MILISECONDS, DEFAULT_BEAT_COUNT, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
 from logger import Logger
 from normalizer import Normalizer
 from sample_clipping_interval import SampleClippingInterval
@@ -22,7 +22,7 @@ class Slicer:
     """
 
     def __init__(self, recording: pydub.AudioSegment, methods=None, tagger=None, logger=Logger()):
-        self.recording = recording
+        self.recording: pydub.AudioSegment = recording
         self.methods = methods if methods is not None else []
         self.tagger = tagger
         self.logger = logger
@@ -89,25 +89,25 @@ class Slicer:
         """
         Get every beat in a song and use that to input a bar of beats as critical times
         """
-        self.sci.append(BeatSlicer(self.recording, beat_count=getattr(arguments, 'beat_count', [4]), attack_miliseconds=getattr(arguments, 'attack_miliseconds', 50), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+        self.sci.append(BeatSlicer(self.recording, beat_count=getattr(arguments, 'beat_count', DEFAULT_BEAT_COUNT), attack_miliseconds=getattr(arguments, 'attack_miliseconds', DEFAULT_ATTACK_MILISECONDS), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
 
     def slice_at_random(self, arguments):
         """
-        Slice randomly (fun?!?... or maybe are you a deranged lunatic?)
+        Slice randomly
         """
-        self.sci.append(ChaosSlicer(self.recording, pad_miliseconds=getattr(arguments, 'pad_miliseconds', 250), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+        self.sci.append(ChaosSlicer(self.recording, pad_miliseconds=getattr(arguments, 'pad_miliseconds', DEFAULT_PAD_DURATION_MILISECONDS), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
 
     def slice_on_vocal_change(self, arguments):
         """
         Slice on vocal cues
         """
-        self.sci.append(VoiceSlicer(self.recording, target_clip_length_miliseconds=getattr(arguments, 'target_clip_length_miliseconds', 9000), low_volume_threshold_decibels=getattr(arguments, 'low_volume_threshold_decibels', -20.0), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+        self.sci.append(VoiceSlicer(self.recording, detection_chunk_size_miliseconds=getattr(arguments, 'detection_chunk_size_miliseconds', DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS), low_volume_threshold_decibels=getattr(arguments, 'low_volume_threshold_decibels', DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS), volume_drift_decibels=getattr(arguments, 'volume_drift_decibels', DEFAULT_VOLUME_DRIFT_DECIBELS), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
 
     def slice_on_volume_change(self, arguments):
         """
         Slice on rapid volume changes (measuring every 10ms)
         """
-        self.sci.append(VolumeSlicer(self.recording, detection_chunk_size_miliseconds=getattr(arguments, 'detection_chunk_size_miliseconds', 10), low_volume_threshold_decibels=getattr(arguments, 'low_volume_threshold_decibels', -20.0), volume_drift_decibels=getattr(arguments, 'volume_drift_decibels', 0.1), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
+        self.sci.append(VolumeSlicer(self.recording, detection_chunk_size_miliseconds=getattr(arguments, 'detection_chunk_size_miliseconds', DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS), low_volume_threshold_decibels=getattr(arguments, 'low_volume_threshold_decibels', DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS), volume_drift_decibels=getattr(arguments, 'volume_drift_decibels', DEFAULT_VOLUME_DRIFT_DECIBELS), max_clips=getattr(arguments, 'max_clips', DEFAULT_MAX_CLIPS)).get())
 
     #     def slice_at_major_pitch_change(self):
     #         """
@@ -173,23 +173,23 @@ class Slicer:
     #          return time_from_frame
 
     def debug_get_real_time_tempo(self):
-        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        monaural_samples = Normalizer.monaural_normalization(self.recording)
         onset_env = librosa.onset.onset_strength(y=monaural_samples, sr=self.recording.frame_rate)
         return librosa.beat.tempo(onset_envelope=onset_env, sr=self.recording.frame_rate, aggregate=None)
 
     def debug_get_tempo(self):
-        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        monaural_samples = Normalizer.monaural_normalization(self.recording)
         return librosa.beat.beat_track(y=monaural_samples, sr=self.recording.frame_rate)[0]
 
     def debug_get_beat_time(self):
-        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        monaural_samples = Normalizer.monaural_normalization(self.recording)
         beats = librosa.beat.beat_track(y=monaural_samples, sr=self.recording.frame_rate)[1]
         return librosa.frames_to_time(beats, sr=self.recording.frame_rate)
 
     def debug_get_pitch(self):
-        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        monaural_samples = Normalizer.monaural_normalization(self.recording)
         return librosa.yin(monaural_samples, fmin=40, fmax=2200, sr=self.recording.frame_rate, frame_length=2048)
 
     def debug_get_volume(self):
-        monaural_samples = Normalizer.monaural_normalization(self.recording.get_array_of_samples(), self.recording.sample_width)
+        monaural_samples = Normalizer.monaural_normalization(self.recording)
         return librosa.amplitude_to_db(S=monaural_samples, ref=0)

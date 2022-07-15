@@ -9,7 +9,7 @@ import pydub
 
 import downloader
 import file
-from configuration import DEFAULT_EXTERNAL_DOWNLOADER, AUDIO_FILE_TYPE, DEFAULT_SAMPLE_RATE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_FADE_IN_DURATION, DEFAULT_FADE_OUT_DURATION, EXPORT_ROOT
+from configuration import DEFAULT_EXTERNAL_DOWNLOADER, AUDIO_FILE_TYPE, DEFAULT_SAMPLE_RATE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT
 from logger import Logger
 from normalizer import Normalizer
 from slicer import Slicer
@@ -25,9 +25,10 @@ class AudioProcessor:
         """
         Use specified URL to download a song from the internet and save it as a file
         Args:
-            :param sample_rate:         The audio samples per second to make the extracted audio file | None to use the default sample rate
-            :param external_downloader: A library for YouTube Download to use for file download | None to use the built-in downloader
-            :param logger:              User supplied logger class | None to use the built-in Logger
+        :param sample_rate:         The audio samples per second to make the extracted audio file | None to use the default sample rate
+        :param external_downloader: A library for YouTube Download to use for file download | None to use the built-in downloader
+        :param logger:              User supplied logger class | None to use the built-in Logger
+        :param preserve_cache:      Should downloaded source media files be kept after processing to prevent re-download later
         """
         self.url = None
         self.download_file_name = None
@@ -37,7 +38,6 @@ class AudioProcessor:
         self.sample_rate = sample_rate
 
         self.external_downloader = external_downloader
-        self.normalizer = Normalizer()
         self.logger = logger
         self.recording = None
         self.tagger = None
@@ -54,12 +54,12 @@ class AudioProcessor:
         """
         Downloads a file and converts it into a pydub AudioSegmant object
         Args:
-            :param url: The source URL from which to extract audio
+        :param url: The source URL from which to extract audio
         """
         self.url = url
-        self.download_file_name = CACHE_ROOT + '\\' + hashlib.md5(url.encode('utf-8')).hexdigest().upper()
-        self.audio_file_name = self.download_file_name + '.' + AUDIO_FILE_TYPE
-        self.metadata_file_name = self.download_file_name + '.' + METADATA_FILE_TYPE
+        self.download_file_name = f"{CACHE_ROOT}\\{hashlib.md5(url.encode('utf-8')).hexdigest().upper()}"
+        self.audio_file_name = f"{self.download_file_name}.{AUDIO_FILE_TYPE}"
+        self.metadata_file_name = f"{self.download_file_name}.{METADATA_FILE_TYPE}"
 
         self.logger.debug(f"Target sample rate: {self.sample_rate}")
         downloader.download(self.url, directory=CACHE_ROOT, filename=self.download_file_name, logger=self.logger, external_downloader=self.external_downloader)
@@ -77,17 +77,17 @@ class AudioProcessor:
 
     def normalize(self):
         """
-        Normalize recording volume
+        Normalize the recording volume
         """
-        self.recording = self.normalizer.normalize(self.recording)
+        self.recording = Normalizer.stereo_normalization(self.recording)
         self.logger.debug(f"Downloaded file (volume normalized) sample count: {len(self.recording.get_array_of_samples()) / 2} [Note: should not alter the sample count]")
         return self
 
     def slice(self, methods=None):
         """
-        Executes slicer methods
+        Executes slicer methods in order defined in the methods list
         Args:
-            :param methods: A dictionary of named slicing functions and parameters to clipify the downloaded file
+        :param methods: A dictionary of named slicing functions and parameters to clipify the downloaded file
         """
         self.slicer = Slicer(recording=self.recording, methods=methods, tagger=self.tagger, logger=self.logger)
         self.slicer.slice()
@@ -95,9 +95,12 @@ class AudioProcessor:
 
         return self
 
-    def fade(self, fade_in_duration=DEFAULT_FADE_IN_DURATION, fade_out_duration=DEFAULT_FADE_OUT_DURATION):
+    def fade(self, fade_in_duration=DEFAULT_FADE_IN_MILISECONDS, fade_out_duration=DEFAULT_FADE_OUT_MILISECONDS):
         """
-        Apply fade-in and fade-out
+        Apply fade-in and fade-out to the clips
+        Args:
+        :param fade_in_duration: The number of miliseconds for the fade in
+        :param fade_out_duration: The number of miliseconds for the fade out
         """
         for index, clip in enumerate(self.clips):
             self.clips[index]['samples'] = clip['samples'].fade_in(fade_in_duration).fade_out(fade_out_duration)
@@ -106,8 +109,9 @@ class AudioProcessor:
     def export(self, directory=EXPORT_ROOT):
         """
         Export the audio clips
+        Args:
+        :param directory: The location that the generated clips will be saved
         """
-
         title = self.tagger.get('title')
 
         for index, clip in enumerate(self.clips):

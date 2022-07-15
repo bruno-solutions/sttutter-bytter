@@ -10,10 +10,10 @@ from sample_clipping_interval import SampleClippingInterval
 
 class VolumeSlicer:
     """
-    Volume change slicer
+    Slice source audio recording using volume change cues
     """
 
-    def __init__(self, recording: pydub.AudioSegment, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, max_clips):
+    def __init__(self, recording: pydub.AudioSegment, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, max_clips: int):
         """
         Args:
         :param recording:                        an audio segment object that contains the audio samples to be processed
@@ -27,7 +27,7 @@ class VolumeSlicer:
         """
         Determine the peak amplitude in decibels for the chunks in an audio recording
         """
-        samples = librosa.amplitude_to_db(Normalizer.monaural_normalization(recording.get_array_of_samples(), recording.sample_width))
+        samples = librosa.amplitude_to_db(Normalizer.monaural_normalization(recording))
 
         def determine_chunk_peak_decibles(chunk):
             """
