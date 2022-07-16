@@ -44,7 +44,6 @@ class VocalSlicer:
             logger.warning(f"The available Spleeter training models are:\n[0]'{models[0]}' [1]'{models[1]}' [2]'{models[2]} [3]'{models[3]}' [4]'{models[4]}' [5]'{models[5]}'")
             model = models[0]
 
-        # TODO Consider running the source file through Spleeter multiple times
         # TODO Consider wav subtraction of other models
 
         # https://github.com/deezer/spleeter
