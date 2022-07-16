@@ -9,11 +9,11 @@ import time
 
 import youtube_dl
 
-from configuration import DEFAULT_SAMPLE_RATE, AUDIO_FILE_TYPE, CACHE_ROOT, DOWNLOAD_BASE_FILE_NAME
+from configuration import DEFAULT_FRAME_RATE, AUDIO_FILE_TYPE, CACHE_ROOT, DOWNLOAD_BASE_FILE_NAME
 from logger import Logger
 
 
-def download(url, postprocess=True, sample_rate=DEFAULT_SAMPLE_RATE, directory=CACHE_ROOT, filename=DOWNLOAD_BASE_FILE_NAME, audio_file_type=AUDIO_FILE_TYPE, logger=Logger(), external_downloader=None):
+def download(url, postprocess=True, sample_rate=DEFAULT_FRAME_RATE, directory=CACHE_ROOT, filename=DOWNLOAD_BASE_FILE_NAME, audio_file_type=AUDIO_FILE_TYPE, logger=Logger(), external_downloader=None):
     """
     Download source media from a URL (and when processing is active, extract and save the audio in a file for clipification)
     Args:

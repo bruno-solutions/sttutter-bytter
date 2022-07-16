@@ -15,7 +15,6 @@ methods = [
 
 AudioProcessor(preserve_cache=True) \
     .download(tester.url(1)) \
-    .trim() \
     .normalize() \
     .slice(methods) \
     .fade() \

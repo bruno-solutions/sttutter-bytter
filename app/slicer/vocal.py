@@ -1,7 +1,7 @@
 from typing import List
 
 import numpy
-import pydub
+import pydub.effects
 from spleeter.separator import Separator
 
 from configuration import LOG_DEBUG, TEMP_VOCAL_FILE_NAME, AUDIO_FILE_TYPE
@@ -41,17 +41,18 @@ class VocalSlicer:
                 logger.warning(f"Invalid model '{model}' provided, defaulting to '{models[0]}'")
                 raise ValueError
         except IndexError or ValueError:
-            logger.warning(f"The available Spleeter training models are:\n[0]'{models[0]}' [1]'{models[1]}' [2]'{models[2]} [3]'{models[3]}' [4]'{models[4]}' [5]'{models[5]}'")
+            logger.warning(f"The available Spleeter training models are: [0]'{models[0]}' [1]'{models[1]}' [2]'{models[2]} [3]'{models[3]}' [4]'{models[4]}' [5]'{models[5]}'")
             model = models[0]
 
         # TODO Consider wav subtraction of other models
 
         # https://github.com/deezer/spleeter
 
-        logger.debug(f"Slicing stage[{stage}], using Vocal Slicer using Spleeter training model '{model}'")
+        logger.debug(f"Slicing stage[{stage}], Vocal Slicer using Spleeter training model '{model}'")
 
         for iteration in range(passes):
-            logger.characteristics(recording, f"Vocal slicer Spleeter pass[{iteration + 1} of {passes}] recording characteristics")
+            logger.debug(f"Vocal slicer Spleeter pass [{iteration + 1} of {passes}] starting")
+            logger.characteristics(recording, f"Recording characteristics")
 
             samples = recording.get_array_of_samples()  # [19,535,872] (int16) = 39,071,744 bytes
             samples_reshaped = numpy.reshape(samples, (-1, recording.channels))  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
@@ -60,7 +61,7 @@ class VocalSlicer:
             vocals_as_int_reshaped = numpy.reshape(vocals_as_int, (recording.channels, -1))  # [2, 9,767,936 (int16)] = 19,535,872 (int16) = 39,071,744 bytes
             as_bytes = vocals_as_int_reshaped.tobytes()  # [39,071,744] bytes
             vocal_recording = pydub.AudioSegment(data=as_bytes, frame_rate=recording.frame_rate, sample_width=recording.sample_width, channels=recording.channels)
-            vocal_recording = Normalizer.stereo_normalization(vocal_recording)
+            vocal_recording = Normalizer.stereo_normalization(pydub.effects.high_pass_filter(pydub.effects.low_pass_filter(pydub.effects.compress_dynamic_range(vocal_recording, attack=1, release=1), cutoff=70), cutoff=200))
 
             if LOG_DEBUG:
                 vocal_recording.export(out_f=f"{TEMP_VOCAL_FILE_NAME}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{AUDIO_FILE_TYPE}", format=AUDIO_FILE_TYPE).close()
