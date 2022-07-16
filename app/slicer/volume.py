@@ -13,7 +13,7 @@ class VolumeSlicer:
     Slice source audio recording using volume change cues
     """
 
-    def __init__(self, recording: pydub.AudioSegment, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, max_clips: int):
+    def __init__(self, recording: pydub.AudioSegment, stage: int, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, max_clips: int):
         """
         Args:
         :param recording:                        an audio segment object that contains the audio samples to be processed

@@ -12,7 +12,7 @@ class BeatSlicer:
     Beat interval slicer
     """
 
-    def __init__(self, recording: pydub.AudioSegment, beat_count: int, attack_miliseconds: int, max_clips: int):
+    def __init__(self, recording: pydub.AudioSegment, stage: int, beat_count: int, attack_miliseconds: int, max_clips: int):
         """
         Creates a list of potential clip begin and end sample indexes using "musical" beat boundaries
         Args:

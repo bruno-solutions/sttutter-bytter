@@ -11,7 +11,7 @@ class ChaosSlicer:
     Random interval slicer
     """
 
-    def __init__(self, recording: pydub.AudioSegment, pad_miliseconds: int, max_clips: int):
+    def __init__(self, recording: pydub.AudioSegment, stage: int, pad_miliseconds: int, max_clips: int):
         """
         Creates a list of potential clip begin and end sample indexes using a random number generator
         Args:

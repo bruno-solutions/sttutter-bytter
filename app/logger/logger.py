@@ -63,7 +63,10 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.error(message)
 
-    def characteristics(self, recording):
+    def characteristics(self, recording, message=None):
+        if message is not None:
+            self.debug(message)
+
         number_of_samples = len(recording.get_array_of_samples())
         number_of_samples_per_channel = number_of_samples / recording.channels
         duration = number_of_samples_per_channel / recording.frame_rate
