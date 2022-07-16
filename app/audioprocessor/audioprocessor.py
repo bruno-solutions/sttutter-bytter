@@ -4,12 +4,13 @@ The main audio processing module
 import hashlib
 import json
 from pathlib import Path
+from pprint import pprint
 
-import pydub
+import pydub.silence
 
 import downloader
 import file
-from configuration import DEFAULT_EXTERNAL_DOWNLOADER, AUDIO_FILE_TYPE, DEFAULT_SAMPLE_RATE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT
+from configuration import DEFAULT_EXTERNAL_DOWNLOADER, AUDIO_FILE_TYPE, DEFAULT_SAMPLE_RATE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT, TEMP_ROOT, LOG_DEBUG
 from logger import Logger
 from normalizer import Normalizer
 from slicer import Slicer
@@ -39,7 +40,7 @@ class AudioProcessor:
 
         self.external_downloader = external_downloader
         self.logger = logger
-        self.recording = None
+        self.recording: pydub.AudioSegment = None
         self.tagger = None
         self.slicer = None
 
@@ -66,13 +67,30 @@ class AudioProcessor:
         self.recording = pydub.AudioSegment.from_file(self.audio_file_name)
         self.recording = self.recording.set_frame_rate(self.sample_rate)
         self.recording.frame_count()
-        self.logger.characteristics(self.recording)
-        return self
+        self.logger.characteristics(self.recording, "Post Download recording characteristics")
 
-    def metadata(self):
         with open(self.metadata_file_name) as json_file:
             self.tagger = Tagger(json.load(json_file))
-            self.tagger.write_tags(self.audio_file_name)
+
+        self.tagger.write_tags(self.audio_file_name)
+
+        return self
+
+    def trim(self):
+        def trim(recording: pydub.AudioSegment):
+            trim.call += 1
+            silence_ms = pydub.silence.detect_leading_silence(recording, silence_threshold=-50.0, chunk_size=10)
+            recording = recording[silence_ms + 1:].reverse()
+            if LOG_DEBUG:
+                debug_file_name = f"{TEMP_ROOT}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
+                (recording if 1 == trim.call else recording.reverse()).export(debug_file_name, format=AUDIO_FILE_TYPE).close()
+                self.tagger.write_tags(debug_file_name)  # in case we want to keep the file
+                self.logger.debug(f"Trimmed {silence_ms} ms of {'leading' if trim.call == 1 else 'trailing'} silence")
+            return recording
+
+        trim.call = 0
+        self.recording = trim(trim(self.recording))
+
         return self
 
     def normalize(self):
@@ -118,7 +136,7 @@ class AudioProcessor:
             Path(directory).mkdir(parents=True, exist_ok=True)
             filename = f"{directory}\\{title}.{index:05d}.{AUDIO_FILE_TYPE}"
             clip['samples'].export(filename, format=AUDIO_FILE_TYPE).close()
-            self.tagger.set('from', f"{clip['from']:.3f}")
-            self.tagger.set('to', f"{clip['to']:.3f}")
+            self.tagger.set('source time indexes', f"{clip['source']['begin']['time']:.3f}:::{clip['source']['end']['time']:.3f}")
+            self.tagger.set('source samples', f"{clip['source']['begin']['sample']:0.0f}:::{clip['source']['end']['sample']:0.0f}")
             self.tagger.write_tags(filename)
         return self
