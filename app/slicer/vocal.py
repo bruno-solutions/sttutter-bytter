@@ -4,9 +4,8 @@ import numpy
 import pydub.effects
 from spleeter.separator import Separator
 
-from configuration import LOG_DEBUG, TEMP_VOCAL_FILE_NAME, AUDIO_FILE_TYPE
+from configuration import LOG_DEBUG, AUDIO_FILE_TYPE, TEMP_ROOT
 from logger import Logger
-from normalizer import Normalizer
 from sample_clipping_interval import SampleClippingInterval
 from volume import VolumeSlicer
 
@@ -46,7 +45,23 @@ class VocalSlicer:
 
         # TODO Consider wav subtraction of other models
 
+        def spleeter_instrument_to_audio_segment(dictionary, name):
+            if name not in dictionary:
+                return None
+
+            instrument = dictionary[name]  # [9,767,936 (float), 2] = 19,535,872 (float) = 78,143,488 bytes
+            as_int = numpy.array(instrument, dtype=numpy.int16)  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
+            as_int_reshaped = numpy.reshape(as_int, (recording.channels, -1))  # [2, 9,767,936 (int16)] = 19,535,872 (int16) = 39,071,744 bytes
+            as_bytes = as_int_reshaped.tobytes()  # [39,071,744] bytes
+            audio_segment = pydub.AudioSegment(data=as_bytes, frame_rate=recording.frame_rate, sample_width=recording.sample_width, channels=recording.channels)
+
+            if LOG_DEBUG:
+                audio_segment.export(out_f=f"{TEMP_ROOT}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{AUDIO_FILE_TYPE}", format=AUDIO_FILE_TYPE).close()
+
+            return audio_segment
+
         # https://github.com/deezer/spleeter
+        # https://github.com/audacity/audacity/blob/master/plug-ins/vocalrediso.ny
 
         logger.debug(f"Slicing stage[{stage}], Vocal Slicer using Spleeter training model '{model}'")
 
@@ -56,17 +71,18 @@ class VocalSlicer:
 
             samples = recording.get_array_of_samples()  # [19,535,872] (int16) = 39,071,744 bytes
             samples_reshaped = numpy.reshape(samples, (-1, recording.channels))  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
-            vocals = Separator(model, multiprocess=False).separate(samples_reshaped)['vocals']  # [9,767,936 (float), 2] = 19,535,872 (float) = 78,143,488 bytes
-            vocals_as_int = numpy.array(vocals, dtype=numpy.int16)  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
-            vocals_as_int_reshaped = numpy.reshape(vocals_as_int, (recording.channels, -1))  # [2, 9,767,936 (int16)] = 19,535,872 (int16) = 39,071,744 bytes
-            as_bytes = vocals_as_int_reshaped.tobytes()  # [39,071,744] bytes
-            vocal_recording = pydub.AudioSegment(data=as_bytes, frame_rate=recording.frame_rate, sample_width=recording.sample_width, channels=recording.channels)
-            vocal_recording = Normalizer.stereo_normalization(pydub.effects.high_pass_filter(pydub.effects.low_pass_filter(pydub.effects.compress_dynamic_range(vocal_recording, attack=1, release=1), cutoff=70), cutoff=200))
+            instruments = Separator(model, multiprocess=False).separate(samples_reshaped)
 
-            if LOG_DEBUG:
-                vocal_recording.export(out_f=f"{TEMP_VOCAL_FILE_NAME}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{AUDIO_FILE_TYPE}", format=AUDIO_FILE_TYPE).close()
+            vocals = spleeter_instrument_to_audio_segment(instruments, 'vocals')
+            drums = spleeter_instrument_to_audio_segment(instruments, 'drums')
+            bass = spleeter_instrument_to_audio_segment(instruments, 'bass')
+            piano = spleeter_instrument_to_audio_segment(instruments, 'piano')
+            other = spleeter_instrument_to_audio_segment(instruments, 'other')
+            accompaniment = spleeter_instrument_to_audio_segment(instruments, 'accompaniment')
 
-            recording = vocal_recording
+            # vocals = Normalizer.stereo_normalization(pydub.effects.high_pass_filter(pydub.effects.low_pass_filter(pydub.effects.compress_dynamic_range(vocals, attack=1, release=1), cutoff=70), cutoff=200))
+
+            recording = vocals
 
         logger.characteristics(recording, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 

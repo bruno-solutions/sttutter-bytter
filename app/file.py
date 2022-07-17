@@ -21,7 +21,7 @@ def cleanup(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT, t
                 logger.error(f"[FATAL]: {name} cannot be created. I suspect that {root} is malformed or inaccessible")
                 raise error
 
-    recreate_root(cache_root, 'Cache root')
-    recreate_root(export_root, 'Export root')
-    recreate_root(log_root, 'Log root')
-    recreate_root(temp_root, 'Temp root')
+    # recreate_root(cache_root, 'Cache root')
+    # recreate_root(export_root, 'Export root')
+    # recreate_root(log_root, 'Log root')
+    # recreate_root(temp_root, 'Temp root')

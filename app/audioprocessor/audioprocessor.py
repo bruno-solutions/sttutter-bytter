@@ -87,7 +87,7 @@ class AudioProcessor:
 
             if LOG_DEBUG:
                 debug_file_name = f"{TEMP_ROOT}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
-                (recording if 1 == trim.call else recording.reverse()).export(debug_file_name, format=AUDIO_FILE_TYPE).close()
+                (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=AUDIO_FILE_TYPE).close()
                 self.tagger.write_tags(debug_file_name)  # in case we want to keep the file
 
             self.logger.debug(f"Trimmed {silence_ms} ms of {'leading' if trim.call == 1 else 'trailing'} silence from the recording")
