@@ -1,5 +1,5 @@
-# sttutter-youtube-bot
-A tool to split audio tracks from YouTube videos
+# sttutter-audio-clipifier
+A tool to split audio tracks from online and local file system media sources
 
 ### Requirements
 
