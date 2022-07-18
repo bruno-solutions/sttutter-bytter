@@ -4,6 +4,7 @@ from typing import List, Union
 
 import taglib
 
+from configuration import APPLICATION_NAME
 from logger import Logger
 
 multivalue_key_to_tag = {'categories': 'category', 'tags': 'tag', 'genres': 'genre'}
@@ -202,3 +203,32 @@ class Tagger:
         file.close()
 
         return self
+
+    def format_metadata_file(self, filename: str):
+        self.logger.debug(f"Reformatting the YouTube Download metadata file {filename}", separator=True)
+
+        # load the YouTube Download metadata
+
+        with open(filename) as json_file:
+            metadata = json.load(json_file)
+
+        # suppress YouTube Download keys that are uninteresting / noisy
+
+        if 'formats' in metadata:
+            del metadata['formats']
+
+        if 'thumbnails' in metadata:
+            del metadata['thumbnails']
+
+        if 'downloader_options' in metadata:
+            del metadata['downloader_options']
+
+        if 'http_headers' in metadata:
+            del metadata['http_headers']
+
+        metadata[APPLICATION_NAME] = "Note: the following YouTube Download metadata keys have been supressed: 'formats', 'thumbnails', 'downloader_options', 'http_headers'"
+
+        # overwrite the YouTube Download metadata
+
+        with open(filename, 'w', encoding='utf-8') as json_file:
+            json.dump(metadata, json_file, ensure_ascii=False, indent=4)

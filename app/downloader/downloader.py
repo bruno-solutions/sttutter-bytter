@@ -17,15 +17,15 @@ from configuration import DEFAULT_FRAME_RATE, AUDIO_FILE_TYPE, CACHE_ROOT, DOWNL
 from logger import Logger
 
 
-def download(uri: str, frame_rate=DEFAULT_FRAME_RATE, directory=CACHE_ROOT, filename=DOWNLOAD_BASE_FILE_NAME, audio_file_type=AUDIO_FILE_TYPE, external_downloader=None, tagger=None, logger=Logger()):
+def download(uri: str, directory=CACHE_ROOT, filename=DOWNLOAD_BASE_FILE_NAME, frame_rate=DEFAULT_FRAME_RATE, audio_file_type=AUDIO_FILE_TYPE, external_downloader=None, tagger=None, logger=Logger()):
     """
     Download source media from a URL (and when processing is active, extract and save the audio in a file for clipification)
     Args:
         :param uri:                 The desired song's source Uniform Resource Identifier
-        :param frame_rate:          Audio samples per second of the audio file extracted from the downloaded media file
-        :param audio_file_type:     the type of audio file to produce from the downloaded media file
         :param directory:           The directory into which the source file will be downloaded
         :param filename:            The name of the downloaded source file (without a file extension)
+        :param frame_rate:          Audio samples per second of the audio file extracted from the downloaded media file
+        :param audio_file_type:     the type of audio file to produce from the downloaded media file
         :param external_downloader: The name of a library for YouTube Download to use to download the source file (instead of it's built-in downloader)
         :param tagger:              The tags for the audio file
         :param logger:              User supplied custom logger | Default audiobot Logger
@@ -33,6 +33,8 @@ def download(uri: str, frame_rate=DEFAULT_FRAME_RATE, directory=CACHE_ROOT, file
     if tagger is None:
         logger.error(f"A Tagger object was not provided to the download() function")
         raise ValueError("A Tagger object must be provided to the download() function for metadata management")
+
+    metadata_filename = f"{filename}.{METADATA_FILE_TYPE}"
 
     parsed = urlparse(uri)
     if "file" == parsed.scheme:
@@ -79,7 +81,7 @@ def download(uri: str, frame_rate=DEFAULT_FRAME_RATE, directory=CACHE_ROOT, file
         tagger.add('full scale decibels', recording.dBFS)
         tagger.add('max full scale decibels', recording.max_dBFS)
         tagger.add('converter', recording.converter)
-        tagger.write_youtube_downloader_metadata(f"{filename}.{METADATA_FILE_TYPE}")
+        tagger.write_youtube_downloader_metadata(metadata_filename)
         return
 
     def progress_callback(attributes):
@@ -118,10 +120,12 @@ def download(uri: str, frame_rate=DEFAULT_FRAME_RATE, directory=CACHE_ROOT, file
     with youtube_dl.YoutubeDL(parameters) as downloader:
         try:
             start_time = time.time()
-            logger.debug(f"Download started [{external_downloader if external_downloader is not None else 'default YoutubeDL'}]", separator=True)
+            logger.debug(f"Download started [{external_downloader if external_downloader is not None else 'default YouTube Download'}]", separator=True)
             downloader.download([uri])
             finish_time = time.time()
             logger.debug(f"Download and file conversion finished [{finish_time - start_time} s]")
         except youtube_dl.DownloadError as error:
             logger.error(message=str(error))
             raise error
+
+    tagger.format_metadata_file(metadata_filename)
