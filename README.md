@@ -1,5 +1,5 @@
 # sttutter-audio-clipifier
-A tool to split audio tracks from online and local file system media sources
+A tool to split audio clips from online and local file system (video or audio) media sources
 
 ### Requirements
 
