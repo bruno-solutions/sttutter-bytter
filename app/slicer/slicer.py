@@ -8,7 +8,8 @@ import pydub
 
 from beat import BeatSlicer
 from chaos import ChaosSlicer
-from configuration import DEFAULT_MAX_CLIPS, DEFAULT_PAD_DURATION_MILISECONDS, DEFAULT_ATTACK_MILISECONDS, DEFAULT_BEAT_COUNT, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
+from configuration import DEFAULT_MAX_CLIPS, DEFAULT_PAD_DURATION_MILISECONDS, DEFAULT_ATTACK_MILISECONDS, DEFAULT_BEAT_COUNT, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS, DEFAULT_CLIP_DURATION
+from interval import SimpleIntervalSlicer
 from logger import Logger
 from normalizer import Normalizer
 from sample_clipping_interval import SampleClippingInterval
@@ -98,6 +99,15 @@ class Slicer:
         max_clips = arguments['max_clips'] if 'max_clips' in arguments else DEFAULT_MAX_CLIPS
 
         self.sci.append(BeatSlicer(self.recording, stage, beat_count=beat_count, attack_miliseconds=attack_miliseconds, max_clips=max_clips).get())
+
+    def slice_at_interval(self, stage, arguments):
+        """
+        Get every beat in a song and use that to input a bar of beats as critical times
+        """
+        duration = arguments['interval'] if 'interval' in arguments else DEFAULT_CLIP_DURATION
+        max_clips = arguments['max_clips'] if 'max_clips' in arguments else DEFAULT_MAX_CLIPS
+
+        self.sci += SimpleIntervalSlicer(self.recording, stage, duration=duration, max_clips=max_clips, logger=self.logger).get()
 
     def slice_at_random(self, stage, arguments):
         """
