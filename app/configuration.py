@@ -1,4 +1,6 @@
-APPLICATION_NAME = "audiobot"
+APPLICATION_NAME = "soundbyte"
+
+DEFAULT_SEPARATOR = '-'
 
 DOWNLOAD_BASE_FILE_NAME = f"{APPLICATION_NAME}.media.download"
 METADATA_FILE_TYPE = "info.json"

@@ -1,7 +1,7 @@
 import logging
 import time
 
-from configuration import LOG_TO_CONSOLE, LOG_FILE_NAME, LOG_DEBUG, LOG_WARNING, LOG_ERROR
+from configuration import LOG_TO_CONSOLE, LOG_FILE_NAME, LOG_DEBUG, LOG_WARNING, LOG_ERROR, DEFAULT_SEPARATOR
 
 
 def timestamp():
@@ -20,28 +20,30 @@ class Logger:
         self.log_warning = log_warning
         self.log_error = log_error
 
-    def separator(self, separator='-', length=80, mode=''):
+    def separator(self, separator=DEFAULT_SEPARATOR, length=80, mode=''):
         """
         Emit a log separator
         """
-        if ('debug' == mode and not self.log_debug) or ('warning' == mode and not self.log_warning) or ('error' == mode and not self.log_error):
+        if separator is None or ('debug' == mode and not self.log_debug) or ('warning' == mode and not self.log_warning) or ('error' == mode and not self.log_error):
             return
 
-        log_separation_line = ''.join([separator * length])
+        separator = ''.join([(separator if separator is str and separator != '' else DEFAULT_SEPARATOR) * length])
 
         if self.log_to_console:
-            print(log_separation_line)
+            print(separator)
 
         if self.log_file_name is not None:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.INFO, format="%(message)s")
-            logging.info(log_separation_line)
+            logging.info(separator)
 
-    def debug(self, message):
+    def debug(self, message, separator=None):
         """
         Log a debug message
         """
         if not self.log_debug:
             return
+
+        self.separator(separator)
 
         message = message.lstrip()
 
@@ -55,12 +57,16 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.debug(message)
 
-    def warning(self, message):
+    def warning(self, message, separator=None):
         """
         Log a warning
         """
         if not self.log_warning:
             return
+
+        self.separator(separator)
+
+        message = message.lstrip()
 
         if self.log_to_console:
             print(f"{timestamp()} [WARNING]: {message}")
@@ -69,12 +75,16 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.warning(message)
 
-    def error(self, message):
+    def error(self, message, separator=None):
         """
         Log an error
         """
         if not self.log_error:
             return
+
+        self.separator(separator)
+
+        message = message.lstrip()
 
         if self.log_to_console:
             print(f"{timestamp()} [ERROR]: {message}")
