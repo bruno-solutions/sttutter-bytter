@@ -14,7 +14,5 @@
 /out/
 
 #application generated files
-*.log
-/app/cache/
 /app/pretrained_models/
-/app/exports/
+
