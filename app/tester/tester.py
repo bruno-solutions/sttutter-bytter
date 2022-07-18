@@ -1,6 +1,6 @@
 import random
 
-example_urls = [
+example_sources = [
     'https://youtu.be/Dc1-W4KsHvE',
     'https://youtu.be/oJL-lCzEXgI',
     'https://youtu.be/dQw4w9WgXcQ',
@@ -10,11 +10,12 @@ example_urls = [
     'https://youtu.be/q3f9ZiH6Euw',
     'https://youtu.be/QDYRQX6FPQQ',
     'https://youtu.be/PARA6_ErZI0',
-    'https://youtu.be/hOZgb0T7AM4'
+    'https://youtu.be/hOZgb0T7AM4',
+    'file:///C:/Users/John Hart/Desktop/audiobot/source/Zombo com/Zombo.com.wav'
 ]
 
 random.seed()
 
 
-def url(index=None):
-    return example_urls[random.randrange(len(example_urls))] if index is None else example_urls[index % len(example_urls)]
+def source(index=None):
+    return example_sources[random.randrange(len(example_sources))] if index is None else example_sources[index % len(example_sources)]

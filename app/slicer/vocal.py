@@ -67,7 +67,7 @@ class VocalSlicer:
 
         for iteration in range(passes):
             logger.debug(f"Vocal slicer Spleeter pass [{iteration + 1} of {passes}] starting")
-            logger.characteristics(recording, f"Recording characteristics")
+            logger.properties(recording, f"Recording characteristics")
 
             samples = recording.get_array_of_samples()  # [19,535,872] (int16) = 39,071,744 bytes
             samples_reshaped = numpy.reshape(samples, (-1, recording.channels))  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
@@ -84,7 +84,7 @@ class VocalSlicer:
 
             recording = vocals
 
-        logger.characteristics(recording, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
+        logger.properties(recording, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 
         volume_slicer = VolumeSlicer(recording, stage, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, max_clips)
 

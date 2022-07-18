@@ -1,37 +1,20 @@
+import json
+from typing import List, Union
+
 import taglib
+
+from logger import Logger
+
+single_value_keys = ['id', 'title', 'description', 'uploader', 'upload_date', 'channel', 'channel_id', 'channel_url', 'playlist', 'playlist_index', 'age_limit', 'is_live', 'view_count', 'like_count', 'thumbnail', 'webpage_url']
+multiple_value_keys = ['categories', 'tags']
+multiple_value_keys_to_tags = {'categories': 'category', 'tags': 'tag'}
+tags_to_multiple_value_keys = dict((v, k) for k, v in multiple_value_keys_to_tags.items())
 
 
 class Tagger:
-    def __init__(self, metadata):
-        self.tags = self.parse_metadata(metadata)
-
-    @staticmethod
-    def parse_metadata(metadata):
-        """
-        Convert a downloaded file's information dictionary into Sttutter audio file tags
-        """
-        tags = {}
-
-        keys = ['id', 'title', 'description', 'uploader', 'upload_date', 'channel', 'channel_id', 'channel_url', 'playlist', 'playlist_index', 'age_limit', 'is_live', 'view_count', 'like_count', 'thumbnail', 'webpage_url']
-
-        for key in keys:
-            if key in metadata:
-                if metadata[key] is not None:
-                    tags[key.replace('_', ' ')] = metadata[key] if metadata[key] is str else str(metadata[key])
-
-        keys = ['categories', 'tags']
-        key2tag = {'categories': 'category', 'tags': 'tag'}
-
-        for key in keys:
-            if key in metadata:
-                for index, value in enumerate(metadata[key]):
-                    value = ' '.join([word.title() if word not in "a an and as but by for in if nor of off on onto or out so the to up with yet" else word for word in value.capitalize().split(' ')])
-                    if key2tag[key] in tags:
-                        tags[key2tag[key]] += ' | ' + value
-                    else:
-                        tags[key2tag[key]] = value
-
-        return tags
+    def __init__(self, logger=Logger()):
+        self.logger = logger
+        self.tags: dict[str, str] = {}
 
     def list(self):
         """
@@ -67,10 +50,9 @@ class Tagger:
         Append a value to a multi-value tag
         """
         if self.tags[tag] is not None:
-            if -1 == '| ' + self.tags[tag] + ' |'.find('| ' + value + ' |'):
-                value = self.tags[tag] + ' | ' + value
-            else:
-                value = self.tags[tag]
+            if -1 != ('| ' + self.tags[tag] + ' |').find('| ' + value + ' |'):
+                return
+            value = self.tags[tag] + ' | ' + value
 
         self.set(tag, value)
 
@@ -78,7 +60,7 @@ class Tagger:
         """
         Delete a tag
         """
-        self.tags[tag] = None
+        del self.tags[tag]
 
     def remove(self, tag):
         """
@@ -94,10 +76,90 @@ class Tagger:
         """
         return self.tags[tag]
 
-    def write_tags(self, filename):
+    # https://github.com/supermihi/pytaglib/blob/39aabb26f4d6016c110794361b20b7fb76e64ecc/src/taglib.pyx#L43
+
+    def read_youtube_downloader_metadata(self, filename):
         """
-        Add Sttutter tags to an audio file
+        Read audio recording metadata from a YouTube Downloader format JSON file
+        Args:
+            :param filename: YouTube Downloader format JSON file containing audio file metadata
         """
-        audio = taglib.File(filename)
-        audio.tags = self.tags
-        audio.save()
+        with open(filename) as json_file:
+            metadata = json.load(json_file)
+
+        tags: dict[str, str] = {}
+
+        for key in single_value_keys:
+            if key in metadata:
+                if metadata[key] is not None:
+                    tags[key.replace('_', ' ')] = metadata[key] if metadata[key] is str else str(metadata[key])
+
+        for key in multiple_value_keys:
+            if key in metadata:
+                for index, value in enumerate(metadata[key]):
+                    value = ' '.join([word.title() if word not in "a an and as but by for in if nor of off on onto or out so the to up with yet" else word for word in value.capitalize().split(' ')])
+                    if multiple_value_keys_to_tags[key] in tags:
+                        tags[multiple_value_keys_to_tags[key]] += ' | ' + value
+                    else:
+                        tags[multiple_value_keys_to_tags[key]] = value
+
+        self.tags = tags
+
+        return self
+
+    def write_youtube_downloader_metadata(self, filename):
+        """
+        Write audio recording metadata to a YouTube Downloader format JSON file
+        Args:
+            :param filename: YouTube Downloader format JSON file to be created
+        """
+        metadata: dict[str, Union[str, List[str]]] = {}
+
+        tags: dict[str, str] = self.tags
+
+        for tag in tags:
+            key = tag.replace(' ', '_').lower()
+            if key in single_value_keys:
+                metadata[key] = tags[tag]
+                continue
+            key = tags_to_multiple_value_keys[tag]
+            if key in multiple_value_keys:
+                metadata[key] = tags[tag].split(' | ')
+
+        with open(filename) as json_file:
+            json.dump(metadata, json_file)
+
+        return self
+
+    def read_audio_file_tags(self, filename):
+        """
+        Read tags from an audio file
+        """
+        self.logger.separator(mode='debug')
+        self.logger.debug(f"Loading tags from audio file {filename}")
+
+        file = taglib.File(filename)
+        self.tags = file.tags
+        file.close()
+
+        for tag, value in self.tags:
+            self.logger.debug(f"[{tag}]:'{value}'")
+
+        return self
+
+    def write_audio_file_tags(self, filename):
+        """
+        Write tags to an audio file
+        """
+        self.logger.separator(mode='debug')
+        self.logger.debug(f"Saving tags to audio file {filename}")
+
+        for tag, value in self.tags:
+            self.logger.debug(f"[{tag}]:'{value}'")
+
+        file = taglib.File(filename)
+        file.tags = self.tags
+        file.save()
+        file.close()
+
+        return self

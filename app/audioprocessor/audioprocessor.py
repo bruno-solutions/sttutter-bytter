@@ -2,7 +2,6 @@
 The main audio processing module
 """
 import hashlib
-import json
 from pathlib import Path
 
 import pydub.silence
@@ -42,15 +41,15 @@ class AudioProcessor:
         self.external_downloader = external_downloader
         self.logger = logger
         self.recording = None
-        self.tagger = None
+        self.tagger = Tagger()
         self.slicer = None
 
         self.clips = list()
 
         if preserve_cache:
-            file.cleanup(cache_root=None)
+            file.rm_md(cache_root=None)
         else:
-            file.cleanup()
+            file.rm_md()
 
     def download(self, url):
         """
@@ -64,19 +63,15 @@ class AudioProcessor:
         self.metadata_file_name = f"{self.download_file_name}.{METADATA_FILE_TYPE}"
 
         self.logger.debug(f"\nDowloading from {url} and setting the frame rate to: {self.frame_rate}")
-        downloader.download(self.url, directory=CACHE_ROOT, filename=self.download_file_name, logger=self.logger, external_downloader=self.external_downloader)
-
-        with open(self.metadata_file_name) as json_file:
-            self.tagger = Tagger(json.load(json_file))
+        downloader.download(self.url, directory=CACHE_ROOT, filename=self.download_file_name, external_downloader=self.external_downloader, tagger=self.tagger, logger=self.logger)
 
         self.recording = pydub.AudioSegment.from_file(self.audio_file_name)
         self.recording = self.recording.set_frame_rate(self.frame_rate)
-        self.logger.characteristics(self.recording, "Post-download recording characteristics")
+        self.logger.properties(self.recording, "Post-download recording characteristics")
         self.trim()
         self.recording.export(self.audio_file_name, format=AUDIO_FILE_TYPE).close()
-        self.logger.characteristics(self.recording, "Post-trim recording characteristics")
+        self.logger.properties(self.recording, "Post-trim recording characteristics")
 
-        self.tagger.write_tags(self.audio_file_name)
         return self
 
     def trim(self):
@@ -88,25 +83,25 @@ class AudioProcessor:
             if LOG_DEBUG:
                 debug_file_name = f"{TEMP_ROOT}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
                 (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=AUDIO_FILE_TYPE).close()
-                self.tagger.write_tags(debug_file_name)  # in case we want to keep the file
+                self.tagger.write_audio_file_tags(debug_file_name)  # in case we want to keep the file
 
             self.logger.debug(f"Trimmed {silence_ms} ms of {'leading' if trim.call == 1 else 'trailing'} silence from the recording")
             return recording
 
-        self.logger.characteristics(self.recording, "Pre-trim recording characteristics:")
+        self.logger.properties(self.recording, "Pre-trim recording characteristics:")
         trim.call = 0
         self.recording = trim(trim(self.recording))
 
-        self.logger.characteristics(self.recording, "Post-trim recording characteristics - Note: sample count is very likely to be less than the prior sample count")
+        self.logger.properties(self.recording, "Post-trim recording characteristics - Note: sample count is very likely to be less than the prior sample count")
         return self
 
     def normalize(self):
         """
         Normalize the recording volume
         """
-        self.logger.characteristics(self.recording, "Pre-normalization recording characteristics:")
+        self.logger.properties(self.recording, "Pre-normalization recording characteristics:")
         self.recording = Normalizer.stereo_normalization(self.recording)
-        self.logger.characteristics(self.recording, "Post-normalization recording characteristics - Note: sample count should not be less than the prior sample count")
+        self.logger.properties(self.recording, "Post-normalization recording characteristics - Note: sample count should not be less than the prior sample count")
         return self
 
     def slice(self, methods=None):
@@ -115,7 +110,7 @@ class AudioProcessor:
         Args:
         :param methods: A dictionary of named slicing functions and parameters to clipify the downloaded file
         """
-        self.slicer = Slicer(recording=self.recording, methods=methods, tagger=self.tagger, logger=self.logger)
+        self.slicer = Slicer(recording=self.recording, methods=methods, logger=self.logger)
         self.slicer.slice()
         self.clips = self.slicer.clip()
 
@@ -146,5 +141,5 @@ class AudioProcessor:
             clip['samples'].export(filename, format=AUDIO_FILE_TYPE).close()
             self.tagger.set('source time indexes', f"{clip['source']['begin']['time']:.3f}:::{clip['source']['end']['time']:.3f}")
             self.tagger.set('source samples', f"{clip['source']['begin']['sample']:0.0f}:::{clip['source']['end']['sample']:0.0f}")
-            self.tagger.write_tags(filename)
+            self.tagger.write_audio_file_tags(filename)
         return self

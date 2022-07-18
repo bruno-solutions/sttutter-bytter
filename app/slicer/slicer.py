@@ -21,10 +21,9 @@ class Slicer:
     The primary object of the slicer module
     """
 
-    def __init__(self, recording: pydub.AudioSegment, methods=None, tagger=None, logger=Logger()):
+    def __init__(self, recording: pydub.AudioSegment, methods=None, logger=Logger()):
         self.recording: pydub.AudioSegment = recording
         self.methods = methods if methods is not None else []
-        self.tagger = tagger
         self.logger = logger if logger is not None else Logger()
 
         self.sci: List[SampleClippingInterval] = []
@@ -66,9 +65,9 @@ class Slicer:
                 self.logger.debug(f"'arguments' not provided for '{method_name}', using default parameter values")
                 arguments = {}
 
-            self.logger.characteristics(self.recording, f"Pre-stage:{stage} [{method_name}] slicing recording characteristics")
+            self.logger.properties(self.recording, f"Pre-stage:{stage} [{method_name}] slicing recording characteristics")
             method(self, stage, arguments)
-            self.logger.characteristics(self.recording, f"Post-stage:{stage} [{method_name}] slicing recording characteristics")
+            self.logger.properties(self.recording, f"Post-stage:{stage} [{method_name}] slicing recording characteristics")
 
         self.logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")
 
@@ -78,7 +77,7 @@ class Slicer:
         """
         Generate audio segment clips from the recording based upon the sample clipping intervals determined by slice()
         """
-        self.logger.characteristics(self.recording, "Clip creation recording characteristics")
+        self.logger.properties(self.recording, "Clip creation recording characteristics")
 
         samples = self.recording.get_array_of_samples()
         frame_rate = self.recording.frame_rate
