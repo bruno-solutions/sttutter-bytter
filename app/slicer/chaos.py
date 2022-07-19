@@ -26,8 +26,11 @@ class ChaosSlicer:
 
         logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 
-        total_samples = segment.frame_count()
+        total_samples = int(segment.frame_count())
         sample_window = segment.frame_rate * min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS)
+
+        logger.debug(f"Segment Samples: {total_samples}")
+        logger.debug(f"Segment Sample Window: {sample_window}")
 
         for clip_index in range(clips):
             sample_index_a = random.randint(0, total_samples)
