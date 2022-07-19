@@ -3,6 +3,8 @@ from typing import List
 
 import pydub
 
+from configuration import MAXIMUM_CLIP_SIZE_MILISECONDS
+from logger import Logger
 from sample_clipping_interval import SampleClippingInterval
 
 
@@ -11,23 +13,30 @@ class ChaosSlicer:
     Random interval slicer
     """
 
-    def __init__(self, recording: pydub.AudioSegment, stage: int, pad_miliseconds: int, clips: int):
+    def __init__(self, stage: int, segment: pydub.AudioSegment, base_sample_index: int, clip_size: int, clips: int, logger: Logger):
         """
         Creates a list of potential clip begin and end sample indexes using a random number generator
         Args:
-        :param recording:      an audio segment object that contains the audio samples to be processed
-        :param pad_miliseconds: number of miliseconds to pad the begin and end of a clip
-        :param clips:      create no more than this many clips from the recording
+        :param segment:           a subset of the downloaded audio recording from which clips will be sliced
+        :param base_sample_index: the index in the downloaded audio recording that corresponds to the first sample in the segment
+        :param clip_size:         the number of miliseconds of the sample clipping intervals to be computed
+        :param clips:             the number of sample clipping intervals to be computed for the segment
         """
         self.sci: List[SampleClippingInterval] = []
 
-        total_frames = recording.frame_count()
-        pad_frames = recording.frame_count(pad_miliseconds)
+        logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 
-        for index in range(clips):
-            beginning_frame = random.randint(0, total_frames - pad_frames)  # the start of source to milisecond pad before the end of source
-            ending_frame = beginning_frame + random.randint(pad_frames, total_frames - beginning_frame)  # from milisecond pad up to the (source duration - the start of the clip)
-            self.sci.append(SampleClippingInterval(beginning_frame, ending_frame))
+        total_samples = segment.frame_count()
+        sample_window = segment.frame_rate * min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS)
+
+        for clip_index in range(clips):
+            sample_index_a = random.randint(0, total_samples)
+            sample_window_left_size = min(sample_window, sample_index_a)
+            sample_window_right_size = min(sample_window, total_samples - sample_index_a)
+            sample_index_b = random.randint(sample_index_a - sample_window_left_size, sample_index_a + sample_window_right_size)
+            sci = SampleClippingInterval(begin=base_sample_index + sample_index_a, end=base_sample_index + sample_index_b)
+            self.sci.append(sci)
+            logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
 
     def get(self):
         return self.sci

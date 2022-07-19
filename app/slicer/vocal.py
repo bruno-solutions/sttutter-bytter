@@ -17,7 +17,7 @@ class VocalSlicer:
     Slice source audio recording using vocal cues
     """
 
-    def __init__(self, recording: pydub.AudioSegment, stage: int, passes: int, model, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, clips: int, logger: Logger):
+    def __init__(self, stage: int, recording: pydub.AudioSegment, passes: int, model, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, clips: int, logger: Logger):
         """
         Args:
         :param recording:                        an audio segment object that contains the audio samples to be processed
@@ -86,7 +86,7 @@ class VocalSlicer:
 
         logger.properties(recording, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 
-        volume_slicer = VolumeSlicer(recording, stage, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, clips)
+        volume_slicer = VolumeSlicer(stage, recording, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, clips)
 
         self.sci: List[SampleClippingInterval] = volume_slicer.get()
 

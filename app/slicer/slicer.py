@@ -9,7 +9,7 @@ import pydub
 
 from beat import BeatSlicer
 from chaos import ChaosSlicer
-from configuration import DEFAULT_CLIPS, DEFAULT_PAD_DURATION_MILISECONDS, DEFAULT_ATTACK_MILISECONDS, DEFAULT_BEAT_COUNT, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS, DEFAULT_CLIP_SIZE_MILISECONDS
+from configuration import DEFAULT_CLIPS, DEFAULT_ATTACK_MILISECONDS, DEFAULT_BEAT_COUNT, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS, DEFAULT_CLIP_SIZE_MILISECONDS
 from interval import SimpleIntervalSlicer
 from logger import Logger
 from normalizer import Normalizer
@@ -103,7 +103,7 @@ class Slicer:
 
     def to_miliseconds(self, value):
         if isinstance(value, int) or isinstance(value, float):
-            return value
+            return len(self.recording) * value if 0 <= value <= 1 else value  # decimal percentage or miliseconds
 
         note = "Durations are numeric (int or float) values or strings ending with one of the following: 's', 'sec', 'secs', 'seconds', 'ms', 'miliseconds', or '%'"
 
@@ -118,7 +118,9 @@ class Slicer:
         parts = re.split(r'([-+]?[.\d]+)(.*)', string if '' != string else '0')
         number = float(parts[1])
         units = parts[2]
-        if '%' == units:
+        if '' == units and 0 <= number <= 1:  # decimal percentage
+            number = len(self.recording) * number
+        elif '%' == units:
             number = len(self.recording) * number / 100
         elif 's' == units or 'sec' == units or 'secs' == units or 'seconds' == units:
             number = number * 1000
@@ -130,35 +132,38 @@ class Slicer:
         return int(number)
 
     def parse_common_arguments(self, arguments):
-        begin = self.to_miliseconds(arguments['begin']) if 'begin' in arguments else 0.0
-        end = self.to_miliseconds(arguments['end']) if 'end' in arguments else 1.0
-        clips = arguments['clips'] if 'clips' in arguments else DEFAULT_CLIPS
-
         recording_length_in_miliseconds = len(self.recording)
+
+        begin = self.to_miliseconds(arguments['begin']) if 'begin' in arguments else 0.0
+        end = self.to_miliseconds(arguments['end']) if 'end' in arguments else recording_length_in_miliseconds
+        clip_size: int = self.to_miliseconds(arguments['clip_size']) if 'clip_size' in arguments else DEFAULT_CLIP_SIZE_MILISECONDS
+        clips: int = arguments['clips'] if 'clips' in arguments else DEFAULT_CLIPS
 
         note = "Note: use values between 0.0 and 1.0 ('100%') to calculate a percentage of the clip duration as the starting or stopping point for clip generation"
 
         if 0 > begin:
-            self.logger.warning(f"Argument 'begin' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using 0]")
+            self.logger.warning(f"Argument 'begin' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using 0 ms]")
             self.logger.warning(f"Omit or set the 'begin' argument to 0 to start at the first sample of the recording")
+            begin = 0
             if note is not None:
                 self.logger.warning(note)
                 note = None
-        if 1.0 <= begin:
-            begin = int(recording_length_in_miliseconds * begin)
         if recording_length_in_miliseconds < begin:
-            self.logger.error(f"Argument 'end' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using 0]")
+            self.logger.warning(f"Argument 'end' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using {recording_length_in_miliseconds} ms]")
+            begin = recording_length_in_miliseconds
             if note is not None:
-                self.logger.error(note)
+                self.logger.warning(note)
+                note = None
         if 0 > end:
-            self.logger.error(f"Argument 'end' {end} invalid, must be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using  {recording_length_in_miliseconds}]")
+            self.logger.warning(f"Argument 'end' {end} invalid, must be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using 0 ms]")
+            end = 0
             if note is not None:
-                self.logger.error(note)
-        if 1.0 <= end:
-            end = int(recording_length_in_miliseconds * end)
+                self.logger.warning(note)
+                note = None
         if recording_length_in_miliseconds < end:
-            self.logger.warning(f"Argument 'end' {end} invalid must, be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using {recording_length_in_miliseconds}]")
+            self.logger.warning(f"Argument 'end' {end} invalid must, be between 0 and the recording length in miliseconds {recording_length_in_miliseconds} [Fixup: using {recording_length_in_miliseconds} ms]")
             self.logger.warning(f"Omit or set the 'end' argument to 1 to stop at the last sample of the recording")
+            end = recording_length_in_miliseconds
             if note is not None:
                 self.logger.warning(note)
                 note = None
@@ -169,61 +174,55 @@ class Slicer:
         if note is not None:
             self.logger.debug(note)
 
-        segment = self.recording[begin:end]
-
-        return segment, begin, clips
+        return self.recording[begin:end], int(self.recording.frame_rate * begin / 1000), clip_size, clips
 
     def slice_on_beat(self, stage, arguments):
         """
         Get every beat in a song and use that to input a bar of beats as critical times
         """
-        segment, base_sample_index, clips = self.parse_common_arguments(arguments)
+        segment, begin, clip_size, clips = self.parse_common_arguments(arguments)
         beat_count = arguments['beat_count'] if 'beat_count' in arguments else DEFAULT_BEAT_COUNT
         attack_miliseconds = arguments['attack_miliseconds'] if 'attack_miliseconds' in arguments else DEFAULT_ATTACK_MILISECONDS
 
-        self.sci.append(BeatSlicer(segment, stage, beat_count=beat_count, attack_miliseconds=attack_miliseconds, clips=clips).get())
+        self.sci.append(BeatSlicer(stage, segment, beat_count=beat_count, attack_miliseconds=attack_miliseconds, clips=clips).get())
 
     def slice_at_interval(self, stage, arguments):
         """
         Slice equally spaced clips based upon the clip size, the desired number of clips, and the duration of the downloaded audio recording
         """
-        segment, base_sample_index, clips = self.parse_common_arguments(arguments)
-        clip_size = self.to_miliseconds(arguments['clip_size']) if 'clip_size' in arguments else DEFAULT_CLIP_SIZE_MILISECONDS
-
-        self.sci += SimpleIntervalSlicer(segment, stage, base_sample_index=base_sample_index, clip_size_ms=clip_size, clips=clips, logger=self.logger).get()
+        segment, base_sample_index, clip_size, clips = self.parse_common_arguments(arguments)
+        self.sci += SimpleIntervalSlicer(stage, segment, base_sample_index=base_sample_index, clip_size=clip_size, clips=clips, logger=self.logger).get()
 
     def slice_at_random(self, stage, arguments):
         """
         Slice randomly (for those who are reckless)
         """
-        segment, base_sample_index, clips = self.parse_common_arguments(arguments)
-        pad_miliseconds = arguments['pad_miliseconds'] if 'pad_miliseconds' in arguments else DEFAULT_PAD_DURATION_MILISECONDS
-
-        self.sci.append(ChaosSlicer(segment, stage, pad_miliseconds=pad_miliseconds, clips=clips).get())
+        segment, base_sample_index, clip_size, clips = self.parse_common_arguments(arguments)
+        self.sci += ChaosSlicer(stage, segment, base_sample_index=base_sample_index, clip_size=clip_size, clips=clips, logger=self.logger).get()
 
     def slice_on_vocal_change(self, stage, arguments):
         """
         Slice on vocal cues
         """
-        segment, base_sample_index, clips = self.parse_common_arguments(arguments)
+        segment, begin, clip_size, clips = self.parse_common_arguments(arguments)
         passes = arguments['passes'] if 'passes' in arguments else 1
         model = arguments['model'] if 'model' in arguments else 0
         detection_chunk_size_miliseconds = arguments['detection_chunk_size_miliseconds'] if 'detection_chunk_size_miliseconds' in arguments else DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
         low_volume_threshold_decibels = arguments['low_volume_threshold_decibels'] if 'low_volume_threshold_decibels' in arguments else DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS
         volume_drift_decibels = arguments['volume_drift_decibels'] if 'volume_drift_decibels' in arguments else DEFAULT_VOLUME_DRIFT_DECIBELS
 
-        self.sci.append(VocalSlicer(segment, stage, passes=passes, model=model, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips, logger=self.logger).get())
+        self.sci.append(VocalSlicer(stage, segment, passes=passes, model=model, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips, logger=self.logger).get())
 
     def slice_on_volume_change(self, stage, arguments):
         """
         Slice on rapid volume changes (measuring every 10ms)
         """
-        segment, base_sample_index, clips = self.parse_common_arguments(arguments)
+        segment, begin, clip_size, clips = self.parse_common_arguments(arguments)
         detection_chunk_size_miliseconds = arguments['detection_chunk_size_miliseconds'] if 'detection_chunk_size_miliseconds' in arguments else DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
         low_volume_threshold_decibels = arguments['low_volume_threshold_decibels'] if 'low_volume_threshold_decibels' in arguments else DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS
         volume_drift_decibels = arguments['volume_drift_decibels'] if 'volume_drift_decibels' in arguments else DEFAULT_VOLUME_DRIFT_DECIBELS
 
-        self.sci.append(VolumeSlicer(segment, stage, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips).get())
+        self.sci.append(VolumeSlicer(stage, segment, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips).get())
 
     #     def slice_at_major_pitch_change(self):
     #         """
