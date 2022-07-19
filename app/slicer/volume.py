@@ -13,14 +13,14 @@ class VolumeSlicer:
     Slice source audio recording using volume change cues
     """
 
-    def __init__(self, recording: pydub.AudioSegment, stage: int, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, max_clips: int):
+    def __init__(self, recording: pydub.AudioSegment, stage: int, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, clips: int):
         """
         Args:
         :param recording:                        an audio segment object that contains the audio samples to be processed
         :param detection_chunk_size_miliseconds: the number of samples of the recording to analyze per chunk
         :param low_volume_threshold_decibels:    the minimum decible value to use when determining the peak volume of a chunk
         :param volume_drift_decibels:            the maximum decibles that the peak amplitude can be increased by a sample (limits the effect of spikes)
-        :param max_clips:                        create no more than this many clips from the recording
+        :param clips:                        create no more than this many clips from the recording
         """
         self.sci: List[SampleClippingInterval] = []
 
@@ -57,7 +57,7 @@ class VolumeSlicer:
         """
         # TODO turn peak decibels array into sample clipping intervals self.sci.append
 
-        if len(self.sci) >= max_clips:
+        if len(self.sci) >= clips:
             return
 
     def get(self):

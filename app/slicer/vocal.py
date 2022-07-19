@@ -17,7 +17,7 @@ class VocalSlicer:
     Slice source audio recording using vocal cues
     """
 
-    def __init__(self, recording: pydub.AudioSegment, stage: int, passes: int, model, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, max_clips: int, logger: Logger):
+    def __init__(self, recording: pydub.AudioSegment, stage: int, passes: int, model, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, clips: int, logger: Logger):
         """
         Args:
         :param recording:                        an audio segment object that contains the audio samples to be processed
@@ -26,7 +26,7 @@ class VocalSlicer:
         :param detection_chunk_size_miliseconds: the number of samples of the recording to analyze per chunk
         :param low_volume_threshold_decibels:    the minimum decible value to use when determining the peak volume of a chunk
         :param volume_drift_decibels:            the maximum decibles that the peak amplitude can be increased by a sample (limits the effect of spikes)
-        :param max_clips:                        create no more than this many clips from the recording
+        :param clips:                        create no more than this many clips from the recording
         :param logger:                           sends error, warning, and debug messages to a log file and/or the console
         """
         try:
@@ -86,7 +86,7 @@ class VocalSlicer:
 
         logger.properties(recording, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 
-        volume_slicer = VolumeSlicer(recording, stage, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, max_clips)
+        volume_slicer = VolumeSlicer(recording, stage, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, clips)
 
         self.sci: List[SampleClippingInterval] = volume_slicer.get()
 

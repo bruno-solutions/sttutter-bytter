@@ -11,24 +11,25 @@ class SimpleIntervalSlicer:
     A simple time interval slicer
     """
 
-    def __init__(self, recording: pydub.AudioSegment, stage: int, duration: int, max_clips: int, logger: Logger):
+    def __init__(self, segment: pydub.AudioSegment, stage: int, base_sample_index: int, clip_size_ms: int, clips: int, logger: Logger):
         """
         Creates a list of potential clip begin and end sample indexes based upon time interval calculations
         Args:
-        :param recording: an audio segment object that contains the audio samples to be processed
-        :param duration:  the number of miliseconds per clipping interval
-        :param max_clips: create no more than this many clips from the recording
+        :param segment:           a subset of the downloaded audio recording from which clips will be sliced
+        :param base_sample_index: the index in the downloaded audio recording that corresponds to the first sample in the segment
+        :param clip_size_ms:      the number of miliseconds of the sample clipping intervals to be computed
+        :param clips:             the number of sample clipping intervals to be computed for the segment
         """
         self.sci: List[SampleClippingInterval] = []
 
-        logger.debug(f"Slicing stage[{stage}], Interval Slicer {duration} miliseconds per clip", separator=True)
+        logger.debug(f"Slicing stage[{stage}], Interval Slicer {clip_size_ms} miliseconds per clip", separator=True)
 
-        recording_samples: int = recording.frame_rate * (len(recording) // 1000)
-        samples_per_clip: int = recording.frame_rate * (duration // 1000)
+        recording_samples: int = segment.frame_rate * (len(segment) // 1000)
+        samples_per_clip: int = segment.frame_rate * (clip_size_ms // 1000)
         max_possible_clips: int = recording_samples // samples_per_clip
 
-        cumulative_samples_to_skip = recording_samples - (max_clips * samples_per_clip)
-        skips = max_clips - 1
+        cumulative_samples_to_skip = recording_samples - (clips * samples_per_clip)
+        skips = clips - 1
         samples_per_skip = cumulative_samples_to_skip // skips
 
         samples_per_iteration = samples_per_clip + samples_per_skip
@@ -36,20 +37,20 @@ class SimpleIntervalSlicer:
         logger.debug(f"Maximum Possible Clips: {max_possible_clips}")
 
         logger.debug(f"Samples per Clip: {samples_per_clip}")
-        logger.debug(f"Clipping Intervals: {max_clips}")
-        logger.debug(f"Cumulative Samples to be Clipped: {max_clips * samples_per_clip}")
+        logger.debug(f"Clipping Intervals: {clips}")
+        logger.debug(f"Cumulative Samples to be Clipped: {clips * samples_per_clip}")
 
         logger.debug(f"Samples per Skip: {samples_per_skip}")
         logger.debug(f"Skipping Intervals: {skips}")
         logger.debug(f"Cumulative Samples to be Skipped: {cumulative_samples_to_skip}")
 
         logger.debug(f"Clip + Skip Samples: {samples_per_iteration}")
-        logger.debug(f"Clips + Skips Samples: {max_clips * samples_per_clip + skips * samples_per_skip}")
+        logger.debug(f"Clips + Skips Samples: {clips * samples_per_clip + skips * samples_per_skip}")
         logger.debug(f"Recording Samples: {recording_samples}")
 
-        clip_index = sample_index = 0
-
-        while max_clips > clip_index:
+        clip_index = 0
+        sample_index = base_sample_index
+        while clips > clip_index:
             clip_index += 1
             end_index = sample_index + samples_per_clip
             if recording_samples < end_index:

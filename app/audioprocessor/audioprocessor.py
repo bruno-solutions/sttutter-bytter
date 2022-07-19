@@ -71,7 +71,6 @@ class AudioProcessor:
         self.trim()
         self.recording.export(self.audio_file_name, format=AUDIO_FILE_TYPE).close()
         self.logger.properties(self.recording, "Post-trim recording characteristics")
-
         return self
 
     def trim(self):
@@ -92,7 +91,8 @@ class AudioProcessor:
         trim.call = 0
         self.recording = trim(trim(self.recording))
 
-        self.logger.properties(self.recording, "Post-trim recording characteristics - Note: sample count is very likely to be less than the prior sample count")
+        self.logger.properties(self.recording, "Post-trim recording characteristics")
+        self.logger.debug("Note: sample count is very likely to be less than the prior sample count")
         return self
 
     def normalize(self):
@@ -101,7 +101,8 @@ class AudioProcessor:
         """
         self.logger.properties(self.recording, "Pre-normalization recording characteristics:")
         self.recording = Normalizer.stereo_normalization(self.recording)
-        self.logger.properties(self.recording, "Post-normalization recording characteristics - Note: sample count should not be less than the prior sample count")
+        self.logger.properties(self.recording, "Post-normalization recording characteristics")
+        self.logger.debug("Note: sample count should not be less than the prior sample count")
         return self
 
     def slice(self, methods=None):
@@ -110,10 +111,10 @@ class AudioProcessor:
         Args:
         :param methods: A dictionary of named slicing functions and parameters to clipify the downloaded file
         """
+        self.logger.separator(mode='debug')
         self.slicer = Slicer(recording=self.recording, methods=methods, logger=self.logger)
         self.slicer.slice()
         self.clips = self.slicer.clip()
-
         return self
 
     def fade(self, fade_in_duration=DEFAULT_FADE_IN_MILISECONDS, fade_out_duration=DEFAULT_FADE_OUT_MILISECONDS):
