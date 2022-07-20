@@ -3,6 +3,7 @@ from typing import List
 
 import pydub
 
+from arguments import parse_common_arguments
 from configuration import MAXIMUM_CLIP_SIZE_MILISECONDS
 from logger import Logger
 from sample_clipping_interval import SampleClippingInterval
@@ -13,24 +14,26 @@ class ChaosSlicer:
     Random interval slicer
     """
 
-    def __init__(self, stage: int, segment: pydub.AudioSegment, base_sample_index: int, clip_size: int, clips: int, logger: Logger):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment, logger: Logger):
         """
         Creates a list of potential clip begin and end sample indexes using a random number generator
         Args:
-        :param segment:           a subset of the downloaded audio recording from which clips will be sliced
-        :param base_sample_index: the index in the downloaded audio recording that corresponds to the first sample in the segment
-        :param clip_size:         the number of miliseconds of the sample clipping intervals to be computed
-        :param clips:             the number of sample clipping intervals to be computed for the segment
+        :param stage:     the number of the method step in the slicing process
+        :param arguments: the common and slicer specific operational parameters
+        :param recording: the downloaded audio recording from which clips will be sliced
+        :param logger:    the Logger instantiated by the main Slicer class
         """
-        self.sci: List[SampleClippingInterval] = []
+        segment, base_sample_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
 
         logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 
-        total_samples = int(segment.frame_count())
-        sample_window = segment.frame_rate * min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS)
+        total_samples: int = int(segment.frame_count())
+        sample_window: int = segment.frame_rate * min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS)
 
-        logger.debug(f"Segment Samples: {total_samples}")
         logger.debug(f"Segment Sample Window: {sample_window}")
+        logger.debug(f"Segment Samples: {total_samples}")
+
+        self.sci: List[SampleClippingInterval] = []
 
         for clip_index in range(clips):
             sample_index_a = random.randint(0, total_samples)
