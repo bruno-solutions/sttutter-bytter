@@ -29,7 +29,7 @@ class SimpleIntervalSlicer:
         logger.debug(f"Slicing stage[{stage}], Interval Slicer: {clips} clips", separator=True)
 
         total_samples: int = int(segment.frame_count())
-        samples_per_clip: int = int(recording.frame_rate * (min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS) / 1000))
+        samples_per_clip: int = int(segment.frame_rate * (min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS) / 1000))
         max_possible_clips: int = total_samples // samples_per_clip
 
         cumulative_samples_to_skip = total_samples - (clips * samples_per_clip)
@@ -41,11 +41,11 @@ class SimpleIntervalSlicer:
         logger.debug(f"Maximum Possible Clips: {max_possible_clips}")
 
         logger.debug(f"Samples per Clip: {samples_per_clip}")
-        logger.debug(f"Clipping Intervals: {clips}")
+        logger.debug(f"Requested Clipping Intervals: {clips}")
         logger.debug(f"Cumulative Samples to be Clipped: {clips * samples_per_clip}")
 
         logger.debug(f"Samples per Skip: {samples_per_skip}")
-        logger.debug(f"Skipping Intervals: {skips}")
+        logger.debug(f"Calculated Skipping Intervals: {skips}")
         logger.debug(f"Cumulative Samples to be Skipped: {cumulative_samples_to_skip}")
 
         logger.debug(f"Clip + Skip Samples: {samples_per_iteration}")
@@ -54,17 +54,17 @@ class SimpleIntervalSlicer:
 
         self.sci: List[SampleClippingInterval] = []
 
-        sample_index = base_sample_index
+        begin_index = base_sample_index
 
         for clip_index in range(clips):
-            end_index = sample_index + samples_per_clip
+            end_index = begin_index + samples_per_clip
             if total_samples < end_index:
-                logger.warning(f"The sample index {sample_index} tried to pass the end of the recording at {total_samples} samples")
+                logger.warning(f"The sample index {end_index} tried to pass the end of the recording at {total_samples} samples")
                 break
-            sci = SampleClippingInterval(begin=sample_index, end=end_index)
+            sci = SampleClippingInterval(begin=begin_index, end=end_index)
             self.sci.append(sci)
             logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
-            sample_index += samples_per_iteration
+            begin_index += samples_per_iteration
 
     def get(self):
         return self.sci

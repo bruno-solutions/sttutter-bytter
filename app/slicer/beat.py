@@ -2,7 +2,11 @@ from typing import List
 
 import librosa
 import pydub
+from numpy import ndarray
 
+from arguments import parse_common_arguments, to_miliseconds
+from configuration import DEFAULT_BEAT_COUNT, DEFAULT_ATTACK_MILISECONDS, DEFAULT_DECAY_MILISECONDS, MAXIMUM_CLIP_SIZE_MILISECONDS
+from logger import Logger
 from normalizer import Normalizer
 from sample_clipping_interval import SampleClippingInterval
 
@@ -12,27 +16,54 @@ class BeatSlicer:
     Beat interval slicer
     """
 
-    def __init__(self, recording: pydub.AudioSegment, stage: int, beat_count: int, attack_miliseconds: int, clips: int):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment, logger: Logger):
         """
         Creates a list of potential clip begin and end sample indexes using "musical" beat boundaries
         Args:
-        :param recording:          an audio segment object that contains the audio samples to be processed
-        :param beat_count:         the number of beats per clipping interval
-        :param attack_miliseconds: the number of miliseconds after the onset of the end beat to include in the clipping interval to ensure that the end beat is fully included in the clipping interval
-        :param clips:          create no more than this many clips from the recording
+        :param stage:     the number of the method step in the slicing process
+        :param arguments: the common and slicer specific operational parameters
+        :param recording: the downloaded audio recording from which clips will be sliced
+        :param logger:    the Logger instantiated by the main Slicer class
         """
+        segment, begin, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        beats_per_clip: int = arguments['beats'] if 'beats' in arguments else DEFAULT_BEAT_COUNT
+        attack: int = to_miliseconds(arguments['attack'], len(recording), logger) if 'attack' in arguments else DEFAULT_ATTACK_MILISECONDS
+        decay: int = to_miliseconds(arguments['decay'], len(recording), logger) if 'decay' in arguments else DEFAULT_DECAY_MILISECONDS
+
+        sample_rate = segment.frame_rate
+        attack_samples: int = (sample_rate // 1000) * attack
+        decay_samples: int = (sample_rate // 1000) * decay
+
+        maximum_clip_samples = sample_rate * (MAXIMUM_CLIP_SIZE_MILISECONDS // 1000)
+        samples = Normalizer.monaural_normalization(segment)
+        total_samples: int = len(samples)
+
+        beat_indexes: ndarray = librosa.frames_to_samples(librosa.beat.beat_track(y=samples, sr=segment.frame_rate)[1])
+        beat_intervals = len(beat_indexes) - beats_per_clip
+
+        logger.debug(f"Decay (trailing pad) Samples: {attack_samples}")
+        logger.debug(f"Attack (leading pad) Samples: {decay_samples}")
+
+        logger.debug(f"Requested Clipping Intervals: {clips}")
+        logger.debug(f"Found Beat Intervals: {beat_intervals}")
+
+        logger.debug(f"Segment Samples: {total_samples}")
+
         self.sci: List[SampleClippingInterval] = []
 
-        frame_rate = recording.frame_rate
-        padding_frames = recording.frame_count(attack_miliseconds)
-        monaural_samples = Normalizer.monaural_normalization(recording)
-        frames = librosa.beat.beat_track(y=monaural_samples, sr=frame_rate)[1]
-        samples = librosa.frames_to_samples(frames)
+        skip_count: int = 0
+        beat_index: int = 0
 
-        for index in range(beat_count, len(samples), beat_count):
-            self.sci.append(SampleClippingInterval(samples[index - beat_count], samples[index] + padding_frames))
-            if len(self.sci) >= clips:
-                return
+        for clip_index in range(min(clips, len(beat_indexes) - beats_per_clip)):
+            begin: int = beat_indexes[beat_index] - attack_samples
+            end: int = beat_indexes[beat_index + beats_per_clip] + decay_samples
+            if 0 > begin or maximum_clip_samples < end - begin or total_samples < end:
+                skip_count += 1
+                continue
+            sci = SampleClippingInterval(begin=begin, end=end)
+            self.sci.append(sci)
+            logger.debug(f"Interval[{clip_index - skip_count}]: {sci.begin} {sci.end}")
+            beat_index += 1
 
     def get(self):
         return self.sci

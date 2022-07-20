@@ -9,7 +9,7 @@ import pydub
 from arguments import parse_common_arguments
 from beat import BeatSlicer
 from chaos import ChaosSlicer
-from configuration import DEFAULT_ATTACK_MILISECONDS, DEFAULT_BEAT_COUNT, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
+from configuration import DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
 from interval import SimpleIntervalSlicer
 from logger import Logger
 from normalizer import Normalizer
@@ -95,23 +95,19 @@ class Slicer:
         """
         Get every beat in a song and use that to input a bar of beats as critical times
         """
-        segment, begin, clip_size, clips = parse_common_arguments(arguments, self.recording, self.logger)
-        beat_count = arguments['beat_count'] if 'beat_count' in arguments else DEFAULT_BEAT_COUNT
-        attack_miliseconds = arguments['attack_miliseconds'] if 'attack_miliseconds' in arguments else DEFAULT_ATTACK_MILISECONDS
-
-        self.sci.append(BeatSlicer(stage, segment, beat_count=beat_count, attack_miliseconds=attack_miliseconds, clips=clips, logger=self.logger).get())
+        self.sci += BeatSlicer(stage, arguments, self.recording, self.logger).get()
 
     def slice_at_interval(self, stage, arguments):
         """
         Slice equally spaced clips based upon the clip size, the desired number of clips, and the duration of the downloaded audio recording
         """
-        self.sci += SimpleIntervalSlicer(stage, arguments, self.recording, logger=self.logger).get()
+        self.sci += SimpleIntervalSlicer(stage, arguments, self.recording, self.logger).get()
 
     def slice_at_random(self, stage, arguments):
         """
         Slice randomly (for those who are reckless)
         """
-        self.sci += ChaosSlicer(stage, arguments, self.recording, logger=self.logger).get()
+        self.sci += ChaosSlicer(stage, arguments, self.recording, self.logger).get()
 
     def slice_on_vocal_change(self, stage, arguments):
         """
