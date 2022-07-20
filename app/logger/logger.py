@@ -1,5 +1,8 @@
 import logging
 import time
+from typing import Union
+
+import pydub
 
 from configuration import LOG_TO_CONSOLE, LOG_FILE_NAME, LOG_DEBUG, LOG_WARNING, LOG_ERROR, DEFAULT_SEPARATOR
 
@@ -13,14 +16,14 @@ class Logger:
     Custom logger class
     """
 
-    def __init__(self, log_to_console=LOG_TO_CONSOLE, log_file_name=LOG_FILE_NAME, log_debug=LOG_DEBUG, log_warning=LOG_WARNING, log_error=LOG_ERROR):
+    def __init__(self, log_file_name: str = LOG_FILE_NAME, log_to_console: bool = LOG_TO_CONSOLE, log_debug: bool = LOG_DEBUG, log_warning: bool = LOG_WARNING, log_error: bool = LOG_ERROR):
         self.log_to_console = log_to_console
         self.log_file_name = log_file_name
         self.log_debug = log_debug
         self.log_warning = log_warning
         self.log_error = log_error
 
-    def separator(self, separator=DEFAULT_SEPARATOR, length=80, mode=''):
+    def separator(self, separator: str = DEFAULT_SEPARATOR, length: int = 80, mode: str = ''):
         """
         Emit a log separator
         """
@@ -36,7 +39,7 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.INFO, format="%(message)s")
             logging.info(separator)
 
-    def debug(self, message, separator=None):
+    def debug(self, message: str, separator: Union[str, bool] = None):
         """
         Log a debug message
         """
@@ -45,7 +48,7 @@ class Logger:
 
         self.separator(separator)
 
-        message = message.lstrip()
+        message: str = message.lstrip()
 
         if self.log_to_console:
             if message.startswith('[download]'):
@@ -57,7 +60,7 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.debug(message)
 
-    def warning(self, message, separator=None):
+    def warning(self, message: str, separator: str = None):
         """
         Log a warning
         """
@@ -66,7 +69,7 @@ class Logger:
 
         self.separator(separator)
 
-        message = message.lstrip()
+        message: str = message.lstrip()
 
         if self.log_to_console:
             print(f"{timestamp()} [WARNING]: {message}")
@@ -75,7 +78,7 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.warning(message)
 
-    def error(self, message, separator=None):
+    def error(self, message: str, separator: str = None):
         """
         Log an error
         """
@@ -84,7 +87,7 @@ class Logger:
 
         self.separator(separator)
 
-        message = message.lstrip()
+        message: str = message.lstrip()
 
         if self.log_to_console:
             print(f"{timestamp()} [ERROR]: {message}")
@@ -93,17 +96,17 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.error(message)
 
-    def properties(self, recording, message=None):
+    def properties(self, recording: pydub.AudioSegment, message: str = None):
         self.separator()
 
         if message is not None:
             self.debug(message)
 
-        number_of_samples = len(recording.get_array_of_samples())
-        number_of_samples_per_channel = number_of_samples / recording.channels
-        duration = number_of_samples_per_channel / recording.frame_rate
+        number_of_samples: int = len(recording.get_array_of_samples())
+        number_of_samples_per_channel: int = number_of_samples // recording.channels
+        duration: float = number_of_samples_per_channel / recording.frame_rate
 
         self.debug(f"Frame rate: {recording.frame_rate}")
         self.debug(f"Channels: {recording.channels} ({'monaural' if 1 == recording.channels else 'stereo'})")
-        self.debug(f"Sample count: {number_of_samples}, per channel: {number_of_samples_per_channel:5.5f}")
+        self.debug(f"Sample count: {number_of_samples}, per channel: {number_of_samples_per_channel}")
         self.debug(f"Duration: {(duration // 60):0.0f}:{(duration % 60):0.0f} or precisely {duration:f} seconds")

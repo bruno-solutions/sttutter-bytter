@@ -23,7 +23,7 @@ class ChaosSlicer:
         :param recording: the downloaded audio recording from which clips will be sliced
         :param logger:    the Logger instantiated by the main Slicer class
         """
-        segment, base_sample_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
 
         logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 
@@ -40,7 +40,7 @@ class ChaosSlicer:
             sample_window_left_size = min(sample_window, sample_index_a)
             sample_window_right_size = min(sample_window, total_samples - sample_index_a)
             sample_index_b = random.randint(sample_index_a - sample_window_left_size, sample_index_a + sample_window_right_size)
-            sci = SampleClippingInterval(begin=base_sample_index + sample_index_a, end=base_sample_index + sample_index_b)
+            sci = SampleClippingInterval(begin=segment_offset_index + sample_index_a, end=segment_offset_index + sample_index_b)
             self.sci.append(sci)
             logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
 

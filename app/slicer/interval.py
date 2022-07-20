@@ -24,7 +24,7 @@ class SimpleIntervalSlicer:
         :param recording: the downloaded audio recording from which clips will be sliced
         :param logger:    the Logger instantiated by the main Slicer class
         """
-        segment, base_sample_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
 
         logger.debug(f"Slicing stage[{stage}], Interval Slicer: {clips} clips", separator=True)
 
@@ -54,7 +54,7 @@ class SimpleIntervalSlicer:
 
         self.sci: List[SampleClippingInterval] = []
 
-        begin_index = base_sample_index
+        begin_index = segment_offset_index
 
         for clip_index in range(clips):
             end_index = begin_index + samples_per_clip

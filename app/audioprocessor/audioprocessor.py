@@ -3,6 +3,7 @@ The main audio processing module
 """
 import hashlib
 from pathlib import Path
+from typing import Optional
 
 import pydub.silence
 
@@ -20,7 +21,7 @@ class AudioProcessor:
     The class that orchestrates the audio processing methods
     """
 
-    def __init__(self, frame_rate=DEFAULT_FRAME_RATE, external_downloader=DEFAULT_EXTERNAL_DOWNLOADER, logger=Logger(), preserve_cache=True):
+    def __init__(self, frame_rate: int = DEFAULT_FRAME_RATE, external_downloader: str = DEFAULT_EXTERNAL_DOWNLOADER, logger: Logger = Logger(), preserve_cache: bool = True):
         """
         Download a video or audio recording from the internet and save only the audio to a file
             - mono frame: single sample value
@@ -31,27 +32,27 @@ class AudioProcessor:
         :param logger:              User supplied logger class | None to use the built-in Logger
         :param preserve_cache:      Should downloaded source media files be kept after processing to prevent re-download later
         """
-        self.url = None
-        self.download_file_name = None
-        self.audio_file_name = None
-        self.metadata_file_name = None
+        self.url: str = ''
+        self.download_file_name: str = ''
+        self.audio_file_name: str = ''
+        self.metadata_file_name: str = ''
 
-        self.frame_rate = frame_rate
+        self.frame_rate: int = frame_rate
 
-        self.external_downloader = external_downloader
-        self.logger = logger
-        self.recording = None
-        self.tagger = Tagger()
-        self.slicer = None
+        self.external_downloader: str = external_downloader
+        self.logger: Logger = logger
+        self.recording: Optional[pydub.AudioSegment] = None
+        self.tagger: Tagger = Tagger()
+        self.slicer: Optional[Slicer] = None
 
-        self.clips = list()
+        self.clips: [] = []
 
         if preserve_cache:
             file.rm_md(cache_root=None)
         else:
             file.rm_md()
 
-    def download(self, url):
+    def download(self, url: str):
         """
         Downloads a file and converts it into a pydub AudioSegmant object
         Args:
@@ -65,8 +66,7 @@ class AudioProcessor:
         self.logger.debug(f"\nDowloading from {url} and setting the frame rate to: {self.frame_rate}")
         downloader.download(self.url, directory=CACHE_ROOT, filename=self.download_file_name, external_downloader=self.external_downloader, tagger=self.tagger, logger=self.logger)
 
-        self.recording = pydub.AudioSegment.from_file(self.audio_file_name)
-        self.recording = self.recording.set_frame_rate(self.frame_rate)
+        self.recording = pydub.AudioSegment.from_file(self.audio_file_name).set_frame_rate(self.frame_rate)
         self.logger.properties(self.recording, "Post-download recording characteristics")
         self.trim()
         self.recording.export(self.audio_file_name, format=AUDIO_FILE_TYPE).close()
@@ -76,11 +76,11 @@ class AudioProcessor:
     def trim(self):
         def trim(recording: pydub.AudioSegment):
             trim.call += 1
-            silence_ms = pydub.silence.detect_leading_silence(recording, silence_threshold=-50.0, chunk_size=10)
+            silence_ms: int = pydub.silence.detect_leading_silence(recording, silence_threshold=-50.0, chunk_size=10)
             recording = recording[silence_ms + 1:].reverse()
 
             if LOG_DEBUG:
-                debug_file_name = f"{TEMP_ROOT}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
+                debug_file_name: str = f"{TEMP_ROOT}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
                 (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=AUDIO_FILE_TYPE).close()
                 self.tagger.write_audio_file_tags(debug_file_name)  # in case we want to keep the file
 
@@ -105,7 +105,7 @@ class AudioProcessor:
         self.logger.debug("Note: sample count should not be less than the prior sample count")
         return self
 
-    def slice(self, methods=None):
+    def slice(self, methods: [{}] = None):
         """
         Executes slicer methods in order defined in the methods list
         Args:
@@ -117,7 +117,7 @@ class AudioProcessor:
         self.clips = self.slicer.clip()
         return self
 
-    def fade(self, fade_in_duration=DEFAULT_FADE_IN_MILISECONDS, fade_out_duration=DEFAULT_FADE_OUT_MILISECONDS):
+    def fade(self, fade_in_duration: int = DEFAULT_FADE_IN_MILISECONDS, fade_out_duration: int = DEFAULT_FADE_OUT_MILISECONDS):
         """
         Apply fade-in and fade-out to the clips
         Args:
@@ -128,7 +128,7 @@ class AudioProcessor:
             self.clips[index]['samples'] = clip['samples'].fade_in(fade_in_duration).fade_out(fade_out_duration)
         return self
 
-    def export(self, directory=EXPORT_ROOT):
+    def export(self, directory: str = EXPORT_ROOT):
         """
         Export the audio clips
         Args:

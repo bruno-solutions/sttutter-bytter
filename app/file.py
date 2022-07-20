@@ -6,7 +6,7 @@ from logger import Logger
 
 
 def rm_md(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT, temp_root=TEMP_ROOT):
-    logger = Logger()
+    logger: Logger = Logger()
 
     def _rm_md(path, name):
         _erred = False

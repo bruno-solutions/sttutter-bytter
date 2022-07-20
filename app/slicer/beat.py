@@ -25,7 +25,10 @@ class BeatSlicer:
         :param recording: the downloaded audio recording from which clips will be sliced
         :param logger:    the Logger instantiated by the main Slicer class
         """
-        segment, begin, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+
+        logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
+
         beats_per_clip: int = arguments['beats'] if 'beats' in arguments else DEFAULT_BEAT_COUNT
         attack: int = to_miliseconds(arguments['attack'], len(recording), logger) if 'attack' in arguments else DEFAULT_ATTACK_MILISECONDS
         decay: int = to_miliseconds(arguments['decay'], len(recording), logger) if 'decay' in arguments else DEFAULT_DECAY_MILISECONDS
@@ -55,8 +58,8 @@ class BeatSlicer:
         beat_index: int = 0
 
         for clip_index in range(min(clips, len(beat_indexes) - beats_per_clip)):
-            begin: int = beat_indexes[beat_index] - attack_samples
-            end: int = beat_indexes[beat_index + beats_per_clip] + decay_samples
+            begin: int = segment_offset_index + beat_indexes[beat_index] - attack_samples
+            end: int = segment_offset_index + beat_indexes[beat_index + beats_per_clip - 1] + decay_samples
             if 0 > begin or maximum_clip_samples < end - begin or total_samples < end:
                 skip_count += 1
                 continue

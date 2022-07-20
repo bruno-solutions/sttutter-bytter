@@ -17,7 +17,7 @@ from configuration import DEFAULT_FRAME_RATE, AUDIO_FILE_TYPE, CACHE_ROOT, DOWNL
 from logger import Logger
 
 
-def download(uri: str, directory=CACHE_ROOT, filename=DOWNLOAD_BASE_FILE_NAME, frame_rate=DEFAULT_FRAME_RATE, audio_file_type=AUDIO_FILE_TYPE, external_downloader=None, tagger=None, logger=Logger()):
+def download(uri: str, directory=CACHE_ROOT, filename=DOWNLOAD_BASE_FILE_NAME, frame_rate=DEFAULT_FRAME_RATE, audio_file_type=AUDIO_FILE_TYPE, external_downloader=None, tagger=None, logger: Logger = Logger()):
     """
     Download source media from a URL (and when processing is active, extract and save the audio in a file for clipification)
     Args:

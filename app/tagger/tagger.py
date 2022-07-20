@@ -39,7 +39,7 @@ def is_multivalue_tag(tag: str):
 
 
 class Tagger:
-    def __init__(self, logger=Logger()):
+    def __init__(self, logger: Logger = Logger()):
         self.logger = logger
         self.tags: dict[str, str] = {}
 

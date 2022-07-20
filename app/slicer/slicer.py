@@ -1,7 +1,7 @@
 """
 Slicer module
 """
-from typing import List
+from typing import List, Union
 
 import librosa
 import pydub
@@ -23,14 +23,14 @@ class Slicer:
     The primary object of the slicer module
     """
 
-    def __init__(self, recording: pydub.AudioSegment, methods=None, logger=Logger()):
+    def __init__(self, recording: pydub.AudioSegment, methods: [{}] = None, logger: Logger = Logger()):
         self.recording: pydub.AudioSegment = recording
-        self.methods = methods if methods is not None else []
-        self.logger = logger if logger is not None else Logger()
+        self.methods: [{}] = methods if methods is not None else []
+        self.logger: Logger = logger if logger is not None else Logger()
 
         self.sci: List[SampleClippingInterval] = []
 
-    def set(self, name, value):
+    def set(self, name: str, value: Union[str, int, float, pydub.AudioSegment]):
         setattr(self, name, value)
 
         return self
@@ -91,25 +91,25 @@ class Slicer:
 
         return clips
 
-    def slice_on_beat(self, stage, arguments):
+    def slice_on_beat(self, stage: int, arguments: {}):
         """
-        Get every beat in a song and use that to input a bar of beats as critical times
+        Slice at clips starting at every beat detected for the length to the detected beat plus a beat range
         """
         self.sci += BeatSlicer(stage, arguments, self.recording, self.logger).get()
 
-    def slice_at_interval(self, stage, arguments):
+    def slice_at_interval(self, stage: int, arguments: {}):
         """
         Slice equally spaced clips based upon the clip size, the desired number of clips, and the duration of the downloaded audio recording
         """
         self.sci += SimpleIntervalSlicer(stage, arguments, self.recording, self.logger).get()
 
-    def slice_at_random(self, stage, arguments):
+    def slice_at_random(self, stage: int, arguments: {}):
         """
         Slice randomly (for those who are reckless)
         """
         self.sci += ChaosSlicer(stage, arguments, self.recording, self.logger).get()
 
-    def slice_on_vocal_change(self, stage, arguments):
+    def slice_on_vocal_change(self, stage: int, arguments: {}):
         """
         Slice on vocal cues
         """
@@ -122,16 +122,11 @@ class Slicer:
 
         self.sci.append(VocalSlicer(stage, segment, passes=passes, model=model, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips, logger=self.logger).get())
 
-    def slice_on_volume_change(self, stage, arguments):
+    def slice_on_volume_change(self, stage: int, arguments: {}):
         """
-        Slice on rapid volume changes (measuring every 10ms)
+        Slice on volume changes, measuring in 'detection_window' sized chunks of the recording
         """
-        segment, begin, clip_size, clips = parse_common_arguments(arguments, self.recording, self.logger)
-        detection_chunk_size_miliseconds = arguments['detection_chunk_size_miliseconds'] if 'detection_chunk_size_miliseconds' in arguments else DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
-        low_volume_threshold_decibels = arguments['low_volume_threshold_decibels'] if 'low_volume_threshold_decibels' in arguments else DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS
-        volume_drift_decibels = arguments['volume_drift_decibels'] if 'volume_drift_decibels' in arguments else DEFAULT_VOLUME_DRIFT_DECIBELS
-
-        self.sci.append(VolumeSlicer(stage, segment, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips).get())
+        self.sci += VolumeSlicer(stage, arguments, self.recording, self.logger).get()
 
     #     def slice_at_major_pitch_change(self):
     #         """

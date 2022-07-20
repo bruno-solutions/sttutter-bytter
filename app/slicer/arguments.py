@@ -1,27 +1,92 @@
 import re
+from math import copysign
 from typing import Union
 
 import pydub
 
-from configuration import DEFAULT_CLIP_SIZE_MILISECONDS, DEFAULT_CLIPS
+from configuration import DEFAULT_CLIP_SIZE_MILISECONDS, DEFAULT_CLIPS, MAXIMUM_SAMPLES
 from logger import Logger
 
 
-def to_decibels(value):
-    if isinstance(value, str):
-        pass
-    return value
+def to_decibels(value: Union[str, float, int], logger: Logger) -> float:
+    """
+    Converts a string, float, or integer value to decibels (untested)
+
+    - numeric values are treated as decibels (requiring no conversion) e.g., -21.1 or 5
+    - string values ending with '', 'db', 'dbs', or 'decibles' are treated as decibels, e.g., '3.1', '-20db', '.15 decibels'
+
+    Args:
+    :param value:  decibel as a string, float, or integer value
+    :param logger: a Logger class to use to record warning and/or debug information
+    """
+    if isinstance(value, int) or isinstance(value, float):
+        return value
+
+    note: str = "Decibles are numeric values, or strings ending with one of the following units: '', 'db', 'dbs', 'decibels'"
+
+    if not isinstance(value, str):
+        logger.warning(f"Decibel level argument type not valid {value} of {type(value)} [Fixup: returning 0 decibels]")
+        logger.warning(note)
+        return 0.0
+
+    string: str = value.replace(' ', '')
+
+    if '' == string:
+        return 0.0
+
+    parts: [str] = re.split(r'([-+]?[.\d]+)(.*)', string if '' != string else '0')
+    number: float = float(parts[1])
+    units: str = parts[2]
+
+    if '' == units or 'db' == units or 'dbs' == units or 'decibels' == units:
+        return number
+
+    logger.warning(f"Decibel level argument units invalid, {string} [Fixup: returning {number} decibels]")
+    logger.warning(note)
+
+    return number
 
 
-def to_sample_index(value):
-    if isinstance(value, str):
-        pass
-    return value
+def miliseconds_to_index(miliseconds, segment: pydub.AudioSegment, logger: Logger):
+    """
+    Converts miliseconds to a sample index within the audio segment (untested)
+    Args:
+    :param miliseconds: a point within the audio segment in miliseconds
+    :param segment:     a segment of an aduio recording
+    :param logger:      a Logger class to use to record warning and/or debug information
+    """
+    frames_per_milisecond = segment.frame_rate / 1000
+    maximum_miliseconds = MAXIMUM_SAMPLES * (segment.frame_rate / 1000)
+
+    if maximum_miliseconds < abs(miliseconds):
+        maximum_miliseconds = copysign(MAXIMUM_SAMPLES, maximum_miliseconds)
+        logger.warning(f"Number of miliseconds too large {miliseconds} [Fixup: using {maximum_miliseconds}]")
+        miliseconds = maximum_miliseconds
+
+    return miliseconds * frames_per_milisecond
+
+
+def index_to_miliseconds(index: int, segment: pydub.AudioSegment, logger: Logger) -> float:
+    """
+    Converts a sample index to miliseconds within the audio segment (untested)
+    Args:
+    :param index:   a sample index within the audio segment
+    :param segment: a segment of an aduio recording
+    :param logger:  a Logger class to use to record warning and/or debug information
+    """
+    frames_per_milisecond: float = segment.frame_rate / 1000
+
+    if MAXIMUM_SAMPLES < abs(index):
+        maximum_index: int = int(copysign(MAXIMUM_SAMPLES, index))
+        logger.warning(f"Sample index magnitude too large {index} [Fixup: using {maximum_index}]")
+        index = maximum_index
+
+    return index / frames_per_milisecond
 
 
 def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logger: Logger) -> int:
     """
-    Converts a string, float, or integer value to a number of miliseconds (as follows):
+    Converts a string, float, or integer value to miliseconds
 
     - numeric values over 1 are treated as miliseconds (requiring no conversion) e.g., 1.1 or 123456
     - numeric values between 0.0 and 1.0 are treated as decimal percentage of the segement length, e.g., 0.5275
@@ -37,7 +102,7 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
     if isinstance(value, int) or isinstance(value, float):
         return int(segment_miliseconds * value if 0 <= value <= 1 else value)  # decimal percentage of the segment or already miliseconds
 
-    note: str = "Durations are numeric (int or float) values or strings ending with one of the following: 's', 'sec', 'secs', 'seconds', 'ms', 'miliseconds', or '%'"
+    note: str = "Durations are numeric values, or strings ending with one of the following units: 's', 'sec', 'secs', 'seconds', 'ms', 'miliseconds', or '%'"
 
     if not isinstance(value, str):
         logger.warning(f"Duration argument type not valid {value} of {type(value)} [Fixup: returning 0]")
@@ -45,8 +110,10 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
         return 0
 
     string: str = value.replace(' ', '')
+
     if '' == string:
-        string = '0'
+        return 0
+
     parts: [str] = re.split(r'([-+]?[.\d]+)(.*)', string if '' != string else '0')
     number: float = float(parts[1])
     units: str = parts[2]
@@ -72,6 +139,13 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
 
 
 def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment, logger: Logger) -> (pydub.AudioSegment, int, int, int):
+    """
+    Extracts common slicer processing arguments
+    Args:
+    :param arguments: slicer arguments from which common ones will be parsed, validated, and returned
+    :param recording: the downloaded aduio recording to be sliced
+    :param logger:    a Logger class to use to record warning and/or debug information
+    """
     recording_ms: int = len(recording)
 
     begin: int = to_miliseconds(arguments['begin'], recording_ms, logger) if 'begin' in arguments else 0
@@ -114,4 +188,4 @@ def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment, logger:
     if note is not None:
         logger.debug(note)
 
-    return recording[begin:end], int(recording.frame_rate * begin / 1000), clip_size, clips
+    return recording[begin:end], miliseconds_to_index(begin, recording, logger), clip_size, clips
