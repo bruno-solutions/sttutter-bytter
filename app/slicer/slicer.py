@@ -6,10 +6,8 @@ from typing import List, Union
 import librosa
 import pydub
 
-from arguments import parse_common_arguments
 from beat import BeatSlicer
 from chaos import ChaosSlicer
-from configuration import DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS, DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
 from interval import SimpleIntervalSlicer
 from logger import Logger
 from normalizer import Normalizer
@@ -113,14 +111,7 @@ class Slicer:
         """
         Slice on vocal cues
         """
-        segment, begin, clip_size, clips = parse_common_arguments(arguments, self.recording, self.logger)
-        passes = arguments['passes'] if 'passes' in arguments else 1
-        model = arguments['model'] if 'model' in arguments else 0
-        detection_chunk_size_miliseconds = arguments['detection_chunk_size_miliseconds'] if 'detection_chunk_size_miliseconds' in arguments else DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
-        low_volume_threshold_decibels = arguments['low_volume_threshold_decibels'] if 'low_volume_threshold_decibels' in arguments else DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS
-        volume_drift_decibels = arguments['volume_drift_decibels'] if 'volume_drift_decibels' in arguments else DEFAULT_VOLUME_DRIFT_DECIBELS
-
-        self.sci.append(VocalSlicer(stage, segment, passes=passes, model=model, detection_chunk_size_miliseconds=detection_chunk_size_miliseconds, low_volume_threshold_decibels=low_volume_threshold_decibels, volume_drift_decibels=volume_drift_decibels, clips=clips, logger=self.logger).get())
+        self.sci += VocalSlicer(stage, arguments, self.recording, self.logger).get()
 
     def slice_on_volume_change(self, stage: int, arguments: {}):
         """

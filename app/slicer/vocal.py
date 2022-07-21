@@ -2,8 +2,10 @@ from typing import List
 
 import numpy
 import pydub.effects
+from numpy import ndarray
 from spleeter.separator import Separator
 
+from arguments import parse_common_arguments
 from configuration import LOG_DEBUG, AUDIO_FILE_TYPE, TEMP_ROOT
 from logger import Logger
 from sample_clipping_interval import SampleClippingInterval
@@ -17,18 +19,26 @@ class VocalSlicer:
     Slice source audio recording using vocal cues
     """
 
-    def __init__(self, stage: int, recording: pydub.AudioSegment, passes: int, model, detection_chunk_size_miliseconds: int, low_volume_threshold_decibels: int, volume_drift_decibels: int, clips: int, logger: Logger):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment, logger: Logger):
         """
+        Creates a list of potential clip begin and end sample indexes using utterance onset and cessation events
         Args:
-        :param recording:                        an audio segment object that contains the audio samples to be processed
-        :param stage:                            the stage within the series of slicers that the vocal slicer is being executed
-        :param model:                            indicates which Spleeter traing model to use for vocal separation
-        :param detection_chunk_size_miliseconds: the number of samples of the recording to analyze per chunk
-        :param low_volume_threshold_decibels:    the minimum decible value to use when determining the peak volume of a chunk
-        :param volume_drift_decibels:            the maximum decibles that the peak amplitude can be increased by a sample (limits the effect of spikes)
-        :param clips:                        create no more than this many clips from the recording
-        :param logger:                           sends error, warning, and debug messages to a log file and/or the console
+        :param stage:     the number of the method step in the slicing process
+        :param arguments: the common and slicer specific operational parameters
+        :param recording: the downloaded audio recording from which clips will be sliced
+        :param logger:    the Logger instantiated by the main Slicer class
         """
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        passes: int = arguments['passes'] if 'passes' in arguments else 1
+        model: str = arguments['model'] if 'model' in arguments else 0
+
+        # No need to extract arguments that are only used by VolumeSlicer()
+
+        logger.debug(f"Slicing stage[{stage}], Vocal Slicer: {clips} clips using Spleeter training model '{model}'", separator=True)
+
+        logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
+        logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
+
         try:
             if isinstance(model, int):
                 if 0 >= model and model < len(models):
@@ -43,50 +53,42 @@ class VocalSlicer:
             logger.warning(f"The available Spleeter training models are: [0]'{models[0]}' [1]'{models[1]}' [2]'{models[2]} [3]'{models[3]}' [4]'{models[4]}' [5]'{models[5]}'")
             model = models[0]
 
-        # TODO Consider wav subtraction of other models
-
-        def spleeter_instrument_to_audio_segment(dictionary, name):
-            if name not in dictionary:
-                return None
-
-            instrument = dictionary[name]  # [9,767,936 (float), 2] = 19,535,872 (float) = 78,143,488 bytes
-            as_int = numpy.array(instrument, dtype=numpy.int16)  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
-            as_int_reshaped = numpy.reshape(as_int, (recording.channels, -1))  # [2, 9,767,936 (int16)] = 19,535,872 (int16) = 39,071,744 bytes
-            as_bytes = as_int_reshaped.tobytes()  # [39,071,744] bytes
-            audio_segment = pydub.AudioSegment(data=as_bytes, frame_rate=recording.frame_rate, sample_width=recording.sample_width, channels=recording.channels)
+        def spleeter_instrument_to_segment(_recording, _instruments: {}, name: str):  # [10,000,000 (float), 2] = 20,000,000 (float) = 80,000,000 bytes
+            as_int: ndarray = numpy.array(_instruments[name], dtype=numpy.int16)  # [10,000,000 (int16), 2] = 20,000,000 (int) = 40,000,000 bytes
+            as_int_reshaped: ndarray = numpy.reshape(as_int, (_recording.channels, -1))  # [2, 10,000,000 (int16)] = 20,000,000 (int16) = 40,000,000 bytes
+            as_bytes: bytes = as_int_reshaped.tobytes()  # [40,000,000] bytes
+            _segment: pydub.AudioSegment = pydub.AudioSegment(data=as_bytes, frame_rate=_recording.frame_rate, sample_width=_recording.sample_width, channels=_recording.channels)
 
             if LOG_DEBUG:
-                audio_segment.export(out_f=f"{TEMP_ROOT}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{AUDIO_FILE_TYPE}", format=AUDIO_FILE_TYPE).close()
+                _segment.export(out_f=f"{TEMP_ROOT}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{AUDIO_FILE_TYPE}", format=AUDIO_FILE_TYPE).close()
 
-            return audio_segment
+            return _segment
 
         # https://github.com/deezer/spleeter
         # https://github.com/audacity/audacity/blob/master/plug-ins/vocalrediso.ny
 
-        logger.debug(f"Slicing stage[{stage}], Vocal Slicer using Spleeter training model '{model}'")
-
         for iteration in range(passes):
             logger.debug(f"Vocal slicer Spleeter pass [{iteration + 1} of {passes}] starting")
-            logger.properties(recording, f"Recording characteristics")
+            logger.properties(segment, f"Recording characteristics")
 
-            samples = recording.get_array_of_samples()  # [19,535,872] (int16) = 39,071,744 bytes
-            samples_reshaped = numpy.reshape(samples, (-1, recording.channels))  # [9,767,936 (int16), 2] = 19,535,872 (int) = 39,071,744 bytes
-            instruments = Separator(model, multiprocess=False).separate(samples_reshaped)
+            samples: ndarray = segment.get_array_of_samples()  # [20,000,000] (int16) = 40,000,000 bytes
+            samples_reshaped: ndarray = numpy.reshape(samples, (-1, segment.channels))  # [10,000,000 (int16), 2] = 20,000,000 (int16) = 40,000,000 bytes
+            instruments: {} = Separator(model, multiprocess=False).separate(samples_reshaped)
 
-            vocals = spleeter_instrument_to_audio_segment(instruments, 'vocals')
-            drums = spleeter_instrument_to_audio_segment(instruments, 'drums')
-            bass = spleeter_instrument_to_audio_segment(instruments, 'bass')
-            piano = spleeter_instrument_to_audio_segment(instruments, 'piano')
-            other = spleeter_instrument_to_audio_segment(instruments, 'other')
-            accompaniment = spleeter_instrument_to_audio_segment(instruments, 'accompaniment')
+            vocals: pydub.AudioSegment = spleeter_instrument_to_segment(recording, instruments, 'vocals')
+            # drums: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'drums')
+            # bass: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'bass')
+            # piano: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'piano')
+            # other: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'other')
+            # accompaniment: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'accompaniment')
 
-            # vocals = Normalizer.stereo_normalization(pydub.effects.high_pass_filter(pydub.effects.low_pass_filter(pydub.effects.compress_dynamic_range(vocals, attack=1, release=1), cutoff=70), cutoff=200))
+            # vocals: pydub.AudioSegment = Normalizer.stereo_normalization(pydub.effects.high_pass_filter(pydub.effects.low_pass_filter(pydub.effects.compress_dynamic_range(vocals, attack=1, release=1), cutoff=70), cutoff=200))
 
-            recording = vocals
+            segment = vocals
 
-        logger.properties(recording, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
+        logger.properties(segment, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 
-        volume_slicer = VolumeSlicer(stage, recording, detection_chunk_size_miliseconds, low_volume_threshold_decibels, volume_drift_decibels, clips)
+        volume_slicer = VolumeSlicer(stage, arguments, segment, logger)
 
         self.sci: List[SampleClippingInterval] = volume_slicer.get()
 

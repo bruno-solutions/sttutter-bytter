@@ -70,6 +70,7 @@ class AudioProcessor:
         self.logger.properties(self.recording, "Post-download recording characteristics")
         self.trim()
         self.recording.export(self.audio_file_name, format=AUDIO_FILE_TYPE).close()
+        self.tagger.write_audio_file_tags(self.audio_file_name)
         self.logger.properties(self.recording, "Post-trim recording characteristics")
         return self
 

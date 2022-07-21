@@ -6,7 +6,7 @@ import pydub
 from numpy import ndarray
 
 from arguments import parse_common_arguments, to_decibels
-from configuration import DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS, DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS, DEFAULT_VOLUME_DRIFT_DECIBELS
+from configuration import DEFAULT_DETECTION_WINDOW_MILISECONDS, DEFAULT_LOW_THRESHOLD, DEFAULT_DRIFT_DECIBELS
 from logger import Logger
 from normalizer import Normalizer
 from sample_clipping_interval import SampleClippingInterval
@@ -27,15 +27,14 @@ class VolumeSlicer:
         :param logger:    the Logger instantiated by the main Slicer class
         """
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else DEFAULT_LOW_THRESHOLD
+        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else DEFAULT_DRIFT_DECIBELS
+        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else DEFAULT_DETECTION_WINDOW_MILISECONDS
 
         logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
 
         logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
         logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
-
-        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else DEFAULT_LOW_VOLUME_THRESHOLD_DECIBELS
-        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else DEFAULT_VOLUME_DRIFT_DECIBELS
-        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else DEFAULT_DETECTION_CHUNK_SIZE_MILISECONDS
 
         logger.debug(f"Silence Threshold Decibels: {low_threshold}")
         logger.debug(f"Per Chunk Raise Limit Decibels: {drift}")

@@ -25,10 +25,10 @@ class ChaosSlicer:
         """
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
 
-        logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
-
         total_samples: int = int(segment.frame_count())
         sample_window: int = segment.frame_rate * min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS)
+
+        logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 
         logger.debug(f"Segment Sample Window: {sample_window}")
         logger.debug(f"Segment Samples: {total_samples}")

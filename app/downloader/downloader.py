@@ -1,9 +1,5 @@
 """
-    Download audio files from the internet
-
-    Functions:
-        get_song_with_aria2c(url, outfile_name, logger) --> None:
-        get_song_with_ytdl(url, outfile_name, logger) --> None:
+Download audio files from the internet
 """
 import os
 import shutil

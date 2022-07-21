@@ -26,9 +26,6 @@ class BeatSlicer:
         :param logger:    the Logger instantiated by the main Slicer class
         """
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
-
-        logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
-
         beats_per_clip: int = arguments['beats'] if 'beats' in arguments else DEFAULT_BEAT_COUNT
         attack: int = to_miliseconds(arguments['attack'], len(recording), logger) if 'attack' in arguments else DEFAULT_ATTACK_MILISECONDS
         decay: int = to_miliseconds(arguments['decay'], len(recording), logger) if 'decay' in arguments else DEFAULT_DECAY_MILISECONDS
@@ -43,6 +40,8 @@ class BeatSlicer:
 
         beat_indexes: ndarray = librosa.frames_to_samples(librosa.beat.beat_track(y=samples, sr=segment.frame_rate)[1])
         beat_intervals = len(beat_indexes) - beats_per_clip
+
+        logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
 
         logger.debug(f"Decay (trailing pad) Samples: {attack_samples}")
         logger.debug(f"Attack (leading pad) Samples: {decay_samples}")
