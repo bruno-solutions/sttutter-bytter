@@ -23,11 +23,11 @@ class Logger:
         self.log_warning = log_warning
         self.log_error = log_error
 
-    def separator(self, separator: str = DEFAULT_SEPARATOR, length: int = 80, mode: str = ''):
+    def separator(self, separator: Union[str, bool] = DEFAULT_SEPARATOR, length: int = 80, mode: str = ''):
         """
         Emit a log separator
         """
-        if separator is None or ('debug' == mode and not self.log_debug) or ('warning' == mode and not self.log_warning) or ('error' == mode and not self.log_error):
+        if not separator or ('debug' == mode and not self.log_debug) or ('warning' == mode and not self.log_warning) or ('error' == mode and not self.log_error):
             return
 
         separator = ''.join([(separator if separator is str and separator != '' else DEFAULT_SEPARATOR) * length])
@@ -39,7 +39,7 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.INFO, format="%(message)s")
             logging.info(separator)
 
-    def debug(self, message: str, separator: Union[str, bool] = None):
+    def debug(self, message: str, separator: Union[str, bool] = False):
         """
         Log a debug message
         """
@@ -60,7 +60,7 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.debug(message)
 
-    def warning(self, message: str, separator: str = None):
+    def warning(self, message: str, separator: Union[str, bool] = False):
         """
         Log a warning
         """
@@ -78,7 +78,7 @@ class Logger:
             logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.warning(message)
 
-    def error(self, message: str, separator: str = None):
+    def error(self, message: str, separator: Union[str, bool] = False):
         """
         Log an error
         """
