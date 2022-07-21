@@ -53,7 +53,7 @@ class VocalSlicer:
             logger.warning(f"The available Spleeter training models are: [0]'{models[0]}' [1]'{models[1]}' [2]'{models[2]} [3]'{models[3]}' [4]'{models[4]}' [5]'{models[5]}'")
             model = models[0]
 
-        def spleeter_instrument_to_segment(_recording, _instruments: {}, name: str):  # [10,000,000 (float), 2] = 20,000,000 (float) = 80,000,000 bytes
+        def instrument_to_segment(_recording: pydub.AudioSegment, _instruments: {}, name: str):  # [10,000,000 (float), 2] = 20,000,000 (float) = 80,000,000 bytes
             as_int: ndarray = numpy.array(_instruments[name], dtype=numpy.int16)  # [10,000,000 (int16), 2] = 20,000,000 (int) = 40,000,000 bytes
             as_int_reshaped: ndarray = numpy.reshape(as_int, (_recording.channels, -1))  # [2, 10,000,000 (int16)] = 20,000,000 (int16) = 40,000,000 bytes
             as_bytes: bytes = as_int_reshaped.tobytes()  # [40,000,000] bytes
@@ -75,12 +75,12 @@ class VocalSlicer:
             samples_reshaped: ndarray = numpy.reshape(samples, (-1, segment.channels))  # [10,000,000 (int16), 2] = 20,000,000 (int16) = 40,000,000 bytes
             instruments: {} = Separator(model, multiprocess=False).separate(samples_reshaped)
 
-            vocals: pydub.AudioSegment = spleeter_instrument_to_segment(recording, instruments, 'vocals')
-            # drums: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'drums')
-            # bass: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'bass')
-            # piano: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'piano')
-            # other: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'other')
-            # accompaniment: pydub.AudioSegment = spleeter_instrument_to_audio_segment(recording, instruments, 'accompaniment')
+            vocals: pydub.AudioSegment = instrument_to_segment(recording, instruments, 'vocals')
+            # drums: pydub.AudioSegment = instrument_to_segment(recording, instruments, 'drums')
+            # bass: pydub.AudioSegment = instrument_to_segment(recording, instruments, 'bass')
+            # piano: pydub.AudioSegment = instrument_to_segment(recording, instruments, 'piano')
+            # other: pydub.AudioSegment = instrument_to_segment(recording, instruments, 'other')
+            # accompaniment: pydub.AudioSegment = instrument_to_segment(recording, instruments, 'accompaniment')
 
             # vocals: pydub.AudioSegment = Normalizer.stereo_normalization(pydub.effects.high_pass_filter(pydub.effects.low_pass_filter(pydub.effects.compress_dynamic_range(vocals, attack=1, release=1), cutoff=70), cutoff=200))
 
