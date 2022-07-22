@@ -9,7 +9,7 @@ from arguments import parse_common_arguments, to_decibels
 from configuration import DEFAULT_DETECTION_WINDOW_MILISECONDS, DEFAULT_LOW_THRESHOLD, DEFAULT_DRIFT_DECIBELS
 from logger import Logger
 from normalizer import Normalizer
-from sample_clipping_interval import SampleClippingInterval
+from sci import SampleClippingInterval
 
 
 class VolumeSlicer:
@@ -31,7 +31,7 @@ class VolumeSlicer:
         drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else DEFAULT_DRIFT_DECIBELS
         chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else DEFAULT_DETECTION_WINDOW_MILISECONDS
 
-        logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
+        logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
 
         logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
         logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
@@ -51,7 +51,7 @@ class VolumeSlicer:
         logger.debug(f"Chunk Size: {chunk_size}")
         logger.debug(f"Segment Chunks: {sample_chunk_count}")
 
-        chunk_peak_decibels: List = []
+        chunk_peaks: List = []
 
         for chunk in padded_samples.reshape(sample_chunk_count, chunk_size):
             peak: float = low_threshold
@@ -61,14 +61,15 @@ class VolumeSlicer:
                         peak += drift  # spiking up (attenuate the peak increase to the decibel drift factor)
                     else:
                         peak = sample  # drifting up
-            chunk_peak_decibels.append(peak)
+            chunk_peaks.append(peak)
 
         self.sci: List[SampleClippingInterval] = []
 
-        # TODO turn peak decibels array into sample clipping intervals self.sci.append
-
-        if len(self.sci) >= clips:
-            return
+        clips = 0  # TODO turn peak decibels array into sample clipping intervals
+        for clip_index in range(clips):
+            sci = SampleClippingInterval(begin=0, end=0)
+            self.sci.append(sci)
+            logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
 
     def get(self):
         return self.sci

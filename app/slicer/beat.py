@@ -8,7 +8,7 @@ from arguments import parse_common_arguments, to_miliseconds
 from configuration import DEFAULT_BEAT_COUNT, DEFAULT_ATTACK_MILISECONDS, DEFAULT_DECAY_MILISECONDS, MAXIMUM_CLIP_SIZE_MILISECONDS
 from logger import Logger
 from normalizer import Normalizer
-from sample_clipping_interval import SampleClippingInterval
+from sci import SampleClippingInterval
 
 
 class BeatSlicer:

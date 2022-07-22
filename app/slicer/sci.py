@@ -29,4 +29,4 @@ class SampleClippingInterval:
         """
         :return: the sample interval in multiple formats
         """
-        return self.begin, self.end, {'begin': self.begin, 'end': self.end}, [self.begin, self.end], (self.begin, self.end)
+        return self.begin, self.end

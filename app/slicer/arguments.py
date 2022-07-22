@@ -8,6 +8,50 @@ from configuration import DEFAULT_CLIP_SIZE_MILISECONDS, DEFAULT_CLIPS, MAXIMUM_
 from logger import Logger
 
 
+def to_hertz(value: Union[str, float, int], logger: Logger) -> float:
+    """
+    Converts a string, float, or integer value to decibels (untested)
+
+    - numeric values are treated as hertz (requiring no conversion) e.g., -21.1 or 5
+    - string values ending with '', 'hz', or 'hertz' are treated as hertz, e.g., '88.8', '440hz', '1500 hertz'
+
+    Args:
+    :param value:  hertz value as a string, float, or integer value
+    :param logger: a Logger class to use to record warning and/or debug information
+    """
+    if isinstance(value, int) or isinstance(value, float):
+        return value
+
+    note: str = "Hertz are positive numeric values, or strings ending with one of the following units: '', 'hz', 'hertz'"
+
+    if not isinstance(value, str):
+        logger.warning(f"Hertz value argument type not valid {value} of {type(value)} [Fixup: returning 440 hertz]")
+        logger.warning(note)
+        return 440
+
+    string: str = value.replace(' ', '')
+
+    if '' == string:
+        return 440
+
+    parts: [str] = re.split(r'([-+]?[.\d]+)(.*)', string if '' != string else '0')
+    number: float = float(parts[1])
+    units: str = parts[2]
+
+    if 0 > number:
+        number = -number
+        logger.warning(f"Hertz value negative, {string} [Fixup: returning {number} hertz]")
+        logger.warning(note)
+
+    if '' == units or 'hz' == units or 'hertz' == units:
+        return number
+
+    logger.warning(f"Hertz argument units invalid, {string} [Fixup: returning {number} hertz]")
+    logger.warning(note)
+
+    return number
+
+
 def to_decibels(value: Union[str, float, int], logger: Logger) -> float:
     """
     Converts a string, float, or integer value to decibels (untested)

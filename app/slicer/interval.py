@@ -5,7 +5,7 @@ import pydub
 from arguments import parse_common_arguments
 from configuration import MAXIMUM_CLIP_SIZE_MILISECONDS
 from logger import Logger
-from sample_clipping_interval import SampleClippingInterval
+from sci import SampleClippingInterval
 
 
 class SimpleIntervalSlicer:

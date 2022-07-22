@@ -8,7 +8,7 @@ from spleeter.separator import Separator
 from arguments import parse_common_arguments
 from configuration import LOG_DEBUG, AUDIO_FILE_TYPE, TEMP_ROOT
 from logger import Logger
-from sample_clipping_interval import SampleClippingInterval
+from sci import SampleClippingInterval
 from volume import VolumeSlicer
 
 models = ['spleeter:2stems', 'spleeter:4stems', 'spleeter:5stems', 'spleeter:2stems-16kHz', 'spleeter:4stems-16kHz', 'spleeter:5stems-16kHz']
@@ -88,9 +88,7 @@ class VocalSlicer:
 
         logger.properties(segment, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 
-        volume_slicer = VolumeSlicer(stage, arguments, segment, logger)
-
-        self.sci: List[SampleClippingInterval] = volume_slicer.get()
+        self.sci: List[SampleClippingInterval] = VolumeSlicer(stage, arguments, segment, logger).get()
 
     def get(self):
         return self.sci
