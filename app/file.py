@@ -5,8 +5,8 @@ from configuration import EXPORT_ROOT, CACHE_ROOT, LOG_ROOT, TEMP_ROOT
 from logger import Logger
 
 
-def rm_md(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT, temp_root=TEMP_ROOT):
-    logger: Logger = Logger()
+def rm_md(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT, temp_root=TEMP_ROOT, logger: Logger = None):
+    logger: Logger = logger if logger is not None else Logger()
 
     def _rm_md(path, name):
         _erred = False

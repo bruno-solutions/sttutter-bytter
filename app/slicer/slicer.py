@@ -21,7 +21,7 @@ class Slicer:
     The primary object of the slicer module
     """
 
-    def __init__(self, recording: pydub.AudioSegment, methods: [{}] = None, logger: Logger = Logger()):
+    def __init__(self, recording: pydub.AudioSegment, methods: [{}] = None, logger: Logger = None):
         self.recording: pydub.AudioSegment = recording
         self.methods: [{}] = methods if methods is not None else []
         self.logger: Logger = logger if logger is not None else Logger()

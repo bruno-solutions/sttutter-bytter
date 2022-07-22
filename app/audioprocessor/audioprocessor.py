@@ -1,15 +1,14 @@
 """
 The main audio processing module
 """
-import hashlib
 from pathlib import Path
 from typing import Optional
 
 import pydub.silence
 
-import downloader
 import file
-from configuration import DEFAULT_EXTERNAL_DOWNLOADER, AUDIO_FILE_TYPE, DEFAULT_FRAME_RATE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT, TEMP_ROOT, LOG_DEBUG
+import loader
+from configuration import DEFAULT_DOWNLOADER_MODULE, AUDIO_FILE_TYPE, DEFAULT_FRAME_RATE, CACHE_ROOT, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT, TEMP_ROOT, LOG_DEBUG
 from logger import Logger
 from normalizer import Normalizer
 from slicer import Slicer
@@ -21,29 +20,26 @@ class AudioProcessor:
     The class that orchestrates the audio processing methods
     """
 
-    def __init__(self, frame_rate: int = DEFAULT_FRAME_RATE, external_downloader: str = DEFAULT_EXTERNAL_DOWNLOADER, logger: Logger = Logger(), preserve_cache: bool = True):
+    def __init__(self, frame_rate: int = DEFAULT_FRAME_RATE, cache_root: str = CACHE_ROOT, downloader_module: str = DEFAULT_DOWNLOADER_MODULE, logger: Logger = None, preserve_cache: bool = True):
         """
         Download a video or audio recording from the internet and save only the audio to a file
             - mono frame: single sample value
             - stereo frame: sample value pair
         Args:
-        :param frame_rate:          The audio frames per second to make the extracted audio file | None to use the default sample rate
-        :param external_downloader: A library for YouTube Download to use for file download | None to use the built-in downloader
-        :param logger:              User supplied logger class | None to use the built-in Logger
-        :param preserve_cache:      Should downloaded source media files be kept after processing to prevent re-download later
+        :param frame_rate:        the audio frames per second to make the extracted audio file | None to use the default sample rate
+        :param downloader_module: a library for YouTube Download to use for file download | None to use the built-in downloader
+        :param logger:            user supplied logger class | None to use the built-in Logger
+        :param preserve_cache:    should downloaded source media files be kept after processing to prevent re-download later
         """
-        self.url: str = ''
-        self.download_file_name: str = ''
-        self.audio_file_name: str = ''
-        self.metadata_file_name: str = ''
-
+        self.cache_root: str = cache_root
         self.frame_rate: int = frame_rate
 
-        self.external_downloader: str = external_downloader
-        self.logger: Logger = logger
+        self.logger: Logger = logger if logger is not None else Logger()
         self.recording: Optional[pydub.AudioSegment] = None
         self.tagger: Tagger = Tagger()
         self.slicer: Optional[Slicer] = None
+
+        self.loader = loader.Loader(frame_rate=frame_rate, downloader_module=downloader_module, tagger=self.tagger, logger=self.logger)
 
         self.clips: [] = []
 
@@ -52,25 +48,18 @@ class AudioProcessor:
         else:
             file.rm_md()
 
-    def download(self, url: str):
+    def load(self, uri: str):
         """
-        Downloads a file and converts it into a pydub AudioSegmant object
+        Downloads or copies a file and converts it into a pydub AudioSegmant object
         Args:
-        :param url: The source URL from which to extract audio
+        :param uri: The source Uniform Resource Identifier from which to extract the audio recording
         """
-        self.url = url
-        self.download_file_name = f"{CACHE_ROOT}\\{hashlib.md5(url.encode('utf-8')).hexdigest().upper()}"
-        self.audio_file_name = f"{self.download_file_name}.{AUDIO_FILE_TYPE}"
-        self.metadata_file_name = f"{self.download_file_name}.{METADATA_FILE_TYPE}"
-
-        self.logger.debug(f"\nDowloading from {url} and setting the frame rate to: {self.frame_rate}")
-        downloader.download(self.url, directory=CACHE_ROOT, filename=self.download_file_name, external_downloader=self.external_downloader, tagger=self.tagger, logger=self.logger)
-
-        self.recording = pydub.AudioSegment.from_file(self.audio_file_name).set_frame_rate(self.frame_rate)
+        self.recording, audio_file = self.loader.load(uri)
         self.logger.properties(self.recording, "Post-download recording characteristics")
+
         self.trim()
-        self.recording.export(self.audio_file_name, format=AUDIO_FILE_TYPE).close()
-        self.tagger.write_audio_file_tags(self.audio_file_name)
+        self.recording.export(audio_file, format=AUDIO_FILE_TYPE).close()
+        self.tagger.write_audio_file_tags(audio_file)
         self.logger.properties(self.recording, "Post-trim recording characteristics")
         return self
 

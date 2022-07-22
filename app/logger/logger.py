@@ -23,6 +23,8 @@ class Logger:
         self.log_warning = log_warning
         self.log_error = log_error
 
+        logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG if log_debug else logging.WARNING if log_warning else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
+
     def separator(self, separator: Union[str, bool] = DEFAULT_SEPARATOR, length: int = 80, mode: str = ''):
         """
         Emit a log separator
@@ -36,7 +38,6 @@ class Logger:
             print(separator)
 
         if self.log_file_name is not None:
-            logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.INFO, format="%(message)s")
             logging.info(separator)
 
     def debug(self, message: str, separator: Union[str, bool] = False):
@@ -57,7 +58,6 @@ class Logger:
                 print(f"{timestamp()} [DEBUG]: {message}")
 
         if self.log_file_name is not None:
-            logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.debug(message)
 
     def warning(self, message: str, separator: Union[str, bool] = False):
@@ -75,7 +75,6 @@ class Logger:
             print(f"{timestamp()} [WARNING]: {message}")
 
         if self.log_file_name is not None:
-            logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.warning(message)
 
     def error(self, message: str, separator: Union[str, bool] = False):
@@ -93,7 +92,6 @@ class Logger:
             print(f"{timestamp()} [ERROR]: {message}")
 
         if self.log_file_name is not None:
-            logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.error(message)
 
     def properties(self, recording: pydub.AudioSegment, message: str = None):

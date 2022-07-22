@@ -1,8 +1,10 @@
 APPLICATION_NAME: str = "soundbyte"
 
+DEFAULT_CHANNELS: int = 2
+DEFAULT_SAMPLE_WIDTH: int = 2  # CD Quality
 DEFAULT_SEPARATOR: str = '-'
 
-DOWNLOAD_BASE_FILE_NAME: str = f"{APPLICATION_NAME}.media.download"
+LOADER_BASE_FILE_NAME: str = f"{APPLICATION_NAME}.media.download"
 METADATA_FILE_TYPE: str = "info.json"
 AUDIO_FILE_TYPE: str = "wav"
 
@@ -20,7 +22,7 @@ LOG_ROOT: str = f"{WORK_ROOT}\\log"
 LOG_FILE_TYPE: str = "log"
 LOG_FILE_NAME: str = f"{LOG_ROOT}\\{APPLICATION_NAME}.{LOG_FILE_TYPE}"
 
-DEFAULT_EXTERNAL_DOWNLOADER: str = "aria2c"
+DEFAULT_DOWNLOADER_MODULE: str = "aria2c"
 DEFAULT_FRAME_RATE: int = 44100
 
 DEFAULT_CLIPS: int = 10

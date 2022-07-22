@@ -19,7 +19,7 @@ methods: [{}] = [
 ]
 
 AudioProcessor(preserve_cache=True) \
-    .download(tester.source(1)) \
+    .load(tester.source(6)) \
     .normalize() \
     .slice(methods) \
     .fade() \
