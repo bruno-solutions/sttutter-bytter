@@ -1,4 +1,4 @@
-APPLICATION_NAME: str = "soundbyte"
+APPLICATION_NAME: str = "sound_bytter"
 
 DEFAULT_CHANNELS: int = 2
 DEFAULT_SAMPLE_WIDTH: int = 2  # CD Quality

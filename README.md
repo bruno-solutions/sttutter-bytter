@@ -1,4 +1,4 @@
-# sttutter-audio-clipifier
+# sttutter-sound-bytter
 A tool to split audio clips from online and local file system (video or audio) media sources
 
 ### Requirements
