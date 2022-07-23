@@ -26,16 +26,17 @@ def load_command_line_arguments():
     parser.add_argument("-P", "--processor", dest="processor_file_name", help="file containing a clipification rule sequence", metavar="xxx.json")
     parser.add_argument("-U", "--urls", dest="url_file_name", help="file containing an array of media file URLs", metavar="xxx.json")
     parser.add_argument("-u", "--url", dest="url", help="local file system or remote URL of a media file", metavar="file://... or http(s)://...")
+    parser.add_argument("-c", "--config", dest="cfg_file_name", help="file containing configuration settings", metavar="xxx.json")
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_false", default=False, help="send debug messages to stdout")
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", default=True, help="send debug messages to the log file")
     parser.add_argument("--version""", action="version", version=f"%(prog)s {APPLICATION_VERSION}")
     args = vars(parser.parse_args())
 
-    return args['processor_file_name'], args['url_file_name'], args['url'], args['verbose'], args['debug']
+    return args['processor_file_name'], args['url_file_name'], args['url'], args['cfg_file_name'],args['verbose'], args['debug']
 
 
 def main():
-    processor_file_name, url_file_name, url, verbose, debug = load_command_line_arguments()
+    processor_file_name, url_file_name, url, cfg_file_name, verbose, debug = load_command_line_arguments()
 
     print(processor_file_name, url_file_name, url, verbose, debug)
 
