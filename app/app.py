@@ -38,7 +38,7 @@ def load_command_line_arguments():
 def main():
     processor_file_name, url_file_name, url, cfg_file_name, verbose, debug = load_command_line_arguments()
 
-    print(processor_file_name, url_file_name, url, verbose, debug)
+    print(processor_file_name, url_file_name, url, cfg_file_name, verbose, debug)
 
     AudioProcessor(preserve_cache=True) \
         .load(tester.source(7)) \
