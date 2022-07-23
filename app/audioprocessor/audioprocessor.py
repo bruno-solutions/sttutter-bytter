@@ -9,7 +9,7 @@ import pydub.silence
 import file
 import loader
 from clip import Clip
-from configuration import DEFAULT_DOWNLOADER_MODULE, AUDIO_FILE_TYPE, DEFAULT_FRAME_RATE, CACHE_ROOT, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT, TEMP_ROOT, LOG_DEBUG
+from configuration import DEFAULT_DOWNLOADER_MODULE, OUTPUT_FILE_TYPE, DEFAULT_FRAME_RATE, CACHE_ROOT, DEFAULT_FADE_IN_MILISECONDS, DEFAULT_FADE_OUT_MILISECONDS, EXPORT_ROOT, TEMP_ROOT, LOG_DEBUG
 from logger import Logger
 from normalizer import Normalizer
 from slicer import Slicer
@@ -57,7 +57,7 @@ class AudioProcessor:
         self.logger.properties(self.recording, "Post-download recording characteristics")
 
         self.trim()
-        self.recording.export(audio_file, format=AUDIO_FILE_TYPE).close()
+        self.recording.export(audio_file, format=OUTPUT_FILE_TYPE).close()
         self.tagger.write_audio_file_tags(audio_file)
         self.logger.properties(self.recording, "Post-trim recording characteristics")
         return self
@@ -70,7 +70,7 @@ class AudioProcessor:
 
             if LOG_DEBUG:
                 debug_file_name: str = f"{TEMP_ROOT}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
-                (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=AUDIO_FILE_TYPE).close()
+                (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=OUTPUT_FILE_TYPE).close()
                 self.tagger.write_audio_file_tags(debug_file_name)  # in case we want to keep the file
 
             self.logger.debug(f"Trimmed {silence_ms} ms of {'leading' if trim.call == 1 else 'trailing'} silence from the recording")
@@ -121,8 +121,8 @@ class AudioProcessor:
         """
         for index, clip in enumerate(self.clips):
             Path(self.export_root).mkdir(parents=True, exist_ok=True)
-            filename = f"{self.export_root}\\{self.tagger.get('title')}.{index:05d}.{AUDIO_FILE_TYPE}"
-            clip['samples'].export(filename, format=AUDIO_FILE_TYPE).close()
+            filename = f"{self.export_root}\\{self.tagger.get('title')}.{index:05d}.{OUTPUT_FILE_TYPE}"
+            clip['samples'].export(filename, format=OUTPUT_FILE_TYPE).close()
             self.tagger.set('source time indexes', f"{clip['source']['begin']['time']:.3f}:::{clip['source']['end']['time']:.3f}")
             self.tagger.set('source samples', f"{clip['source']['begin']['sample']:0.0f}:::{clip['source']['end']['sample']:0.0f}")
             self.tagger.write_audio_file_tags(filename)

@@ -1,13 +1,15 @@
 from setuptools import setup
 
+from configuration import APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_URL, APPLICATION_AUTHOR, APPLICATION_EMAIL, APPLICATION_DESCRIPTION
+
 setup(
-    name='sttutter-sound-bytter',
-    version='0.0.1',
-    packages=['loader', 'logger', 'slicer', 'tagger', 'tester', 'audioprocessor'],
-    package_dir={'': 'app'},
-    url='www.sttutter.com',
-    license='MIT',
-    author='Sttutter',
-    author_email='sound.bytter@sttutter.com',
-    description='Automaticall create audio clips'
+    name=APPLICATION_NAME,
+    version=APPLICATION_VERSION,
+    url=APPLICATION_URL,
+    author=APPLICATION_AUTHOR,
+    author_email=APPLICATION_EMAIL,
+    description=APPLICATION_DESCRIPTION,
+    license="MIT",
+    package_dir={"": "app"},
+    packages=["loader", "logger", "slicer", "tagger", "tester", "audioprocessor"]
 )

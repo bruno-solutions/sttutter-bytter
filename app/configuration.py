@@ -1,4 +1,9 @@
-APPLICATION_NAME: str = "sttutter-sound-bytter"
+APPLICATION_AUTHOR: str = "Sttutter"
+APPLICATION_NAME: str = "sttutter-bytter"
+APPLICATION_VERSION: str = "0.0.1"
+APPLICATION_URL: str = "bytter.sttutter.com"
+APPLICATION_EMAIL: str = "bytter@sttutter.com"
+APPLICATION_DESCRIPTION: str = "Artifically intelligent video and audio clipifier"
 
 DEFAULT_CHANNELS: int = 2
 DEFAULT_SAMPLE_WIDTH: int = 2  # CD Quality
@@ -6,9 +11,9 @@ DEFAULT_SEPARATOR: str = '-'
 
 LOADER_BASE_FILE_NAME: str = f"{APPLICATION_NAME}.media.download"
 METADATA_FILE_TYPE: str = "info.json"
-AUDIO_FILE_TYPE: str = "wav"
+OUTPUT_FILE_TYPE: str = "wav"
 
-WORK_ROOT: str = f"C:\\Users\\John Hart\\Desktop\\{APPLICATION_NAME}"
+WORK_ROOT: str = f"C:\\Users\\Public\\Desktop\\{APPLICATION_NAME}"
 TEMP_ROOT: str = f"{WORK_ROOT}\\temp"
 CACHE_ROOT: str = f"{WORK_ROOT}\\cache"
 EXPORT_ROOT: str = f"{WORK_ROOT}\\export"
@@ -23,7 +28,7 @@ LOG_FILE_TYPE: str = "log"
 LOG_FILE_NAME: str = f"{LOG_ROOT}\\{APPLICATION_NAME}.{LOG_FILE_TYPE}"
 
 DEFAULT_DOWNLOADER_MODULE: str = "aria2c"
-DEFAULT_FRAME_RATE: int = 44100
+DEFAULT_FRAME_RATE: int = 44100  # hz, CD quality
 
 DEFAULT_CLIPS: int = 10
 DEFAULT_DETECTION_WINDOW_MILISECONDS: int = 10

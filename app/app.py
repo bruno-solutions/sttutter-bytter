@@ -1,10 +1,9 @@
 """The main module"""
+from argparse import ArgumentParser
 
 import tester
 from audioprocessor import AudioProcessor
-
-# TODO [Enhancement] enable method combining (combine/compare the nearness sample clipping intervals to evaluate the quality of a clip)
-# TODO [Enhancement] enable method chaining (feed samples from one method into another to create sub-clips)
+from configuration import APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_DESCRIPTION
 
 methods: [{}] = [
     # {'method': 'slice_at_random'},
@@ -18,9 +17,35 @@ methods: [{}] = [
     {'method': 'slice_on_vocal_change', 'arguments': {'begin': 0, 'end': 1, 'passes': 1, 'model': 'spleeter:5stems-16kHz', 'detection_window': 20, 'low_threshold': -20.0, 'drift': 0.1, 'clips': 20}}
 ]
 
-AudioProcessor(preserve_cache=True) \
-    .load(tester.source(7)) \
-    .normalize() \
-    .slice(methods) \
-    .fade() \
-    .export()
+
+# TODO [Enhancement] enable method combining (combine/compare the nearness sample clipping intervals to evaluate the quality of a clip)
+# TODO [Enhancement] enable method chaining (feed samples from one method into another to create sub-clips)
+
+def load_command_line_arguments():
+    parser = ArgumentParser(prog=APPLICATION_NAME, description=APPLICATION_DESCRIPTION)
+    parser.add_argument("-P", "--processor", dest="processor_file_name", help="file containing a clipification rule sequence", metavar="xxx.json")
+    parser.add_argument("-U", "--urls", dest="url_file_name", help="file containing an array of media file URLs", metavar="xxx.json")
+    parser.add_argument("-u", "--url", dest="url", help="local file system or remote URL of a media file", metavar="file://... or http(s)://...")
+    parser.add_argument("-v", "--verbose", dest="verbose", action="store_false", default=False, help="send debug messages to stdout")
+    parser.add_argument("-d", "--debug", dest="debug", action="store_true", default=True, help="send debug messages to the log file")
+    parser.add_argument("--version""", action="version", version=f"%(prog)s {APPLICATION_VERSION}")
+    args = vars(parser.parse_args())
+
+    return args['processor_file_name'], args['url_file_name'], args['url'], args['verbose'], args['debug']
+
+
+def main():
+    processor_file_name, url_file_name, url, verbose, debug = load_command_line_arguments()
+
+    print(processor_file_name, url_file_name, url, verbose, debug)
+
+    AudioProcessor(preserve_cache=True) \
+        .load(tester.source(7)) \
+        .normalize() \
+        .slice(methods) \
+        .fade() \
+        .export()
+
+
+if __name__ == "__main__":
+    main()

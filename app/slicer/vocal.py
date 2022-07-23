@@ -6,7 +6,7 @@ from numpy import ndarray
 from spleeter.separator import Separator
 
 from arguments import parse_common_arguments
-from configuration import LOG_DEBUG, AUDIO_FILE_TYPE, TEMP_ROOT
+from configuration import LOG_DEBUG, OUTPUT_FILE_TYPE, TEMP_ROOT
 from logger import Logger
 from sci import SampleClippingInterval
 from volume import VolumeSlicer
@@ -60,7 +60,7 @@ class VocalSlicer:
             _segment: pydub.AudioSegment = pydub.AudioSegment(data=as_bytes, frame_rate=_recording.frame_rate, sample_width=_recording.sample_width, channels=_recording.channels)
 
             if LOG_DEBUG:
-                _segment.export(out_f=f"{TEMP_ROOT}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{AUDIO_FILE_TYPE}", format=AUDIO_FILE_TYPE).close()
+                _segment.export(out_f=f"{TEMP_ROOT}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{OUTPUT_FILE_TYPE}", format=OUTPUT_FILE_TYPE).close()
 
             return _segment
 

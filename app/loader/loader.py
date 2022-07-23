@@ -11,13 +11,13 @@ from urllib.parse import urlparse
 import pydub
 import youtube_dl
 
-from configuration import DEFAULT_FRAME_RATE, AUDIO_FILE_TYPE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_CHANNELS, DEFAULT_SAMPLE_WIDTH
+from configuration import DEFAULT_FRAME_RATE, OUTPUT_FILE_TYPE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_CHANNELS, DEFAULT_SAMPLE_WIDTH
 from logger import Logger
 from tagger import Tagger
 
 
 class Loader:
-    def __init__(self, cache_root: str = CACHE_ROOT, audio_file_type: str = AUDIO_FILE_TYPE, channels: int = DEFAULT_CHANNELS, frame_rate: int = DEFAULT_FRAME_RATE, sample_width: int = DEFAULT_SAMPLE_WIDTH, downloader_module: str = None, tagger: Tagger = None, logger: Logger = None):
+    def __init__(self, cache_root: str = CACHE_ROOT, audio_file_type: str = OUTPUT_FILE_TYPE, channels: int = DEFAULT_CHANNELS, frame_rate: int = DEFAULT_FRAME_RATE, sample_width: int = DEFAULT_SAMPLE_WIDTH, downloader_module: str = None, tagger: Tagger = None, logger: Logger = None):
         """
         Propvides the ability to load (download or copy) and convert source media (audio or video) files as audio files
         Args:
@@ -147,7 +147,7 @@ class Loader:
         self.logger.debug(f"Loading media file from {uri}", separator=True)
         start_time: float = time.time()
         path_file_base: str = f"{self.cache_root}\\{hashlib.md5(uri.encode('utf-8')).hexdigest().upper()}"
-        audio_file: str = f"{path_file_base}.{AUDIO_FILE_TYPE}"
+        audio_file: str = f"{path_file_base}.{OUTPUT_FILE_TYPE}"
         recording: pydub.AudioSegment = self.copy(uri, path_file_base, audio_file) if uri.startswith("file://") else self.download(uri, path_file_base, audio_file)
 
         self.logger.debug(f"Audio file {audio_file} generated")
