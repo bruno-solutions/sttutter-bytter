@@ -179,3 +179,11 @@ class Slicer:
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
         self.sci += PitchSlicer(stage, arguments, self.recording, self.logger).get()
+
+    @staticmethod
+    def get_slicer_methods() -> list[str]:
+        """
+        Returns a list of the available slicer methods to assist users in writing slicing scripts:
+        Note: all slicer wrapper method names must begin with "slice_"
+        """
+        return [attribute for attribute in dir(Slicer) if attribute.startswith("slice_") and callable(getattr(Slicer, attribute))]

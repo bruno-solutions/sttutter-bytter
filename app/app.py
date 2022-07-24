@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 import tester
 from audioprocessor import AudioProcessor
-from configuration import APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_DESCRIPTION
+from configuration import APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_DESCRIPTION, load_configuration_script, generate_configuration_and_logic_file
 
 methods: [{}] = [
     # {'method': 'slice_at_random'},
@@ -23,22 +23,29 @@ methods: [{}] = [
 
 def load_command_line_arguments():
     parser = ArgumentParser(prog=APPLICATION_NAME, description=APPLICATION_DESCRIPTION)
-    parser.add_argument("-P", "--processor", dest="processor_file_name", help="file containing a clipification rule sequence", metavar="xxx.json")
-    parser.add_argument("-U", "--urls", dest="url_file_name", help="file containing an array of media file URLs", metavar="xxx.json")
+    parser.add_argument("-C", "--configuration", dest="configuration_and_logic_file", help="configuration and clip logic file", metavar="xxx.json")
+    parser.add_argument("-U", "--urls", dest="url_file", help="file containing an array of media file URLs", metavar="xxx.json")
     parser.add_argument("-u", "--url", dest="url", help="local file system or remote URL of a media file", metavar="file://... or http(s)://...")
-    parser.add_argument("-c", "--config", dest="cfg_file_name", help="file containing configuration settings", metavar="xxx.json")
+    parser.add_argument("-r", "--root", dest="work_root", help="directory from which to process", metavar="local file system path")
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_false", default=False, help="send debug messages to stdout")
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", default=True, help="send debug messages to the log file")
+    parser.add_argument("-t", "--template", dest="template_file", action="store_true", default=True, help="generate a default configuration and logic template file", metavar="xxx.json")
     parser.add_argument("--version""", action="version", version=f"%(prog)s {APPLICATION_VERSION}")
     args = vars(parser.parse_args())
 
-    return args['processor_file_name'], args['url_file_name'], args['url'], args['cfg_file_name'],args['verbose'], args['debug']
+    return args['configuration_and_logic_file'], args['url_file'], args['url'], args['work_root'], args['verbose'], args['debug'], args['template_file']
 
 
 def main():
-    processor_file_name, url_file_name, url, cfg_file_name, verbose, debug = load_command_line_arguments()
+    configuration_and_logic_file_path, url_file_path, url, work_root, verbose, debug, template_file = load_command_line_arguments()
 
-    print(processor_file_name, url_file_name, url, cfg_file_name, verbose, debug)
+    if template_file:
+        generate_configuration_and_logic_file(template_file)
+        return
+
+    load_configuration_script(configuration_and_logic_file_path, work_root, verbose, debug)
+
+    print(configuration_and_logic_file_path, url_file_path, url, work_root, verbose, debug, template_file)
 
     AudioProcessor(preserve_cache=True) \
         .load(tester.source(7)) \

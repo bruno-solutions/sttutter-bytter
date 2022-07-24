@@ -4,7 +4,7 @@ from typing import Union
 
 import pydub
 
-from configuration import LOG_TO_CONSOLE, LOG_FILE_NAME, LOG_DEBUG, LOG_WARNING, LOG_ERROR, DEFAULT_SEPARATOR
+from configuration import LOG_TO_CONSOLE, LOG_FILE_NAME, LOG_DEBUG, LOG_WARNING, LOG_ERROR, DEFAULT_LOG_FILE_SEPARATOR
 
 
 def timestamp():
@@ -25,14 +25,14 @@ class Logger:
 
         logging.basicConfig(filename=self.log_file_name, filemode='w', level=logging.DEBUG if log_debug else logging.WARNING if log_warning else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
 
-    def separator(self, separator: Union[str, bool] = DEFAULT_SEPARATOR, length: int = 80, mode: str = ''):
+    def separator(self, separator: Union[str, bool] = DEFAULT_LOG_FILE_SEPARATOR, length: int = 80, mode: str = ''):
         """
         Emit a log separator
         """
         if not separator or ('debug' == mode and not self.log_debug) or ('warning' == mode and not self.log_warning) or ('error' == mode and not self.log_error):
             return
 
-        separator = ''.join([(separator if separator is str and separator != '' else DEFAULT_SEPARATOR) * length])
+        separator = ''.join([(separator if separator is str and separator != '' else DEFAULT_LOG_FILE_SEPARATOR) * length])
 
         if self.log_to_console:
             print(separator)

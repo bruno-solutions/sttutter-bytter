@@ -4,7 +4,7 @@ from typing import Union
 
 import pydub
 
-from configuration import DEFAULT_CLIP_SIZE_MILISECONDS, DEFAULT_CLIPS, MAXIMUM_SAMPLES
+from configuration import DEFAULT_CLIP_SIZE_MILISECONDS, DEFAULT_CLIPS_PER_STAGE, MAXIMUM_SAMPLES
 from logger import Logger
 
 
@@ -195,7 +195,7 @@ def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment, logger:
     begin: int = to_miliseconds(arguments['begin'], recording_ms, logger) if 'begin' in arguments else 0
     end: int = to_miliseconds(arguments['end'], recording_ms, logger) if 'end' in arguments else recording_ms
     clip_size: int = to_miliseconds(arguments['clip_size'], recording_ms, logger) if 'clip_size' in arguments else DEFAULT_CLIP_SIZE_MILISECONDS
-    clips: int = arguments['clips'] if 'clips' in arguments else DEFAULT_CLIPS
+    clips: int = arguments['clips'] if 'clips' in arguments else DEFAULT_CLIPS_PER_STAGE
 
     note = "Note: use values between 0.0 and 1.0 ('100%') to calculate a percentage of the clip duration as the starting or stopping point for clip generation"
 

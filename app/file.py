@@ -1,8 +1,21 @@
 import os
 import shutil
+from pathlib import Path
 
 from configuration import EXPORT_ROOT, CACHE_ROOT, LOG_ROOT, TEMP_ROOT
 from logger import Logger
+
+
+def normalize_file_path(file_path: str, extension: str) -> str:
+    """
+    Expand the full path and ensure the file extension is set correctly
+    Args:
+    :param file_path: the name of the file to be normalized
+    :param extension: the extension to add to the normalized file path
+    """
+    extension = extension if extension.startswith('.') else f".{extension}"  # guarantee '.' on the extension
+    path = Path(file_path).resolve()  # expand relative paths to full paths
+    return str(path.parent.joinpath(path.name, f"{extension if extension != path.suffix else ''}"))
 
 
 def rm_md(cache_root=CACHE_ROOT, export_root=EXPORT_ROOT, log_root=LOG_ROOT, temp_root=TEMP_ROOT, logger: Logger = None):
