@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 import tester
 from audioprocessor import AudioProcessor
-from configuration import APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_DESCRIPTION, load_configuration_script, generate_configuration_and_logic_file
+from configuration import APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_DESCRIPTION, load_configuration_and_logic, generate_configuration_and_logic_file
 
 methods: [{}] = [
     # {'method': 'slice_at_random'},
@@ -43,7 +43,7 @@ def main():
         generate_configuration_and_logic_file(template_file)
         return
 
-    load_configuration_script(configuration_and_logic_file_path, work_root, verbose, debug)
+    load_configuration_and_logic(configuration_and_logic_file_path, work_root, verbose, debug)
 
     print(configuration_and_logic_file_path, url_file_path, url, work_root, verbose, debug, template_file)
 

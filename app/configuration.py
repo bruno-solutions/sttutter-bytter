@@ -15,11 +15,14 @@ APPLICATION_DESCRIPTION: str = "Artifically intelligent video and audio clipifie
 
 # The application configuration constants
 
+CONFIGURATION_LOGIC_FILE_NAME: str  # NOT allowed to be overridden
+
 LOADER_BASE_FILE_NAME: str  # NOT allowed to be overridden
 METADATA_FILE_TYPE: str  # NOT allowed to be overridden
 OUTPUT_FILE_TYPE: str  # May be overridden
 
 WORK_ROOT: str  # May be overridden
+CONFIGURATION_SUBDIRECTORY: str  # NOT allowed to be overridden
 CONFIGURATION_ROOT: str  # Derived and NOT allowed to be overridden
 TEMP_ROOT: str  # Derived and NOT allowed to be overridden
 CACHE_ROOT: str  # Derived and NOT allowed to be overridden
@@ -82,13 +85,17 @@ LOADABLE_CONFIGURATION: {} = {
 
 
 def set_configuration_constants() -> None:
-    global WORK_ROOT, CONFIGURATION_ROOT, TEMP_ROOT, CACHE_ROOT, EXPORT_ROOT, LOADER_BASE_FILE_NAME, METADATA_FILE_TYPE, OUTPUT_FILE_TYPE
+    global CONFIGURATION_LOGIC_FILE_NAME
+    CONFIGURATION_LOGIC_FILE_NAME = f"{APPLICATION_NAME}.configuration.json"
+
+    global WORK_ROOT, CONFIGURATION_SUBDIRECTORY, CONFIGURATION_ROOT, TEMP_ROOT, CACHE_ROOT, EXPORT_ROOT, LOADER_BASE_FILE_NAME, METADATA_FILE_TYPE, OUTPUT_FILE_TYPE
     LOADER_BASE_FILE_NAME = f"{APPLICATION_NAME}.media.download"
     METADATA_FILE_TYPE = "info.json"
     OUTPUT_FILE_TYPE = LOADABLE_CONFIGURATION['output_file_type']
 
     WORK_ROOT = LOADABLE_CONFIGURATION['work_root']
-    CONFIGURATION_ROOT = f"{WORK_ROOT}\\config"
+    CONFIGURATION_SUBDIRECTORY = "\\config"
+    CONFIGURATION_ROOT = f"{WORK_ROOT}{CONFIGURATION_SUBDIRECTORY}"
     TEMP_ROOT = f"{WORK_ROOT}\\temp"
     CACHE_ROOT = f"{WORK_ROOT}\\cache"
     EXPORT_ROOT = f"{WORK_ROOT}\\export"
@@ -137,7 +144,13 @@ def override_configuration_setting(key: str, value) -> None:
     LOADABLE_CONFIGURATION[key] = value
 
 
-def load_configuration_script(file_path: str, work_root: str = None, verbose: bool = None, debug: bool = None) -> None:
+def load_configuration_and_logic(file_path: str = None, work_root: str = None, verbose: bool = None, debug: bool = None) -> None:
+    if file_path is None:
+        if work_root is None:
+            file_path = f"{CONFIGURATION_ROOT}\\{CONFIGURATION_LOGIC_FILE_NAME}"
+        else:
+            file_path = f"{work_root}{CONFIGURATION_SUBDIRECTORY}\\{CONFIGURATION_LOGIC_FILE_NAME}"
+
     file_path = normalize_file_path(file_path, "json")
 
     try:
