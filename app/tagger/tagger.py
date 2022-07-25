@@ -6,7 +6,7 @@ from typing import List, Union
 import pydub
 import taglib
 
-from configuration import APPLICATION_NAME
+from configuration.constants import APPLICATION_NAME
 from logger import Logger
 
 multivalue_key_to_tag: {} = {

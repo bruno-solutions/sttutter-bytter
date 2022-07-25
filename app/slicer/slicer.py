@@ -37,17 +37,17 @@ class Slicer:
         self.recording: Optional[pydub.AudioSegment] = None
         self.sci: List[SampleClippingInterval] = []
 
-    def slice(self, recording: pydub.AudioSegment = None, methods: [{}] = None, sci: List[SampleClippingInterval] = None) -> Slicer:
+    def slice(self, recording: pydub.AudioSegment = None, logic: [{}] = None, sci: List[SampleClippingInterval] = None) -> Slicer:
         """
         Apply slicer methods to build a set of recording sample clipping intervals
         Args:
         :param recording: the audio recording to be sliced
-        :param methods:   the slicers to use to slice the recording and the slicer arguments
+        :param logic:     the slicers to use to slice the recording and the slicer arguments
         :param sci:       starter sample clipping intervals
         """
         if recording is None or 1000 > len(recording):  # refuse to slice recordings shorter than 1 second (for no particular reason)
             raise RuntimeError("Recording not provided, use the Loader class to load a file to slice")
-        if methods is None or 0 == len(methods):
+        if logic is None or 0 == len(logic):
             raise RuntimeError("Slicer methods not declared, create a method dictionary that describes how to process and slice the recording")
 
         self.recording = recording
@@ -55,7 +55,10 @@ class Slicer:
 
         self.logger.debug("Slicing sample clipping intervals from the recording")
 
-        for stage, slicer in enumerate(methods):  # execution each slicer is a "stage" in the processing of the source recording
+        for stage, slicer in enumerate(logic):  # execution each slicer is a "stage" in the processing of the source
+            if 'active' in slicer and not slicer['active']:  # skip methods that are deactivated
+                continue
+
             try:
                 method_name = slicer['method']
             except AttributeError:

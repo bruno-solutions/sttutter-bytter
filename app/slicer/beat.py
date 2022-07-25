@@ -5,10 +5,13 @@ import pydub
 from numpy import ndarray
 
 from arguments import parse_common_arguments, to_miliseconds
-from configuration import DEFAULT_BEAT_COUNT, DEFAULT_ATTACK_MILISECONDS, DEFAULT_DECAY_MILISECONDS, MAXIMUM_CLIP_SIZE_MILISECONDS
+from configuration.configuration import Configuration
+from configuration.constants import MAXIMUM_CLIP_SIZE_MILISECONDS
 from logger import Logger
 from normalizer import Normalizer
 from sci import SampleClippingInterval
+
+CONFIGURATION = Configuration()
 
 
 class BeatSlicer:
@@ -26,9 +29,9 @@ class BeatSlicer:
         :param logger:    the Logger instantiated by the main Slicer class
         """
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
-        beats_per_clip: int = arguments['beats'] if 'beats' in arguments else DEFAULT_BEAT_COUNT
-        attack: int = to_miliseconds(arguments['attack'], len(recording), logger) if 'attack' in arguments else DEFAULT_ATTACK_MILISECONDS
-        decay: int = to_miliseconds(arguments['decay'], len(recording), logger) if 'decay' in arguments else DEFAULT_DECAY_MILISECONDS
+        beats_per_clip: int = arguments['beats'] if 'beats' in arguments else CONFIGURATION.get('default_beat_count')
+        attack: int = to_miliseconds(arguments['attack'], len(recording), logger) if 'attack' in arguments else CONFIGURATION.get('default_attack_miliseconds')
+        decay: int = to_miliseconds(arguments['decay'], len(recording), logger) if 'decay' in arguments else CONFIGURATION.get('default_decay_miliseconds')
 
         sample_rate = segment.frame_rate
         attack_samples: int = (sample_rate // 1000) * attack

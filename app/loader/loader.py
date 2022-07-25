@@ -11,13 +11,15 @@ from urllib.parse import urlparse
 import pydub
 import youtube_dl
 
-from configuration import DEFAULT_FRAME_RATE, OUTPUT_FILE_TYPE, CACHE_ROOT, METADATA_FILE_TYPE, DEFAULT_CHANNELS, DEFAULT_SAMPLE_WIDTH
+from configuration.configuration import Configuration
 from logger import Logger
 from tagger import Tagger
 
+CONFIGURATION = Configuration()
+
 
 class Loader:
-    def __init__(self, cache_root: str = CACHE_ROOT, audio_file_type: str = OUTPUT_FILE_TYPE, channels: int = DEFAULT_CHANNELS, frame_rate: int = DEFAULT_FRAME_RATE, sample_width: int = DEFAULT_SAMPLE_WIDTH, downloader_module: str = None, tagger: Tagger = None, logger: Logger = None):
+    def __init__(self, cache_root: str = CONFIGURATION.get('cache_root'), audio_file_type: str = CONFIGURATION.get('output_file_type'), channels: int = CONFIGURATION.get('channels'), frame_rate: int = CONFIGURATION.get('frame_rate'), sample_width: int = CONFIGURATION.get('sample_width'), downloader_module: str = None, tagger: Tagger = None, logger: Logger = None):
         """
         Propvides the ability to load (download or copy) and convert source media (audio or video) files as audio files
         Args:
@@ -55,7 +57,7 @@ class Loader:
         parsed_url = urlparse(uri)
         source_file_name = parsed_url.netloc + parsed_url.path if parsed_url.netloc else parsed_url.path.strip('/')  # This might be Windows only logic
         intermediate_file_name = f"{path_file_base}.{os.path.splitext(parsed_url.path)[1]}"
-        metadata_file_name = f"{path_file_base}.{METADATA_FILE_TYPE}"
+        metadata_file_name = f"{path_file_base}.{CONFIGURATION.get('metadata_file_type')}"
 
         if os.path.isfile(intermediate_file_name):
             self.logger.debug(f"File {intermediate_file_name} is cached on the local file system")
@@ -133,7 +135,7 @@ class Loader:
                 self.logger.error(message=str(error))
                 raise error
 
-        metadata_file_name: str = f"{path_file_base}.{METADATA_FILE_TYPE}"
+        metadata_file_name: str = f"{path_file_base}.{CONFIGURATION.get('metadata_file_type')}"
         self.tagger.synchronize_metadata(audio_file, metadata_file_name)
 
         return pydub.AudioSegment.from_file(audio_file)
@@ -147,7 +149,7 @@ class Loader:
         self.logger.debug(f"Loading media file from {uri}", separator=True)
         start_time: float = time.time()
         path_file_base: str = f"{self.cache_root}\\{hashlib.md5(uri.encode('utf-8')).hexdigest().upper()}"
-        audio_file: str = f"{path_file_base}.{OUTPUT_FILE_TYPE}"
+        audio_file: str = f"{path_file_base}.{CONFIGURATION.get('output_file_type')}"
         recording: pydub.AudioSegment = self.copy(uri, path_file_base, audio_file) if uri.startswith("file://") else self.download(uri, path_file_base, audio_file)
 
         self.logger.debug(f"Audio file {audio_file} generated")

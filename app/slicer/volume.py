@@ -6,10 +6,12 @@ import pydub
 from numpy import ndarray
 
 from arguments import parse_common_arguments, to_decibels
-from configuration import DEFAULT_DETECTION_WINDOW_MILISECONDS, DEFAULT_LOW_THRESHOLD, DEFAULT_DRIFT_DECIBELS
+from configuration.configuration import Configuration
 from logger import Logger
 from normalizer import Normalizer
 from sci import SampleClippingInterval
+
+CONFIGURATION = Configuration()
 
 
 class VolumeSlicer:
@@ -27,9 +29,9 @@ class VolumeSlicer:
         :param logger:    the Logger instantiated by the main Slicer class
         """
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
-        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else DEFAULT_LOW_THRESHOLD
-        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else DEFAULT_DRIFT_DECIBELS
-        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else DEFAULT_DETECTION_WINDOW_MILISECONDS
+        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else CONFIGURATION.get('low_threshold')
+        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else CONFIGURATION.get('drift_decibels')
+        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else CONFIGURATION.get('detection_window_miliseconds')
 
         logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
 

@@ -3,7 +3,7 @@ from typing import List
 import pydub
 
 from arguments import parse_common_arguments
-from configuration import MAXIMUM_CLIP_SIZE_MILISECONDS
+from configuration.constants import MAXIMUM_CLIP_SIZE_MILISECONDS
 from logger import Logger
 from sci import SampleClippingInterval
 

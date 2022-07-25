@@ -1,10 +1,11 @@
-from configuration import MAXIMUM_SAMPLES
+from configuration.configuration import Configuration
 
 
 class SampleClippingInterval:
     """
     Value object for a sample clipping interval
     """
+    MAXIMUM_SAMPLES = Configuration().get('maximum_samples')
 
     def __init__(self, begin=0, end=MAXIMUM_SAMPLES):
         """
@@ -19,8 +20,8 @@ class SampleClippingInterval:
             begin, end = end, begin
         if 0 > begin:
             begin = 0
-        if end > MAXIMUM_SAMPLES:
-            end = MAXIMUM_SAMPLES
+        if end > self.MAXIMUM_SAMPLES:
+            end = self.MAXIMUM_SAMPLES
 
         self.begin = int(begin)
         self.end = int(end)
