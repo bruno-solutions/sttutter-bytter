@@ -91,7 +91,7 @@ class Configuration:
             return self.mutable_configuration[key]
         elif key in self.derived_configuration:
             return self.derived_configuration[key]
-        elif key in self.mutable_logic:
-            return self.derived_configuration[key]
+        elif 'logic' == key:
+            return self.mutable_logic
         else:
             raise KeyError(f"{key} not found in the configuration parameters")
