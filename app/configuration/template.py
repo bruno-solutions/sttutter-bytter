@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Final
 
 from configuration.constants import APPLICATION_NAME
-from slicer import Slicer
 from utility import normalize_file_path
 
 
@@ -34,7 +33,7 @@ class Template:
     }
 
     logic: Final = {
-        "logic": [{"method": method, "active": False, "arguments": {}} for method in Slicer.get_slicer_methods()]
+        # "logic": [{"method": method, "active": False, "arguments": {}} for method in Slicer.get_slicer_methods()]
     }
 
     @staticmethod

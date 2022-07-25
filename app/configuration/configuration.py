@@ -18,6 +18,8 @@ class Configuration:
         self.set_derived_configuration_and_logic()
 
     def set_derived_configuration_and_logic(self) -> None:
+        self.derived_configuration['maximum_samples'] = 24 * 60 * 60 * self.mutable_configuration['frame_rate']
+
         work_root = self.mutable_configuration['work_root']
 
         self.derived_configuration['configuration_logic_file_path'] = f"{self.mutable_configuration['work_root']}\\{self.constant_configuration['configuration_logic_file_name']}"
@@ -83,4 +85,13 @@ class Configuration:
         self.mutable_logic = loaded_logic
 
     def get(self, key: str):
-        return self[key]
+        if key in self.constant_configuration:
+            return self.constant_configuration[key]
+        elif key in self.mutable_configuration:
+            return self.mutable_configuration[key]
+        elif key in self.derived_configuration:
+            return self.derived_configuration[key]
+        elif key in self.mutable_logic:
+            return self.derived_configuration[key]
+        else:
+            raise KeyError(f"{key} not found in the configuration parameters")

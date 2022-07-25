@@ -8,8 +8,8 @@ from argparse import ArgumentParser
 
 import tester
 from audioprocessor import AudioProcessor
-from configuration import Template
 from configuration.configuration import Configuration
+from configuration.template import Template
 
 CONFIGURATION = Configuration()
 
