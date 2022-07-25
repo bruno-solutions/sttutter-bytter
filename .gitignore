@@ -16,3 +16,4 @@
 #application generated files
 /app/pretrained_models/
 
+*.json
