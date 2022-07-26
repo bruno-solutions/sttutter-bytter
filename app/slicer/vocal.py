@@ -7,18 +7,14 @@ from spleeter.separator import Separator
 
 from arguments import parse_common_arguments
 from configuration.configuration import Configuration
-
 from logger import Logger
 from sci import SampleClippingInterval
 from volume import VolumeSlicer
 
-CONFIGURATION = Configuration()
-
-
 models = ['spleeter:2stems', 'spleeter:4stems', 'spleeter:5stems', 'spleeter:2stems-16kHz', 'spleeter:4stems-16kHz', 'spleeter:5stems-16kHz']
 
 
-class VocalSlicer:
+class VocalSlicer(object):
     """
     Slice source audio recording using vocal cues
     """
@@ -63,8 +59,8 @@ class VocalSlicer:
             as_bytes: bytes = as_int_reshaped.tobytes()  # [40,000,000] bytes
             _segment: pydub.AudioSegment = pydub.AudioSegment(data=as_bytes, frame_rate=_recording.frame_rate, sample_width=_recording.sample_width, channels=_recording.channels)
 
-            if CONFIGURATION.get('log_debug'):
-                _segment.export(out_f=f"{CONFIGURATION.get('temp_root')}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{CONFIGURATION.get('output_file_type')}", format=CONFIGURATION.get('output_file_type')).close()
+            if Configuration().get('log_debug'):
+                _segment.export(out_f=f"{Configuration().get('temp_root')}\\{name}.{model.replace(':', '.')}.stage.{stage}.pass.{iteration + 1}.{Configuration().get('output_file_type')}", format=Configuration().get('output_file_type')).close()
 
             return _segment
 

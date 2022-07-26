@@ -12,6 +12,7 @@ APPLICATION_DESCRIPTION: Final = "Artifically intelligent video and audio clipif
 
 CONFIGURATION_LOGIC_FILE_NAME: Final = f"{APPLICATION_NAME}.configuration.json"
 CONFIGURATION_LOGIC_FILE_PATH: Final = f"{Path(os.getcwd()).joinpath(CONFIGURATION_LOGIC_FILE_NAME)}"
+
 LOG_FILE_TYPE: Final = "log"
 LOADER_BASE_FILE_NAME: Final = f"{APPLICATION_NAME}.media.download"
 METADATA_FILE_TYPE: Final = "info.json"

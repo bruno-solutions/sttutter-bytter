@@ -1,49 +1,51 @@
 import json
-from typing import Final
 
 from configuration.constants import configuration_constants
-from configuration.template import Template
+from configuration.derived import configuration_derived
+from configuration.mutable import configuration_mutable, logic_mutable
 from utility import normalize_file_path
 from utility.singleton import singleton
 
 
 @singleton
-class Configuration:
-    constant_configuration: Final = configuration_constants
-    mutable_configuration: Final = Template.configuration
-    mutable_logic: Final = Template.logic
-    derived_configuration: Final = {}
-
+class Configuration(object):
     def __init__(self):
-        self.set_derived_configuration_and_logic()
+        self.constant_configuration = configuration_constants
+        self.mutable_configuration = configuration_mutable
+        self.mutable_logic = logic_mutable
+        self.derived_configuration = configuration_derived
+        self.set_derived_configuration()
 
-    def set_derived_configuration_and_logic(self) -> None:
-        self.derived_configuration['maximum_samples'] = 24 * 60 * 60 * self.mutable_configuration['frame_rate']
+    def set_configuration_value(self, key: str, value: str) -> None:
+        if key in self.derived_configuration:
+            print(f"Derived: configuration['{key}'] replacing value {self.derived_configuration[key]} with {value}")
+            self.derived_configuration[key] = value
+        elif key in self.mutable_configuration:
+            print(f"Mutable: configuration['{key}'] replacing value {self.mutable_configuration[key]} with {value}")
+            self.mutable_configuration[key] = value
+        elif key in self.constant_configuration:
+            print(f"Constant: configuration['{key}'] value for this key cannot be changed")
+        else:
+            print(f"Ignored: configuration['{key}'] is not recognized")
+
+    def set_derived_configuration(self) -> None:
+        self.set_configuration_value('maximum_samples', 24 * 60 * 60 * self.mutable_configuration['frame_rate'])
 
         work_root = self.mutable_configuration['work_root']
+        log_root = f"{work_root}\\log"
 
-        self.derived_configuration['configuration_logic_file_path'] = f"{self.mutable_configuration['work_root']}\\{self.constant_configuration['configuration_logic_file_name']}"
-        self.derived_configuration['temp_root'] = f"{work_root}\\temp"
-        self.derived_configuration['cache_root'] = f"{work_root}\\cache"
-        self.derived_configuration['export_root'] = f"{work_root}\\export"
-        self.derived_configuration['log_root'] = f"{work_root}\\log"
-        self.derived_configuration['log_file_path'] = f"{self.derived_configuration['log_root']}\\{self.constant_configuration['application_name']}.{self.constant_configuration['log_file_type']}"
-
-    def set_mutable_configuration_value(self, key: str, value: str) -> None:
-        if key in self.constant_configuration:
-            print(f"configuration['{key}'] is not a constant configuration key, that cannot be changed")
-        elif key in self.mutable_configuration:
-            print(f"configuration['{key}'] replacing value {self.mutable_configuration[key]} with {value}")
-            self.mutable_configuration[key] = value
-        elif key in self.derived_configuration:
-            print(f"configuration['{key}'] is not a derived configuration key, that cannot be directly set")
-        else:
-            print(f"configuration['{key}'] is not a mutable configuration key, ignoring")
+        self.set_configuration_value('configuration_logic_file_path', f"{work_root}\\{self.constant_configuration['configuration_logic_file_name']}")
+        self.set_configuration_value('temp_root', f"{work_root}\\temp")
+        self.set_configuration_value('cache_root', f"{work_root}\\cache")
+        self.set_configuration_value('export_root', f"{work_root}\\export")
+        self.set_configuration_value('log_root', log_root)
+        self.set_configuration_value('log_file_path', f"{log_root}\\{self.constant_configuration['application_name']}.{self.constant_configuration['log_file_type']}")
+        print(self.derived_configuration)
 
     def set_mutable_configuration(self, configuration_and_logic: {}) -> None:
         for key, value in configuration_and_logic.items():
-            self.set_mutable_configuration_value(key, value)
-        self.set_derived_configuration_and_logic()
+            self.set_configuration_value(key, value)
+        self.set_derived_configuration()
 
     def load_configuration_and_logic(self, file_path: str = None, work_root: str = None, verbose: bool = None, debug: bool = None) -> None:
         if file_path is None:

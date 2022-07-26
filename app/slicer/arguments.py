@@ -7,8 +7,6 @@ import pydub
 from configuration.configuration import Configuration
 from logger import Logger
 
-CONFIGURATION = Configuration()
-
 
 def to_hertz(value: Union[str, float, int], logger: Logger) -> float:
     """
@@ -102,10 +100,10 @@ def miliseconds_to_index(miliseconds, segment: pydub.AudioSegment, logger: Logge
     :param logger:      a Logger class to use to record warning and/or debug information
     """
     frames_per_milisecond = segment.frame_rate / 1000
-    maximum_miliseconds = CONFIGURATION.get('maximum_samples') * (segment.frame_rate / 1000)
+    maximum_miliseconds = Configuration().get('maximum_samples') * (segment.frame_rate / 1000)
 
     if maximum_miliseconds < abs(miliseconds):
-        maximum_miliseconds = copysign(CONFIGURATION.get('maximum_samples'), maximum_miliseconds)
+        maximum_miliseconds = copysign(Configuration().get('maximum_samples'), maximum_miliseconds)
         logger.warning(f"Number of miliseconds too large {miliseconds} [Fixup: using {maximum_miliseconds}]")
         miliseconds = maximum_miliseconds
 
@@ -122,8 +120,8 @@ def index_to_miliseconds(index: int, segment: pydub.AudioSegment, logger: Logger
     """
     frames_per_milisecond: float = segment.frame_rate / 1000
 
-    if CONFIGURATION.get('maximum_samples') < abs(index):
-        maximum_index: int = int(copysign(CONFIGURATION.get('maximum_samples'), index))
+    if Configuration().get('maximum_samples') < abs(index):
+        maximum_index: int = int(copysign(Configuration().get('maximum_samples'), index))
         logger.warning(f"Sample index magnitude too large {index} [Fixup: using {maximum_index}]")
         index = maximum_index
 
@@ -196,8 +194,8 @@ def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment, logger:
 
     begin: int = to_miliseconds(arguments['begin'], recording_ms, logger) if 'begin' in arguments else 0
     end: int = to_miliseconds(arguments['end'], recording_ms, logger) if 'end' in arguments else recording_ms
-    clip_size: int = to_miliseconds(arguments['clip_size'], recording_ms, logger) if 'clip_size' in arguments else CONFIGURATION.get('clip_size_miliseconds')
-    clips: int = arguments['clips'] if 'clips' in arguments else CONFIGURATION.get('clips_per_stage')
+    clip_size: int = to_miliseconds(arguments['clip_size'], recording_ms, logger) if 'clip_size' in arguments else Configuration().get('clip_size_miliseconds')
+    clips: int = arguments['clips'] if 'clips' in arguments else Configuration().get('clips_per_stage')
 
     note = "Note: use values between 0.0 and 1.0 ('100%') to calculate a percentage of the clip duration as the starting or stopping point for clip generation"
 

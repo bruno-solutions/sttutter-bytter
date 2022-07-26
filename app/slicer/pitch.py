@@ -9,7 +9,7 @@ from logger import Logger
 from sci import SampleClippingInterval
 
 
-class PitchSlicer:
+class PitchSlicer(object):
     """
     Pitch change slicer
     Locates fundamental frequency (key or pitch) change events to define sample clipping intervals

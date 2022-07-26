@@ -1,7 +1,7 @@
 from configuration.configuration import Configuration
 
 
-class SampleClippingInterval:
+class SampleClippingInterval(object):
     """
     Value object for a sample clipping interval
     """

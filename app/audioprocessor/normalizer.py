@@ -6,7 +6,7 @@ import pydub
 from numpy import ndarray
 
 
-class Normalizer:
+class Normalizer(object):
     """
     The class that implements ReplayGain
     """

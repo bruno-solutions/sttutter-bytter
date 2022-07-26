@@ -9,7 +9,7 @@ from logger import Logger
 from sci import SampleClippingInterval
 
 
-class ChaosSlicer:
+class ChaosSlicer(object):
     """
     Random interval slicer
     """

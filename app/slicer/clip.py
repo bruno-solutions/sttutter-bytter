@@ -3,7 +3,7 @@ import pydub
 from sci import SampleClippingInterval
 
 
-class Clip:
+class Clip(object):
     """
     Value object of a clip
     """

@@ -4,10 +4,8 @@ import shutil
 from configuration.configuration import Configuration
 from logger import Logger
 
-CONFIGURATION = Configuration()
 
-
-def rm_md(cache_root=CONFIGURATION.get('cache_root'), export_root=CONFIGURATION.get('export_root'), log_root=CONFIGURATION.get('log_root'), temp_root=CONFIGURATION.get('temp_root'), logger: Logger = None):
+def rm_md(cache_root=Configuration().get('cache_root'), export_root=Configuration().get('export_root'), log_root=Configuration().get('log_root'), temp_root=Configuration().get('temp_root'), logger: Logger = None):
     logger: Logger = logger if logger is not None else Logger()  # create a logger when one is not provided
 
     def _rm_md(path, name):

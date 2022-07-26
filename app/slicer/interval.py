@@ -8,7 +8,7 @@ from logger import Logger
 from sci import SampleClippingInterval
 
 
-class SimpleIntervalSlicer:
+class SimpleIntervalSlicer(object):
     """
     A simple time interval slicer
     """

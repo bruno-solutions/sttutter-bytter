@@ -11,10 +11,8 @@ from logger import Logger
 from normalizer import Normalizer
 from sci import SampleClippingInterval
 
-CONFIGURATION = Configuration()
 
-
-class VolumeSlicer:
+class VolumeSlicer(object):
     """
     Slice source audio recording using volume change cues
     """
@@ -29,9 +27,9 @@ class VolumeSlicer:
         :param logger:    the Logger instantiated by the main Slicer class
         """
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
-        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else CONFIGURATION.get('low_threshold')
-        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else CONFIGURATION.get('drift_decibels')
-        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else CONFIGURATION.get('detection_window_miliseconds')
+        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else Configuration().get('low_threshold')
+        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else Configuration().get('drift_decibels')
+        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else Configuration().get('detection_window_miliseconds')
 
         logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
 

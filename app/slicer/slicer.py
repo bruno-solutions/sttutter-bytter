@@ -20,7 +20,7 @@ from .vocal import VocalSlicer
 from .volume import VolumeSlicer
 
 
-class Slicer:
+class Slicer(object):
     """
     Builds a list of weighted sample clipping intervals based upon the results of the invoked slicing methods
     from which lists of auido array sample arrays (known as clips) are prepared from a source audio recording

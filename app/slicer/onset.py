@@ -9,7 +9,7 @@ from logger import Logger
 from sci import SampleClippingInterval
 
 
-class OnsetSlicer:
+class OnsetSlicer(object):
     """
     Onset slicer
     Locates note onset events by picking peaks in an onset strength envelope to define sample clipping intervals

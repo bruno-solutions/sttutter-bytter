@@ -15,15 +15,13 @@ from normalizer import Normalizer
 from slicer import Slicer
 from tagger import Tagger
 
-CONFIGURATION = Configuration()
 
-
-class AudioProcessor:
+class AudioProcessor(object):
     """
     The class that orchestrates the audio processing methods
     """
 
-    def __init__(self, frame_rate: int = CONFIGURATION.get('frame_rate'), downloader_module: str = CONFIGURATION.get('downloader_module'), preserve_cache: bool = True, cache_root: str = CONFIGURATION.get('cache_root'), export_root: str = CONFIGURATION.get('export_root'), logger: Logger = None):
+    def __init__(self, frame_rate: int = Configuration().get('frame_rate'), downloader_module: str = Configuration().get('downloader_module'), preserve_cache: bool = True, cache_root: str = Configuration().get('cache_root'), export_root: str = Configuration().get('export_root'), logger: Logger = None):
         """
         Download a video or audio recording from the internet and save only the audio to a file
             - mono frame: single sample value
@@ -59,7 +57,7 @@ class AudioProcessor:
         self.logger.properties(self.recording, "Post-download recording characteristics")
 
         self.trim()
-        self.recording.export(audio_file, format=CONFIGURATION.get('output_file_type')).close()
+        self.recording.export(audio_file, format=Configuration().get('output_file_type')).close()
         self.tagger.write_audio_file_tags(audio_file)
         self.logger.properties(self.recording, "Post-trim recording characteristics")
         return self
@@ -70,9 +68,9 @@ class AudioProcessor:
             silence_ms: int = pydub.silence.detect_leading_silence(recording, silence_threshold=-50.0, chunk_size=10)
             recording = recording[silence_ms + 1:].reverse()
 
-            if CONFIGURATION.get('log_debug'):
-                debug_file_name: str = f"{CONFIGURATION.get('temp_root')}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
-                (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=CONFIGURATION.get('output_file_type')).close()
+            if Configuration().get('log_debug'):
+                debug_file_name: str = f"{Configuration().get('temp_root')}\\{'leading' if trim.call == 1 else 'leading.and.trailing'}.trim.wav"
+                (recording.reverse() if 1 == trim.call else recording).export(debug_file_name, format=Configuration().get('output_file_type')).close()
                 self.tagger.write_audio_file_tags(debug_file_name)  # in case we want to keep the file
 
             self.logger.debug(f"Trimmed {silence_ms} ms of {'leading' if trim.call == 1 else 'trailing'} silence from the recording")
@@ -96,7 +94,7 @@ class AudioProcessor:
         self.logger.debug("Note: sample count should not be less than the prior sample count")
         return self
 
-    def slice(self, logic: [{}] = CONFIGURATION.mutable_logic):
+    def slice(self, logic: [{}] = Configuration().mutable_logic):
         """
         Executes slicer methods in order defined in the methods list
         Args:
@@ -106,7 +104,7 @@ class AudioProcessor:
         self.clips = self.slicer.slice(recording=self.recording, logic=logic).get()
         return self
 
-    def fade(self, fade_in_duration: int = CONFIGURATION.get('fade_in_miliseconds'), fade_out_duration: int = CONFIGURATION.get('fade_out_miliseconds')):
+    def fade(self, fade_in_duration: int = Configuration().get('fade_in_miliseconds'), fade_out_duration: int = Configuration().get('fade_out_miliseconds')):
         """
         Apply fade-in and fade-out to the clips
         Args:
@@ -123,8 +121,8 @@ class AudioProcessor:
         """
         for index, clip in enumerate(self.clips):
             Path(self.export_root).mkdir(parents=True, exist_ok=True)
-            filename = f"{self.export_root}\\{self.tagger.get('title')}.{index:05d}.{CONFIGURATION.get('output_file_type')}"
-            clip['samples'].export(filename, format=CONFIGURATION.get('output_file_type')).close()
+            filename = f"{self.export_root}\\{self.tagger.get('title')}.{index:05d}.{Configuration().get('output_file_type')}"
+            clip['samples'].export(filename, format=Configuration().get('output_file_type')).close()
             self.tagger.set('source time indexes', f"{clip['source']['begin']['time']:.3f}:::{clip['source']['end']['time']:.3f}")
             self.tagger.set('source samples', f"{clip['source']['begin']['sample']:0.0f}:::{clip['source']['end']['sample']:0.0f}")
             self.tagger.write_audio_file_tags(filename)

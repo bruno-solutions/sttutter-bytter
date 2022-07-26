@@ -1,39 +1,40 @@
 import logging
 import time
+import traceback
 from typing import Union
 
 import pydub
 
 from configuration.configuration import Configuration
 
-CONFIGURATION = Configuration()
 
 def timestamp():
     return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))
 
 
-class Logger:
+class Logger(object):
     """
     Custom logger class
     """
 
-    def __init__(self, log_file_path: str = CONFIGURATION.get('log_file_path'), log_to_console: bool = CONFIGURATION.get('log_to_console'), log_debug: bool = CONFIGURATION.get('log_debug'), log_warning: bool = CONFIGURATION.get('log_warning'), log_error: bool = CONFIGURATION.get('log_error')):
+    def __init__(self, log_file_path: str = Configuration().get('log_file_path'), log_to_console: bool = Configuration().get('log_to_console'), log_debug: bool = Configuration().get('log_debug'), log_warning: bool = Configuration().get('log_warning'), log_error: bool = Configuration().get('log_error')):
         self.log_to_console = log_to_console
         self.log_file_path = log_file_path
         self.log_debug = log_debug
         self.log_warning = log_warning
         self.log_error = log_error
 
+        traceback.print_stack()
         logging.basicConfig(filename=self.log_file_path, filemode='w', level=logging.DEBUG if log_debug else logging.WARNING if log_warning else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
 
-    def separator(self, separator: Union[str, bool] = CONFIGURATION.get('log_file_separator'), length: int = 80, mode: str = ''):
+    def separator(self, separator: Union[str, bool] = Configuration().get('log_file_separator'), length: int = 80, mode: str = ''):
         """
         Emit a log separator
         """
         if not separator or ('debug' == mode and not self.log_debug) or ('warning' == mode and not self.log_warning) or ('error' == mode and not self.log_error):
             return
 
-        separator = ''.join([(separator if separator is str and separator != '' else CONFIGURATION.get('log_file_separator')) * length])
+        separator = ''.join([(separator if separator is str and separator != '' else Configuration().get('log_file_separator')) * length])
 
         if self.log_to_console:
             print(separator)

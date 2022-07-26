@@ -112,7 +112,7 @@ def is_multivalue_tag(tag: str):
     return tag in multivalue_tags
 
 
-class Tagger:
+class Tagger(object):
     def __init__(self, logger: Logger = None):
         self.logger: Logger = logger if logger is not None else Logger()
         self.tags: dict[str, str] = {}

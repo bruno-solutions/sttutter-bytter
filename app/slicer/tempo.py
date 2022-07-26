@@ -9,7 +9,7 @@ from logger import Logger
 from sci import SampleClippingInterval
 
 
-class TempoSlicer:
+class TempoSlicer(object):
     """
     Tempo change slicer
     Locates tempo (beats per minute) change events to define sample clipping intervals
