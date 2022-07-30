@@ -11,7 +11,7 @@ example_sources = [
     'https://youtu.be/QDYRQX6FPQQ',
     'https://youtu.be/PARA6_ErZI0',
     'https://youtu.be/hOZgb0T7AM4',
-    'file:///C:/Users/John Hart/Desktop/soundbyte/source/Zombo com/Zombo.com.wav'
+    'file:///C:/Users/Public/Desktop/bytter/source/Zombo com/Zombo.com.wav'
 ]
 
 random.seed()

@@ -8,7 +8,7 @@ from configuration.configuration import Configuration
 from logger import Logger
 
 
-def to_hertz(value: Union[str, float, int], logger: Logger) -> float:
+def to_hertz(value: Union[str, float, int]) -> float:
     """
     Converts a string, float, or integer value to decibels (untested)
 
@@ -17,7 +17,6 @@ def to_hertz(value: Union[str, float, int], logger: Logger) -> float:
 
     Args:
     :param value:  hertz value as a string, float, or integer value
-    :param logger: a Logger class to use to record warning and/or debug information
     """
     if isinstance(value, int) or isinstance(value, float):
         return value
@@ -25,8 +24,8 @@ def to_hertz(value: Union[str, float, int], logger: Logger) -> float:
     note: str = "Hertz are positive numeric values, or strings ending with one of the following units: '', 'hz', 'hertz'"
 
     if not isinstance(value, str):
-        logger.warning(f"Hertz value argument type not valid {value} of {type(value)} [Fixup: returning 440 hertz]")
-        logger.warning(note)
+        Logger.warning(f"Hertz value argument type not valid {value} of {type(value)} [Fixup: returning 440 hertz]")
+        Logger.warning(note)
         return 440
 
     string: str = value.replace(' ', '')
@@ -40,19 +39,19 @@ def to_hertz(value: Union[str, float, int], logger: Logger) -> float:
 
     if 0 > number:
         number = -number
-        logger.warning(f"Hertz value negative, {string} [Fixup: returning {number} hertz]")
-        logger.warning(note)
+        Logger.warning(f"Hertz value negative, {string} [Fixup: returning {number} hertz]")
+        Logger.warning(note)
 
     if '' == units or 'hz' == units or 'hertz' == units:
         return number
 
-    logger.warning(f"Hertz argument units invalid, {string} [Fixup: returning {number} hertz]")
-    logger.warning(note)
+    Logger.warning(f"Hertz argument units invalid, {string} [Fixup: returning {number} hertz]")
+    Logger.warning(note)
 
     return number
 
 
-def to_decibels(value: Union[str, float, int], logger: Logger) -> float:
+def to_decibels(value: Union[str, float, int]) -> float:
     """
     Converts a string, float, or integer value to decibels (untested)
 
@@ -61,7 +60,6 @@ def to_decibels(value: Union[str, float, int], logger: Logger) -> float:
 
     Args:
     :param value:  decibel as a string, float, or integer value
-    :param logger: a Logger class to use to record warning and/or debug information
     """
     if isinstance(value, int) or isinstance(value, float):
         return value
@@ -69,8 +67,8 @@ def to_decibels(value: Union[str, float, int], logger: Logger) -> float:
     note: str = "Decibles are numeric values, or strings ending with one of the following units: '', 'db', 'dbs', 'decibels'"
 
     if not isinstance(value, str):
-        logger.warning(f"Decibel level argument type not valid {value} of {type(value)} [Fixup: returning 0 decibels]")
-        logger.warning(note)
+        Logger.warning(f"Decibel level argument type not valid {value} of {type(value)} [Fixup: returning 0 decibels]")
+        Logger.warning(note)
         return 0.0
 
     string: str = value.replace(' ', '')
@@ -85,50 +83,48 @@ def to_decibels(value: Union[str, float, int], logger: Logger) -> float:
     if '' == units or 'db' == units or 'dbs' == units or 'decibels' == units:
         return number
 
-    logger.warning(f"Decibel level argument units invalid, {string} [Fixup: returning {number} decibels]")
-    logger.warning(note)
+    Logger.warning(f"Decibel level argument units invalid, {string} [Fixup: returning {number} decibels]")
+    Logger.warning(note)
 
     return number
 
 
-def miliseconds_to_index(miliseconds, segment: pydub.AudioSegment, logger: Logger):
+def miliseconds_to_index(miliseconds, segment: pydub.AudioSegment):
     """
     Converts miliseconds to a sample index within the audio segment (untested)
     Args:
     :param miliseconds: a point within the audio segment in miliseconds
     :param segment:     a segment of an aduio recording
-    :param logger:      a Logger class to use to record warning and/or debug information
     """
     frames_per_milisecond = segment.frame_rate / 1000
     maximum_miliseconds = Configuration().get('maximum_samples') * (segment.frame_rate / 1000)
 
     if maximum_miliseconds < abs(miliseconds):
         maximum_miliseconds = copysign(Configuration().get('maximum_samples'), maximum_miliseconds)
-        logger.warning(f"Number of miliseconds too large {miliseconds} [Fixup: using {maximum_miliseconds}]")
+        Logger.warning(f"Number of miliseconds too large {miliseconds} [Fixup: using {maximum_miliseconds}]")
         miliseconds = maximum_miliseconds
 
     return miliseconds * frames_per_milisecond
 
 
-def index_to_miliseconds(index: int, segment: pydub.AudioSegment, logger: Logger) -> float:
+def index_to_miliseconds(index: int, segment: pydub.AudioSegment) -> float:
     """
     Converts a sample index to miliseconds within the audio segment (untested)
     Args:
     :param index:   a sample index within the audio segment
     :param segment: a segment of an aduio recording
-    :param logger:  a Logger class to use to record warning and/or debug information
     """
     frames_per_milisecond: float = segment.frame_rate / 1000
 
     if Configuration().get('maximum_samples') < abs(index):
         maximum_index: int = int(copysign(Configuration().get('maximum_samples'), index))
-        logger.warning(f"Sample index magnitude too large {index} [Fixup: using {maximum_index}]")
+        Logger.warning(f"Sample index magnitude too large {index} [Fixup: using {maximum_index}]")
         index = maximum_index
 
     return index / frames_per_milisecond
 
 
-def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logger: Logger) -> int:
+def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int) -> int:
     """
     Converts a string, float, or integer value to miliseconds
 
@@ -141,7 +137,6 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
     Args:
     :param value:               duration as a percent of the audio segment, number of seconds, or number of miliseconds as a string, float, or integer value
     :param segment_miliseconds: the length of the aduio segment to use to calculate a miliseconds percentage values (optional)
-    :param logger:              a Logger class to use to record warning and/or debug information
     """
     if isinstance(value, int) or isinstance(value, float):
         return int(segment_miliseconds * value if 0 <= value <= 1 else value)  # decimal percentage of the segment or already miliseconds
@@ -149,8 +144,8 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
     note: str = "Durations are numeric values, or strings ending with one of the following units: 's', 'sec', 'secs', 'seconds', 'ms', 'miliseconds', or '%'"
 
     if not isinstance(value, str):
-        logger.warning(f"Duration argument type not valid {value} of {type(value)} [Fixup: returning 0]")
-        logger.warning(note)
+        Logger.warning(f"Duration argument type not valid {value} of {type(value)} [Fixup: returning 0]")
+        Logger.warning(note)
         return 0
 
     string: str = value.replace(' ', '')
@@ -168,7 +163,7 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
         if '%' == units:  # string percentage e.g., '99.99%'
             return int(segment_miliseconds * number / 100)
     except TypeError:
-        logger.error("When expressing a duration as a percentage an audio segment length (in miliseconds) is required")
+        Logger.error("When expressing a duration as a percentage an audio segment length (in miliseconds) is required")
         return 0
 
     if 's' == units or 'sec' == units or 'secs' == units or 'seconds' == units:
@@ -176,60 +171,59 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int, logg
     if '' == units or 'ms' == units or 'miliseconds' == units:
         return int(number)
 
-    logger.warning(f"Duration argument units invalid, {string} [Fixup: treating as {number} miliseconds]")
-    logger.warning(note)
+    Logger.warning(f"Duration argument units invalid, {string} [Fixup: treating as {number} miliseconds]")
+    Logger.warning(note)
 
     return int(number)
 
 
-def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment, logger: Logger) -> (pydub.AudioSegment, int, int, int):
+def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment) -> (pydub.AudioSegment, int, int, int):
     """
     Extracts common slicer processing arguments
     Args:
     :param arguments: slicer arguments from which common ones will be parsed, validated, and returned
     :param recording: the downloaded aduio recording to be sliced
-    :param logger:    a Logger class to use to record warning and/or debug information
     """
     recording_ms: int = len(recording)
 
-    begin: int = to_miliseconds(arguments['begin'], recording_ms, logger) if 'begin' in arguments else 0
-    end: int = to_miliseconds(arguments['end'], recording_ms, logger) if 'end' in arguments else recording_ms
-    clip_size: int = to_miliseconds(arguments['clip_size'], recording_ms, logger) if 'clip_size' in arguments else Configuration().get('clip_size_miliseconds')
+    begin: int = to_miliseconds(arguments['begin'], recording_ms) if 'begin' in arguments else 0
+    end: int = to_miliseconds(arguments['end'], recording_ms) if 'end' in arguments else recording_ms
+    clip_size: int = to_miliseconds(arguments['clip_size'], recording_ms) if 'clip_size' in arguments else Configuration().get('clip_size_miliseconds')
     clips: int = arguments['clips'] if 'clips' in arguments else Configuration().get('clips_per_stage')
 
     note = "Note: use values between 0.0 and 1.0 ('100%') to calculate a percentage of the clip duration as the starting or stopping point for clip generation"
 
     if 0 > begin:
-        logger.warning(f"Argument 'begin' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using 0 ms]")
-        logger.warning(f"Omit or set the 'begin' argument to 0 to start at the first sample of the recording")
+        Logger.warning(f"Argument 'begin' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using 0 ms]")
+        Logger.warning(f"Omit or set the 'begin' argument to 0 to start at the first sample of the recording")
         begin = 0
         if note is not None:
-            logger.warning(note)
+            Logger.warning(note)
             note = None
     if recording_ms < begin:
-        logger.warning(f"Argument 'end' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using {recording_ms} ms]")
+        Logger.warning(f"Argument 'end' {begin} invalid, must be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using {recording_ms} ms]")
         begin = recording_ms
         if note is not None:
-            logger.warning(note)
+            Logger.warning(note)
             note = None
     if 0 > end:
-        logger.warning(f"Argument 'end' {end} invalid, must be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using 0 ms]")
+        Logger.warning(f"Argument 'end' {end} invalid, must be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using 0 ms]")
         end = 0
         if note is not None:
-            logger.warning(note)
+            Logger.warning(note)
             note = None
     if recording_ms < end:
-        logger.warning(f"Argument 'end' {end} invalid must, be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using {recording_ms} ms]")
-        logger.warning(f"Omit or set the 'end' argument to 1 to stop at the last sample of the recording")
+        Logger.warning(f"Argument 'end' {end} invalid must, be between 0 and the recording length in miliseconds {recording_ms} [Fixup: using {recording_ms} ms]")
+        Logger.warning(f"Omit or set the 'end' argument to 1 to stop at the last sample of the recording")
         end = recording_ms
         if note is not None:
-            logger.warning(note)
+            Logger.warning(note)
             note = None
     if begin > end:
         begin, end = end, begin
-        logger.warning(f"Argument begin {end} and end {begin} were reversed [Fixup: using {begin},{end}]")
+        Logger.warning(f"Argument begin {end} and end {begin} were reversed [Fixup: using {begin},{end}]")
 
     if note is not None:
-        logger.debug(note)
+        Logger.debug(note)
 
-    return recording[begin:end], miliseconds_to_index(begin, recording, logger), clip_size, clips
+    return recording[begin:end], miliseconds_to_index(begin, recording), clip_size, clips

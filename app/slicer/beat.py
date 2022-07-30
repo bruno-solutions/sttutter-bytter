@@ -17,19 +17,18 @@ class BeatSlicer(object):
     Beat interval slicer
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment, logger: Logger):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
         """
         Creates a list of potential clip begin and end sample indexes using "musical" beat boundaries
         Args:
         :param stage:     the number of the method step in the slicing process
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
-        :param logger:    the Logger instantiated by the main Slicer class
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
         beats_per_clip: int = arguments['beats'] if 'beats' in arguments else Configuration().get('default_beat_count')
-        attack: int = to_miliseconds(arguments['attack'], len(recording), logger) if 'attack' in arguments else Configuration().get('default_attack_miliseconds')
-        decay: int = to_miliseconds(arguments['decay'], len(recording), logger) if 'decay' in arguments else Configuration().get('default_decay_miliseconds')
+        attack: int = to_miliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('default_attack_miliseconds')
+        decay: int = to_miliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('default_decay_miliseconds')
 
         sample_rate = segment.frame_rate
         attack_samples: int = (sample_rate // 1000) * attack
@@ -42,15 +41,15 @@ class BeatSlicer(object):
         beat_indexes: ndarray = librosa.frames_to_samples(librosa.beat.beat_track(y=samples, sr=segment.frame_rate)[1])
         beat_intervals = len(beat_indexes) - beats_per_clip
 
-        logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
+        Logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
 
-        logger.debug(f"Decay (trailing pad) Samples: {attack_samples}")
-        logger.debug(f"Attack (leading pad) Samples: {decay_samples}")
+        Logger.debug(f"Decay (trailing pad) Samples: {attack_samples}")
+        Logger.debug(f"Attack (leading pad) Samples: {decay_samples}")
 
-        logger.debug(f"Requested Clipping Intervals: {clips}")
-        logger.debug(f"Found Beat Intervals: {beat_intervals}")
+        Logger.debug(f"Requested Clipping Intervals: {clips}")
+        Logger.debug(f"Found Beat Intervals: {beat_intervals}")
 
-        logger.debug(f"Segment Samples: {total_samples}")
+        Logger.debug(f"Segment Samples: {total_samples}")
 
         self.sci: List[SampleClippingInterval] = []
 
@@ -65,7 +64,7 @@ class BeatSlicer(object):
                 continue
             sci = SampleClippingInterval(begin=begin, end=end)
             self.sci.append(sci)
-            logger.debug(f"Interval[{clip_index - skip_count}]: {sci.begin} {sci.end}")
+            Logger.debug(f"Interval[{clip_index - skip_count}]: {sci.begin} {sci.end}")
             beat_index += 1
 
     def get(self):

@@ -15,25 +15,24 @@ class PitchSlicer(object):
     Locates fundamental frequency (key or pitch) change events to define sample clipping intervals
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment, logger: Logger):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
         """
         Creates a list of potential clip begin and end sample indexes using tempo (beats per minute) change detection
         Args:
         :param stage:     the number of the method step in the slicing process
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
-        :param logger:    the Logger instantiated by the main Slicer class
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
-        min_frequency: int = to_hertz(arguments['min_frequency'], logger) if 'min_frequency' in arguments else 65  # hz (C2)
-        max_frequency: int = to_hertz(arguments['max_frequency'], logger) if 'max_frequency' in arguments else 2093  # hz (C7)
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        min_frequency: int = to_hertz(arguments['min_frequency']) if 'min_frequency' in arguments else 65  # hz (C2)
+        max_frequency: int = to_hertz(arguments['max_frequency']) if 'max_frequency' in arguments else 2093  # hz (C7)
         frame_length: int = arguments['frame_length'] if 'frame_length' in arguments else recording.frame_rate // 11
 
         total_samples: int = int(segment.frame_count())
 
-        logger.debug(f"Slicing stage[{stage}], Pitch Change Slicer: {clips} clips", separator=True)
+        Logger.debug(f"Slicing stage[{stage}], Pitch Change Slicer: {clips} clips", separator=True)
 
-        logger.debug(f"Segment Samples: {total_samples}")
+        Logger.debug(f"Segment Samples: {total_samples}")
 
         self.sci: List[SampleClippingInterval] = []
 
@@ -54,7 +53,7 @@ class PitchSlicer(object):
 
             sci = SampleClippingInterval(begin=0, end=0)
             self.sci.append(sci)
-            logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
+            Logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
 
     def get(self):
         return self.sci

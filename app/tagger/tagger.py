@@ -113,16 +113,11 @@ def is_multivalue_tag(tag: str):
 
 
 class Tagger(object):
-    def __init__(self, logger: Logger = None):
-        self.logger: Logger = logger if logger is not None else Logger()
+    def __init__(self):
         self.tags: dict[str, str] = {}
 
     def clear(self):
         self.tags = {}
-
-        # # Stuff a dummy value in every monovalue key
-        # for key in monovalue_keys:
-        #     self.tags[key_to_tag(key)] = key
 
     def list(self):
         """
@@ -135,16 +130,15 @@ class Tagger(object):
         Add a new tag (does not change tag value when the tag already exists)
         """
         if tag in self.tags:
-            self.logger.warning(f'Tag {tag} already exists with a value of {self.tags[tag]}. If it is OK to overwrite this tag use set() instead')
+            Logger.warning(f'Tag {tag} already exists with a value of {self.tags[tag]}. If it is OK to overwrite this tag use set() instead')
             return
 
         self.set(tag, value)
 
     def set(self, tag: str, value):
         """
-        Set a tag value (silently overwritting where there is an ex old value)
+        Set a tag value (silently overwritting where there is an existing value)
         """
-        self.delete(tag)
         self.tags[tag] = str(value)
 
     def replace(self, tag: str, value):
@@ -159,7 +153,7 @@ class Tagger(object):
         """
         Append a value to a multi-value tag
         """
-        if self.tags[tag] is not None:
+        if tag in self.tags:
             if -1 != ('| ' + self.tags[tag] + ' |').find('| ' + str(value) + ' |'):
                 return
             value = self.tags[tag] + ' | ' + str(value)
@@ -199,19 +193,19 @@ class Tagger(object):
         """
         Read tags from an audio file
         """
-        self.logger.debug(f"Loading tags from audio file {filename}", separator=True)
+        Logger.debug(f"Loading tags from audio file {filename}", separator=True)
 
         try:
             file: taglib.File = taglib.File(filename)
             metadata: {} = file.tags
             file.close()
         except IOError:
-            self.logger.warning(f"Audio file {filename} could not be opened to retrieve metadata")
+            Logger.warning(f"Audio file {filename} could not be opened to retrieve metadata")
             return self
 
         recording: pydub.AudioSegment = pydub.AudioSegment.from_file(filename)
 
-        self.logger.debug(f"Generating additional metadata values (minicking YouTube Download option 'writeinfojson': True)", separator=True)
+        Logger.debug(f"Generating additional metadata values (minicking YouTube Download option 'writeinfojson': True)", separator=True)
         metadata['asr'] = recording.frame_rate
         metadata['channels'] = recording.channels
         metadata['converter'] = recording.converter
@@ -227,11 +221,13 @@ class Tagger(object):
 
         for tag, value in metadata.items():
             tag = tag.lower()
+            value = value[0] if type(value) in (tuple, list) else str(value) if type(value) in (int, float) else value
             if is_multivalue_tag(tag):
-                self.set(tag, multivalue_tag_value_formatter(value))
+                value = multivalue_tag_value_formatter(value)
+                self.append(tag, value)
             else:
                 self.set(tag, str(value))
-            self.logger.debug(f"[{tag}]:'{value}'")
+            Logger.debug(f"[{tag}]:'{value}'")
 
         return self
 
@@ -239,10 +235,10 @@ class Tagger(object):
         """
         Write tags to an audio file
         """
-        self.logger.debug(f"Saving tags to audio file {filename}", separator=True)
+        Logger.debug(f"Saving tags to audio file {filename}", separator=True)
 
         for tag, value in self.tags.items():
-            self.logger.debug(f"[{tag}]:'{value}'")
+            Logger.debug(f"[{tag}]:'{value}'")
 
         # https://github.com/supermihi/pytaglib/blob/main/src/taglib.pyx
         # https://github.com/supermihi/pytaglib/blob/39aabb26f4d6016c110794361b20b7fb76e64ecc/src/taglib.pyx#L173
@@ -253,37 +249,26 @@ class Tagger(object):
             file.save()
             file.close()
         except IOError as error:
-            self.logger.error(f"Was not able to write audio file {filename} metadata {error}")
+            Logger.error(f"Was not able to write audio file {filename} metadata {error}")
 
         return self
 
-    def load_youtube_downloader_metadata(self, filename: str):
+    def load_metadata_file(self, filename: str):
         """
         Read audio recording metadata from a YouTube Downloader format JSON file
         Args:
         :param filename: YouTube Downloader format JSON file containing audio file metadata
         """
-        self.logger.debug(f"Loading tags from metadata file {filename}", separator=True)
+        Logger.debug(f"Loading tags from metadata file {filename}", separator=True)
 
         try:
             with open(filename) as json_file:
                 metadata = json.load(json_file)
         except IOError:
-            self.logger.warning(f"YouTube Download metadata file {filename} not found")
+            Logger.warning(f"Metadata file {filename} not found")
             return self
 
-        # Scrub metadata elements that are uninteresting / noisy
-
-        # if 'formats' in metadata:
-        #     del metadata['formats']
-        # if 'thumbnails' in metadata:
-        #     del metadata['thumbnails']
-        # if 'downloader_options' in metadata:
-        #     del metadata['downloader_options']
-        # if 'http_headers' in metadata:
-        #     del metadata['http_headers']
-        #
-        # metadata[APPLICATION_NAME] = "Note: the following YouTube Download metadata keys have been supressed: 'formats', 'thumbnails', 'downloader_options', 'http_headers'"
+        # We only handle metadata keys that are defined in this module (all others are ignored)
 
         for key in monovalue_keys:
             if key in metadata:
@@ -301,13 +286,13 @@ class Tagger(object):
 
         return filename
 
-    def write_youtube_downloader_metadata(self, filename: str):
+    def write_downloader_metadata(self, filename: str):
         """
         Write audio recording metadata to a YouTube Downloader format JSON file
         Args:
         :param filename: YouTube Downloader format JSON file to be created
         """
-        self.logger.debug(f"Saving tags to metadata file {filename}", separator=True)
+        Logger.debug(f"Saving tags to metadata file {filename}", separator=True)
 
         metadata: dict[str, Union[str, List[str]]] = {}
 
@@ -324,17 +309,17 @@ class Tagger(object):
             with open(filename, 'w', encoding='utf-8') as json_file:
                 json.dump(metadata, json_file, ensure_ascii=False, indent=4)
         except IOError as error:
-            self.logger.error(f"Was not able to overwrite YouTube Download metadata file {error}")
+            Logger.error(f"Was not able to overwrite YouTube Download metadata file {error}")
 
         return filename
 
     def synchronize_metadata(self, media_filename: str, metadata_filename: str):
-        self.logger.debug(f"Reading and rewriting metadata for:", separator=True)
-        self.logger.debug(f"  - Media (video or audio) file: {media_filename}")
-        self.logger.debug(f"  - YouTube Download metadata file: {metadata_filename}")
+        Logger.debug(f"Reading and rewriting metadata for:", separator=True)
+        Logger.debug(f"  - Media (video or audio) file: {media_filename}")
+        Logger.debug(f"  - YouTube Download metadata file: {metadata_filename}")
 
         self.clear()
-        self.load_youtube_downloader_metadata(metadata_filename)
+        self.load_metadata_file(metadata_filename)
         self.load_audio_file_tags(media_filename)
-        self.write_youtube_downloader_metadata(metadata_filename)
+        self.write_downloader_metadata(metadata_filename)
         self.write_audio_file_tags(media_filename)

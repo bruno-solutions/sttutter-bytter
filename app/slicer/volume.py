@@ -17,27 +17,26 @@ class VolumeSlicer(object):
     Slice source audio recording using volume change cues
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment, logger: Logger):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
         """
         Creates a list of potential clip begin and end sample indexes using volume change event boundaries
         Args:
         :param stage:     the number of the method step in the slicing process
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
-        :param logger:    the Logger instantiated by the main Slicer class
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording, logger)
-        low_threshold: float = to_decibels(arguments['low_threshold'], logger) if 'low_threshold' in arguments else Configuration().get('low_threshold')
-        drift: float = to_decibels(arguments['drift'], logger) if 'drift' in arguments else Configuration().get('drift_decibels')
+        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        low_threshold: float = to_decibels(arguments['low_threshold']) if 'low_threshold' in arguments else Configuration().get('low_threshold')
+        drift: float = to_decibels(arguments['drift']) if 'drift' in arguments else Configuration().get('drift_decibels')
         chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else Configuration().get('detection_window_miliseconds')
 
-        logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
+        Logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
 
-        logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
-        logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
+        Logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
+        Logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
 
-        logger.debug(f"Silence Threshold Decibels: {low_threshold}")
-        logger.debug(f"Per Chunk Raise Limit Decibels: {drift}")
+        Logger.debug(f"Silence Threshold Decibels: {low_threshold}")
+        Logger.debug(f"Per Chunk Raise Limit Decibels: {drift}")
 
         samples: ndarray = librosa.amplitude_to_db(Normalizer.monaural_normalization(segment))
         chunk_remainder_count: int = len(samples) % chunk_size
@@ -46,10 +45,10 @@ class VolumeSlicer(object):
         padded_sample_count: int = len(padded_samples)
         sample_chunk_count: int = padded_sample_count // chunk_size
 
-        logger.debug(f"Segment Samples: {len(segment)}")
-        logger.debug(f"Zero Padded Samples: {padded_sample_count}")
-        logger.debug(f"Chunk Size: {chunk_size}")
-        logger.debug(f"Segment Chunks: {sample_chunk_count}")
+        Logger.debug(f"Segment Samples: {len(segment)}")
+        Logger.debug(f"Zero Padded Samples: {padded_sample_count}")
+        Logger.debug(f"Chunk Size: {chunk_size}")
+        Logger.debug(f"Segment Chunks: {sample_chunk_count}")
 
         chunk_peaks: List = []
 
@@ -69,7 +68,7 @@ class VolumeSlicer(object):
         for clip_index in range(clips):
             sci = SampleClippingInterval(begin=0, end=0)
             self.sci.append(sci)
-            logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
+            Logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
 
     def get(self):
         return self.sci

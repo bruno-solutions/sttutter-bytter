@@ -26,14 +26,11 @@ class Slicer(object):
     from which lists of auido array sample arrays (known as clips) are prepared from a source audio recording
     """
 
-    def __init__(self, logger: Logger = None):
+    def __init__(self):
         """
         Instantiate the Slicer class
         Args:
-        :param logger: class to send debug, warning, and error messages to the console and log file
         """
-        self.logger: Logger = logger if logger is not None else Logger()
-
         self.recording: Optional[pydub.AudioSegment] = None
         self.sci: List[SampleClippingInterval] = []
 
@@ -53,7 +50,7 @@ class Slicer(object):
         self.recording = recording
         self.sci = [] if sci is None else sci
 
-        self.logger.debug("Slicing sample clipping intervals from the recording")
+        Logger.debug("Slicing sample clipping intervals from the recording")
 
         for stage, slicer in enumerate(logic):  # execution each slicer is a "stage" in the processing of the source
             if 'active' in slicer and not slicer['active']:  # skip methods that are deactivated
@@ -62,28 +59,28 @@ class Slicer(object):
             try:
                 method_name = slicer['method']
             except AttributeError:
-                self.logger.warning(f"Attribute 'method' not defined on slicer[{stage}]")
-                self.logger.warning(f"Available methods are: 'slice_on_beat', 'slice_at_random', 'slice_on_vocal_change', 'slice_on_volume_change'")
+                Logger.warning(f"Attribute 'method' not defined on slicer[{stage}]")
+                Logger.warning(f"Available methods are: 'slice_on_beat', 'slice_at_random', 'slice_on_vocal_change', 'slice_on_volume_change'")
                 continue
 
             try:
                 method = getattr(Slicer, method_name)
             except AttributeError:
-                self.logger.warning(f"No slicer method named '{method_name}' is avaialable in the slicer module, referenced in slicer[{stage}]")
-                self.logger.warning(f"Available methods are: 'slice_on_beat', 'slice_at_random', 'slice_on_vocal_change', 'slice_on_volume_change'")
+                Logger.warning(f"No slicer method named '{method_name}' is avaialable in the slicer module, referenced in slicer[{stage}]")
+                Logger.warning(f"Available methods are: 'slice_on_beat', 'slice_at_random', 'slice_on_vocal_change', 'slice_on_volume_change'")
                 continue
 
             try:
                 arguments = slicer['arguments']
             except KeyError:
-                self.logger.debug(f"'arguments' not provided for '{method_name}', using default values")
+                Logger.debug(f"'arguments' not provided for '{method_name}', using default values")
                 arguments = {}
 
-            self.logger.properties(recording, f"Pre-stage:{stage} [{method_name}] slicing recording characteristics")
+            Logger.properties(recording, f"Pre-stage:{stage} [{method_name}] slicing recording characteristics")
             method(self, stage, arguments)  # -> None
-            self.logger.properties(recording, f"Post-stage:{stage} [{method_name}] slicing recording characteristics")
+            Logger.properties(recording, f"Post-stage:{stage} [{method_name}] slicing recording characteristics")
 
-        self.logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")
+        Logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")
         return self
 
     def get(self, start: int = None, length: int = None) -> [Clip]:
@@ -96,7 +93,7 @@ class Slicer(object):
         start = 0 if start is None else start
         length = len(self.sci) if length is None else length
 
-        self.logger.properties(self.recording, "Clip creation recording characteristics")
+        Logger.properties(self.recording, "Clip creation recording characteristics")
 
         # TODO add logic to evaluate clips by combined weighting of the clipping methods used
 
@@ -114,7 +111,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += BeatSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += BeatSlicer(stage, arguments, self.recording).get()
 
     def slice_at_interval(self, stage: int, arguments: {}) -> None:
         """
@@ -124,7 +121,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += SimpleIntervalSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += SimpleIntervalSlicer(stage, arguments, self.recording).get()
 
     def slice_at_random(self, stage: int, arguments: {}) -> None:
         """
@@ -134,7 +131,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += ChaosSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += ChaosSlicer(stage, arguments, self.recording).get()
 
     def slice_on_vocal_change(self, stage: int, arguments: {}) -> None:
         """
@@ -144,7 +141,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += VocalSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += VocalSlicer(stage, arguments, self.recording).get()
 
     def slice_on_volume_change(self, stage: int, arguments: {}) -> None:
         """
@@ -154,7 +151,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += VolumeSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += VolumeSlicer(stage, arguments, self.recording).get()
 
     def slice_at_onset(self, stage: int, arguments: {}) -> None:
         """
@@ -163,7 +160,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += OnsetSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += OnsetSlicer(stage, arguments, self.recording).get()
 
     def slice_on_tempo_change(self, stage: int, arguments: {}) -> None:
         """
@@ -172,7 +169,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += TempoSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += TempoSlicer(stage, arguments, self.recording).get()
 
     def slice_on_pitch_change(self, stage: int, arguments: {}) -> None:
         """
@@ -181,7 +178,7 @@ class Slicer(object):
         :param stage:     the index of the slicing method being processed
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
-        self.sci += PitchSlicer(stage, arguments, self.recording, self.logger).get()
+        self.sci += PitchSlicer(stage, arguments, self.recording).get()
 
     @staticmethod
     def get_slicer_methods() -> list[str]:
