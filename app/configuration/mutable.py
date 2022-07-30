@@ -25,4 +25,4 @@ configuration_mutable = {
     "fade_out_miliseconds": 500
 }
 
-logic_mutable = []
+logic_mutable: [{}] = []

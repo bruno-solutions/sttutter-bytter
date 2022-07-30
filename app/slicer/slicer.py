@@ -97,7 +97,7 @@ class Slicer(object):
 
         # TODO add logic to evaluate clips by combined weighting of the clipping methods used
 
-        clips: [Clip] = [Clip]
+        clips: [Clip] = []
         finish: int = min(start + length, len(self.sci)) - 1
         for index in range(start, finish):
             clips.append(Clip(self.recording, self.sci[index]))

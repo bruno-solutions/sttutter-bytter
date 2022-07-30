@@ -88,23 +88,25 @@ class AudioProcessor(object):
         Logger.debug("Note: sample count should not be less than the prior sample count")
         return self
 
-    def slice(self, logic: [{}] = Configuration().mutable_logic):
+    def slice(self, logic: [{}] = None):
         """
         Executes slicer methods in order defined in the methods list
-        Args:
-        :param logic: A dictionary of named slicing functions and parameters to clipify the downloaded file
         """
+        logic = logic if logic is not None else Configuration().get('logic')
         Logger.separator(mode='debug')
         self.clips = self.slicer.slice(recording=self.recording, logic=logic).get()
         return self
 
-    def fade(self, fade_in_duration: int = Configuration().get('fade_in_miliseconds'), fade_out_duration: int = Configuration().get('fade_out_miliseconds')):
+    def fade(self, fade_in_duration: int = None, fade_out_duration: int = None):
         """
         Apply fade-in and fade-out to the clips
         Args:
         :param fade_in_duration: The number of miliseconds for the fade in
         :param fade_out_duration: The number of miliseconds for the fade out
         """
+        fade_in_duration = fade_in_duration if fade_in_duration is not None else Configuration().get('fade_in_miliseconds')
+        fade_out_duration = fade_out_duration if fade_out_duration is not None else Configuration().get('fade_out_miliseconds')
+
         for index, clip in enumerate(self.clips):
             self.clips[index]['samples'] = clip['samples'].fade_in(fade_in_duration).fade_out(fade_out_duration)
         return self

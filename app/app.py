@@ -22,7 +22,7 @@ def main():
     try:
         recording.load(url)
     except FileNotFoundError:
-        Logger.error(f"Skipping: Unable to access URL {url}")
+        Logger.error(f"Unable to access {url} [Processing with next URL]")
         sys.exit(-1)
 
     recording.normalize()

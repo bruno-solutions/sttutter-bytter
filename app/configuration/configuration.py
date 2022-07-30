@@ -1,8 +1,8 @@
 import json
 
-from configuration.constants import configuration_constants
-from configuration.derived import configuration_derived
-from configuration.mutable import configuration_mutable, logic_mutable
+from constants import configuration_constants
+from derived import configuration_derived
+from mutable import configuration_mutable, logic_mutable
 from utility import normalize_file_path
 from utility.singleton import singleton
 
@@ -12,9 +12,9 @@ class Configuration(object):
     def __init__(self):
         self.constant_configuration = configuration_constants
         self.mutable_configuration = configuration_mutable
-        self.mutable_logic = logic_mutable
         self.derived_configuration = configuration_derived
         self.set_derived_configuration()
+        self.mutable_logic = logic_mutable
 
     def set_configuration_value(self, key: str, value: str) -> None:
         if key in self.derived_configuration:
@@ -64,10 +64,9 @@ class Configuration(object):
             print(f"[ERROR]: {exception}")
             raise exception
 
-        loaded_configuration = loaded_configuration_and_logic['configuration']
-        loaded_logic = loaded_configuration_and_logic['logic']
+        # command line options override loaded configuration key values
 
-        # command line options override loaded configuration key values 
+        loaded_configuration = loaded_configuration_and_logic['configuration']
 
         if work_root is not None:
             loaded_configuration['work_root'] = work_root
@@ -84,7 +83,7 @@ class Configuration(object):
             loaded_configuration['log_error'] = debug
 
         self.set_mutable_configuration(loaded_configuration)
-        self.mutable_logic = loaded_logic
+        self.mutable_logic = loaded_configuration_and_logic['logic']
 
     def get(self, key: str):
         if key in self.constant_configuration:
