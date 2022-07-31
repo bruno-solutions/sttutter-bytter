@@ -14,7 +14,7 @@ class ChaosSlicer(object):
     Random interval slicer
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
         Creates a list of potential clip begin and end sample indexes using a random number generator
         Args:
@@ -22,7 +22,12 @@ class ChaosSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+
+        if not active or 0 == weight:
+            return
 
         total_samples: int = int(segment.frame_count())
         sample_window: int = segment.frame_rate * min(clip_size, Configuration().get('maximum_clip_size_miliseconds'))
@@ -31,8 +36,6 @@ class ChaosSlicer(object):
 
         Logger.debug(f"Segment Sample Window: {sample_window}")
         Logger.debug(f"Segment Samples: {total_samples}")
-
-        self.sci: List[SampleClippingInterval] = []
 
         for clip_index in range(clips):
             sample_index_a = random.randint(0, total_samples)

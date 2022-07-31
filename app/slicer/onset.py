@@ -15,7 +15,7 @@ class OnsetSlicer(object):
     Locates note onset events by picking peaks in an onset strength envelope to define sample clipping intervals
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
         Creates a list of potential clip begin and end sample indexes using (major sound change) onset detection
         Args:
@@ -23,15 +23,18 @@ class OnsetSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+
+        if not active or 0 == weight:
+            return
 
         total_samples: int = int(segment.frame_count())
 
         Logger.debug(f"Slicing stage[{stage}], Onset Detection Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Segment Samples: {total_samples}")
-
-        self.sci: List[SampleClippingInterval] = []
 
         # https://librosa.org/doc/main/generated/librosa.to_mono.html
         # https://librosa.org/doc/main/generated/librosa.onset.onset_detect.html

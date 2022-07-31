@@ -13,7 +13,7 @@ class SimpleIntervalSlicer(object):
     A simple time interval slicer
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
         Creates a list of potential clip begin and end sample indexes based upon time intervals
         Note: dependent upon the length of the recording segment, the length of the clips, and the number of clips
@@ -23,7 +23,12 @@ class SimpleIntervalSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+
+        if not active or 0 == weight:
+            return
 
         total_samples: int = int(segment.frame_count())
         samples_per_clip: int = int(segment.frame_rate * (min(clip_size, Configuration().get('maximum_clip_size_miliseconds')) / 1000))
@@ -50,8 +55,6 @@ class SimpleIntervalSlicer(object):
         Logger.debug(f"Clip + Skip Samples: {samples_per_iteration}")
         Logger.debug(f"Clips + Skips Samples: {clips * samples_per_clip + skips * samples_per_skip}")
         Logger.debug(f"Segment Samples: {total_samples}")
-
-        self.sci: List[SampleClippingInterval] = []
 
         begin_index = segment_offset_index
 

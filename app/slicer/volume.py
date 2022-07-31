@@ -17,7 +17,7 @@ class VolumeSlicer(object):
     Slice source audio recording using volume change cues
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
         Creates a list of potential clip begin and end sample indexes using volume change event boundaries
         Args:
@@ -25,7 +25,13 @@ class VolumeSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+
+        if not active or 0 == weight:
+            return
+
         low_threshold: float = to_decibels(arguments['low_threshold']) if 'low_threshold' in arguments else Configuration().get('low_threshold')
         drift: float = to_decibels(arguments['drift']) if 'drift' in arguments else Configuration().get('drift_decibels')
         chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else Configuration().get('detection_window_miliseconds')
@@ -61,8 +67,6 @@ class VolumeSlicer(object):
                     else:
                         peak = sample  # drifting up
             chunk_peaks.append(peak)
-
-        self.sci: List[SampleClippingInterval] = []
 
         clips = 0  # TODO turn peak decibels array into sample clipping intervals
         for clip_index in range(clips):

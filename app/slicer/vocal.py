@@ -19,7 +19,7 @@ class VocalSlicer(object):
     Slice source audio recording using vocal cues
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
         Creates a list of potential clip begin and end sample indexes using utterance onset and cessation events
         Args:
@@ -27,7 +27,13 @@ class VocalSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+
+        if not active or 0 == weight:
+            return
+
         passes: int = arguments['passes'] if 'passes' in arguments else 1
         model: str = arguments['model'] if 'model' in arguments else 0
 
@@ -87,7 +93,7 @@ class VocalSlicer(object):
 
         Logger.properties(segment, f"Vocal slicer post {passes} pass Spleeter processing recording characteristics")
 
-        self.sci: List[SampleClippingInterval] = VolumeSlicer(stage, arguments, segment).get()
+        self.sci = VolumeSlicer(stage, arguments, segment).get()
 
     def get(self):
         return self.sci

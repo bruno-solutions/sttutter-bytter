@@ -15,7 +15,7 @@ class PitchSlicer(object):
     Locates fundamental frequency (key or pitch) change events to define sample clipping intervals
     """
 
-    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
+    def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
         Creates a list of potential clip begin and end sample indexes using tempo (beats per minute) change detection
         Args:
@@ -23,7 +23,13 @@ class PitchSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+
+        if not active or 0 == weight:
+            return
+
         min_frequency: int = to_hertz(arguments['min_frequency']) if 'min_frequency' in arguments else 65  # hz (C2)
         max_frequency: int = to_hertz(arguments['max_frequency']) if 'max_frequency' in arguments else 2093  # hz (C7)
         frame_length: int = arguments['frame_length'] if 'frame_length' in arguments else recording.frame_rate // 11
@@ -33,8 +39,6 @@ class PitchSlicer(object):
         Logger.debug(f"Slicing stage[{stage}], Pitch Change Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Segment Samples: {total_samples}")
-
-        self.sci: List[SampleClippingInterval] = []
 
         # https://librosa.org/doc/main/generated/librosa.to_mono.html
         # https://librosa.org/doc/main/generated/librosa.yin.html

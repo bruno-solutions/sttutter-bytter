@@ -177,7 +177,7 @@ def to_miliseconds(value: Union[str, float, int], segment_miliseconds: int) -> i
     return int(number)
 
 
-def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment) -> (pydub.AudioSegment, int, int, int):
+def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment) -> (bool, float, pydub.AudioSegment, int, int, int):
     """
     Extracts common slicer processing arguments
     Args:
@@ -186,6 +186,8 @@ def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment) -> (pyd
     """
     recording_ms: int = len(recording)
 
+    active: bool = bool(arguments['active']) if 'active' in arguments else True
+    weight: float = float(arguments['weight']) if 'weight' in arguments else 0.0
     begin: int = to_miliseconds(arguments['begin'], recording_ms) if 'begin' in arguments else 0
     end: int = to_miliseconds(arguments['end'], recording_ms) if 'end' in arguments else recording_ms
     clip_size: int = to_miliseconds(arguments['clip_size'], recording_ms) if 'clip_size' in arguments else Configuration().get('clip_size_miliseconds')
@@ -226,4 +228,7 @@ def parse_common_arguments(arguments: {}, recording: pydub.AudioSegment) -> (pyd
     if note is not None:
         Logger.debug(note)
 
-    return recording[begin:end], miliseconds_to_index(begin, recording), clip_size, clips
+    if 0 > weight:
+        weight = 0
+
+    return active, weight, recording[begin:end], miliseconds_to_index(begin, recording), clip_size, clips
