@@ -1,15 +1,14 @@
 """
 The module that provides audio volume leveling functionality
 """
-import numpy
-import pydub
-from numpy import ndarray
 
 
 class Normalizer(object):
     """
     The class that implements ReplayGain
     """
+    import pydub
+
     stereo_normalizer = getattr(pydub.AudioSegment, 'normalize')
 
     @staticmethod
@@ -21,6 +20,8 @@ class Normalizer(object):
         """
         return Normalizer.stereo_normalizer(recording)
 
+    from numpy import ndarray
+
     @staticmethod
     def monaural_normalization(recording: pydub.AudioSegment) -> ndarray:
         """
@@ -28,6 +29,9 @@ class Normalizer(object):
         Args:
         :param recording: an audio segment object that contains the audio samples to be processed
         """
+        import numpy
+        from numpy import ndarray
+
         stereo: ndarray = numpy.array(recording.get_array_of_samples())
         left_channel: ndarray = stereo[::2]
         right_channel: ndarray = stereo[1::2]

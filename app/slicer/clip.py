@@ -1,5 +1,3 @@
-import pydub
-
 from sci import SampleClippingInterval
 
 
@@ -7,6 +5,7 @@ class Clip(object):
     """
     Value object of a clip
     """
+    import pydub
 
     def __init__(self, recording: pydub.AudioSegment, sci: SampleClippingInterval):
         """

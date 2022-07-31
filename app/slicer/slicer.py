@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from typing import List, Optional, Union, Literal
 
-import pydub
-
 from beat import BeatSlicer
 from chaos import ChaosSlicer
 from clip import Clip
@@ -32,8 +30,12 @@ class Slicer(object):
         Instantiate the Slicer class
         Args:
         """
+        import pydub
+
         self.recording: Optional[pydub.AudioSegment] = None
         self.sci: List[SampleClippingInterval] = []
+
+    import pydub
 
     def slice(self, recording: pydub.AudioSegment = None, logic: [{}] = None, sci: List[SampleClippingInterval] = None) -> Slicer:
         """

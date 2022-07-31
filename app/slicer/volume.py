@@ -1,10 +1,5 @@
 from typing import List
 
-import librosa
-import numpy
-import pydub
-from numpy import ndarray
-
 from arguments import parse_common_arguments, to_decibels
 from configuration.configuration import Configuration
 from logger import Logger
@@ -16,6 +11,7 @@ class VolumeSlicer(object):
     """
     Slice source audio recording using volume change cues
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
@@ -25,6 +21,10 @@ class VolumeSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import librosa
+        import numpy
+        from numpy import ndarray
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)

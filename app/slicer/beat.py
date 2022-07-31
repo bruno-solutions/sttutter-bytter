@@ -1,9 +1,5 @@
 from typing import List
 
-import librosa
-import pydub
-from numpy import ndarray
-
 from arguments import parse_common_arguments, to_miliseconds
 from configuration.configuration import Configuration
 from logger import Logger
@@ -15,6 +11,7 @@ class BeatSlicer(object):
     """
     Beat interval slicer
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment):
         """
@@ -24,6 +21,9 @@ class BeatSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import librosa
+        from numpy import ndarray
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)

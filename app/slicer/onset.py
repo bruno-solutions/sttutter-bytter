@@ -1,9 +1,5 @@
 from typing import List
 
-import librosa
-import pydub
-from numpy import ndarray
-
 from arguments import parse_common_arguments
 from logger import Logger
 from sci import SampleClippingInterval
@@ -14,6 +10,7 @@ class OnsetSlicer(object):
     Onset slicer
     Locates note onset events by picking peaks in an onset strength envelope to define sample clipping intervals
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
@@ -23,6 +20,9 @@ class OnsetSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import librosa
+        from numpy import ndarray
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)

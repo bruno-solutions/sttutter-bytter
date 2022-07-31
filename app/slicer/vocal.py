@@ -1,10 +1,5 @@
 from typing import List
 
-import numpy
-import pydub.effects
-from numpy import ndarray
-from spleeter.separator import Separator
-
 from arguments import parse_common_arguments
 from configuration.configuration import Configuration
 from logger import Logger
@@ -18,6 +13,7 @@ class VocalSlicer(object):
     """
     Slice source audio recording using vocal cues
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
@@ -27,6 +23,11 @@ class VocalSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import pydub
+        import numpy
+        from numpy import ndarray
+        from spleeter.separator import Separator
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)

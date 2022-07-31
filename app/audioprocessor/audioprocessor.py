@@ -4,8 +4,6 @@ The main audio processing module
 from pathlib import Path
 from typing import Optional
 
-import pydub.silence
-
 import loader
 from clip import Clip
 from configuration.configuration import Configuration
@@ -29,6 +27,8 @@ class AudioProcessor(object):
         Args:
         :param preserve_cache: should downloaded source media files be kept after processing to prevent re-download later
         """
+        import pydub
+
         rm_md(cache_root=(None if preserve_cache else Configuration().get('cache_root')), export_root=Configuration().get('export_root'), log_root=Configuration().get('log_root'), temp_root=Configuration().get('temp_root'))
 
         if preserve_cache:
@@ -57,7 +57,11 @@ class AudioProcessor(object):
         return self
 
     def trim(self):
+        import pydub
+
         def trim(recording: pydub.AudioSegment):
+            import pydub.silence
+
             trim.call += 1
             silence_ms: int = pydub.silence.detect_leading_silence(recording, silence_threshold=-50.0, chunk_size=10)
             recording = recording[silence_ms + 1:].reverse()

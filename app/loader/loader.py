@@ -7,9 +7,6 @@ import shutil
 import time
 from urllib.parse import urlparse
 
-import pydub
-import youtube_dl
-
 from configuration.configuration import Configuration
 from logger import Logger
 from tagger import Tagger
@@ -28,6 +25,8 @@ class Loader(object):
 
         self.tagger: Tagger = tagger
 
+    import pydub
+
     def copy(self, uri: str, path_file_base: str, audio_file_name: str) -> pydub.AudioSegment:
         """
         Copy a media (video or audio) file from the local file system
@@ -36,6 +35,8 @@ class Loader(object):
         :param path_file_base:  the base path and file for the media file to be loaded to which file extensions will be appended as required (media file vs metadata file)
         :param audio_file_name: the name of the copy/converted audio file
         """
+        import pydub
+
         parsed_url = urlparse(uri)
         source_file_name = parsed_url.netloc + parsed_url.path if parsed_url.netloc else parsed_url.path.strip('/')  # This might be Windows only logic
         intermediate_file_name = f"{path_file_base}{os.path.splitext(parsed_url.path)[1]}"
@@ -111,6 +112,8 @@ class Loader(object):
             ]
         }
 
+        import youtube_dl
+
         with youtube_dl.YoutubeDL(parameters) as downloader:
             try:
                 downloader.download([uri])
@@ -120,6 +123,8 @@ class Loader(object):
 
         metadata_file_name: str = f"{path_file_base}.{Configuration().get('metadata_file_type')}"
         self.tagger.synchronize_metadata(audio_file, metadata_file_name)
+
+        import pydub
 
         return pydub.AudioSegment.from_file(audio_file)
 
@@ -133,6 +138,8 @@ class Loader(object):
         start_time: float = time.time()
         path_file_base: str = f"{Configuration().get('cache_root')}\\{hashlib.md5(uri.encode('utf-8')).hexdigest().upper()}"
         audio_file: str = f"{path_file_base}.{Configuration().get('output_file_type')}"
+
+        import pydub
 
         try:
             recording: pydub.AudioSegment = self.copy(uri, path_file_base, audio_file) if uri.startswith("file://") else self.download(uri, path_file_base, audio_file)

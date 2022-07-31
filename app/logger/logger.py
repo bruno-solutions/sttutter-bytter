@@ -3,8 +3,6 @@ import time
 from pathlib import Path
 from typing import Union
 
-import pydub
-
 from configuration.configuration import Configuration
 
 
@@ -101,6 +99,8 @@ class Logger(object):
         if log_file_path and Path(log_file_path).parent.is_dir():
             logging.basicConfig(filemode='w', filename=log_file_path, level=logging.DEBUG if Configuration().get('log_debug') else logging.WARNING if Configuration().get('log_warning') else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
             logging.error(message)
+
+    import pydub
 
     @staticmethod
     def properties(recording: pydub.AudioSegment, message: str = None):

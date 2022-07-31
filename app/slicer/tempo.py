@@ -1,9 +1,5 @@
 from typing import List
 
-import librosa
-import pydub
-from numpy import ndarray
-
 from arguments import parse_common_arguments
 from logger import Logger
 from sci import SampleClippingInterval
@@ -14,6 +10,7 @@ class TempoSlicer(object):
     Tempo change slicer
     Locates tempo (beats per minute) change events to define sample clipping intervals
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
@@ -23,6 +20,9 @@ class TempoSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import librosa
+        from numpy import ndarray
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
@@ -42,7 +42,6 @@ class TempoSlicer(object):
 
         clips = 0  # TODO turn the tempo change points array into sample clipping intervals
         for clip_index in range(clips):
-
             # difference: float = math.fabs(changes[1] - changes[0])
             # for index in range(changes.size - 1):
             #     if difference + 2 < math.fabs(changes[index + 1] - changes[index]):

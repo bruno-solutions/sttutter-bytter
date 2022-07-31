@@ -1,7 +1,4 @@
-import random
 from typing import List
-
-import pydub
 
 from arguments import parse_common_arguments
 from configuration.configuration import Configuration
@@ -13,6 +10,7 @@ class ChaosSlicer(object):
     """
     Random interval slicer
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
@@ -22,6 +20,8 @@ class ChaosSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import random
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)

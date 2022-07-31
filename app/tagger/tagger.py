@@ -3,9 +3,6 @@ import os
 import re
 from typing import List, Union
 
-import pydub
-import taglib
-
 from configuration.constants import APPLICATION_NAME
 from logger import Logger
 
@@ -193,6 +190,9 @@ class Tagger(object):
         """
         Read tags from an audio file
         """
+        import pydub
+        import taglib
+
         Logger.debug(f"Loading tags from audio file {filename}", separator=True)
 
         try:
@@ -235,6 +235,8 @@ class Tagger(object):
         """
         Write tags to an audio file
         """
+        import taglib
+
         Logger.debug(f"Saving tags to audio file {filename}", separator=True)
 
         for tag, value in self.tags.items():

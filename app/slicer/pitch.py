@@ -1,9 +1,5 @@
 from typing import List
 
-import librosa
-import pydub
-from numpy import ndarray
-
 from arguments import parse_common_arguments, to_hertz
 from logger import Logger
 from sci import SampleClippingInterval
@@ -14,6 +10,7 @@ class PitchSlicer(object):
     Pitch change slicer
     Locates fundamental frequency (key or pitch) change events to define sample clipping intervals
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
@@ -23,6 +20,9 @@ class PitchSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
+        import librosa
+        from numpy import ndarray
+
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)

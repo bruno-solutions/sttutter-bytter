@@ -1,7 +1,5 @@
 from typing import List
 
-import pydub
-
 from arguments import parse_common_arguments
 from configuration.configuration import Configuration
 from logger import Logger
@@ -12,6 +10,7 @@ class SimpleIntervalSlicer(object):
     """
     A simple time interval slicer
     """
+    import pydub
 
     def __init__(self, stage: int, arguments: {}, recording: pydub.AudioSegment) -> None:
         """
