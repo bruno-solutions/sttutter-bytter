@@ -106,7 +106,7 @@ class Slicer(object):
             clips.append(Clip(self.recording, self.sci[index]))
         return clips
 
-    slice_on_beat_weight: float = 5.0
+    slice_on_beat_weight: int = 5
 
     def slice_on_beat(self, stage: int, arguments: {}) -> None:
         """
@@ -118,7 +118,7 @@ class Slicer(object):
         """
         self.sci += BeatSlicer(stage, arguments, self.recording).get()
 
-    slice_at_interval_weight: float = 0.75
+    slice_at_interval_weight: int = 1
 
     def slice_at_interval(self, stage: int, arguments: {}) -> None:
         """
@@ -130,7 +130,7 @@ class Slicer(object):
         """
         self.sci += SimpleIntervalSlicer(stage, arguments, self.recording).get()
 
-    slice_at_random_weight: float = 0.5
+    slice_at_random_weight: int = 1
 
     def slice_at_random(self, stage: int, arguments: {}) -> None:
         """
@@ -142,7 +142,7 @@ class Slicer(object):
         """
         self.sci += ChaosSlicer(stage, arguments, self.recording).get()
 
-    slice_on_vocal_change_weight: float = 1.0
+    slice_on_vocal_change_weight: int = 1
 
     def slice_on_vocal_change(self, stage: int, arguments: {}) -> None:
         """
@@ -154,7 +154,7 @@ class Slicer(object):
         """
         self.sci += VocalSlicer(stage, arguments, self.recording).get()
 
-    slice_on_volume_change_weight: float = 5.0
+    slice_on_volume_change_weight: int = 5
 
     def slice_on_volume_change(self, stage: int, arguments: {}) -> None:
         """
@@ -166,7 +166,7 @@ class Slicer(object):
         """
         self.sci += VolumeSlicer(stage, arguments, self.recording).get()
 
-    slice_at_onset_weight: float = 4.0
+    slice_at_onset_weight: int = 4
 
     def slice_at_onset(self, stage: int, arguments: {}) -> None:
         """
@@ -177,7 +177,7 @@ class Slicer(object):
         """
         self.sci += OnsetSlicer(stage, arguments, self.recording).get()
 
-    slice_on_tempo_change_weight: float = 3.0
+    slice_on_tempo_change_weight: int = 3
 
     def slice_on_tempo_change(self, stage: int, arguments: {}) -> None:
         """
@@ -188,7 +188,7 @@ class Slicer(object):
         """
         self.sci += TempoSlicer(stage, arguments, self.recording).get()
 
-    slice_on_pitch_change_weight: float = 2.0
+    slice_on_pitch_change_weight: int = 2
 
     def slice_on_pitch_change(self, stage: int, arguments: {}) -> None:
         """
@@ -200,7 +200,7 @@ class Slicer(object):
         self.sci += PitchSlicer(stage, arguments, self.recording).get()
 
     @staticmethod
-    def get_slicer_methods() -> list[(str, float)]:
+    def get_slicer_methods() -> list[(str, int)]:
         """
         Returns a list of the available slicer methods to assist users in writing slicing scripts:
         Note: all slicer wrapper method names must begin with "slice_"
