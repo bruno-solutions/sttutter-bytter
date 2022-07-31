@@ -3,7 +3,7 @@ Slicer module
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Union, Literal
 
 import pydub
 
@@ -56,11 +56,13 @@ class Slicer(object):
         Logger.debug("Slicing sample clipping intervals from the recording")
 
         for stage, slicer in enumerate(logic):  # execution each slicer is a "stage" in the processing of the source
-            if 'active' in slicer and not slicer['active']:  # skip methods that are deactivated
+            if "active" in slicer and not slicer["active"]:  # skip methods that are deactivated
+                continue
+            if "weight" in slicer and 0 == int(slicer["weight"]):  # skip methods that have no weight
                 continue
 
             try:
-                method_name = slicer['method']
+                method_name = slicer["method"]
             except AttributeError:
                 Logger.warning(f"Attribute 'method' not defined on slicer[{stage}]")
                 Logger.warning(f"Available methods are: 'slice_on_beat', 'slice_at_random', 'slice_on_vocal_change', 'slice_on_volume_change'")
@@ -74,10 +76,12 @@ class Slicer(object):
                 continue
 
             try:
-                arguments = slicer['arguments']
+                arguments = slicer["arguments"]
             except KeyError:
                 Logger.debug(f"'arguments' not provided for '{method_name}', using default values")
                 arguments = {}
+
+            arguments["weight"] = slicer["weight"] if "weight" in slicer else "1"
 
             Logger.properties(recording, f"Pre-stage:{stage} [{method_name}] slicing recording characteristics")
             method(self, stage, arguments)  # -> None
@@ -86,9 +90,38 @@ class Slicer(object):
         Logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")
         return self
 
+    def cluster_indexes(self, side: Literal["begin", "end"], proximity: Union[int, None] = None) -> [[int]]:
+        """
+        Group Sample Clipping Intervals by beginning or ending sample index to "vote" for likely clip edges
+        Args:
+        :param side:      specifies whether to cluster by the 'begin' or 'end' attribute of the Sample Clipping Interval
+        :param proximity: the nearness in miliseconds by which to cluster Sample Clipping Intervals
+        """
+        intervals: List[SampleClippingInterval] = sorted(self.sci, key=lambda sci: getattr(sci, side))
+
+        if proximity is None:
+            proximity = Configuration().get('cluster_window_miliseconds')
+
+        proximity = self.recording.frame_rate // 1000 * proximity  # convert miliseconds to samples
+
+        cluster: List[SampleClippingInterval] = []
+        previous: int = 0
+
+        for interval in intervals:
+            current: int = getattr(interval, side)
+            if proximity >= current - previous:
+                cluster += [interval]
+            else:
+                yield cluster
+                cluster = [interval]
+            previous = current
+
+        if cluster:
+            yield cluster
+
     def get(self, start: int = None, length: int = None) -> [Clip]:
         """
-        Generate audio segment clips from the recording based upon the sample clipping intervals determined by slice()
+        Generate audio segment clips from the recording based upon the Sample Clipping Intervals determined by slice()
         Args:
         :param start:  the index of the first clip to return (to support pagination/memory management)
         :param length: the maximum number of clips to return (to support pagination/memory management)
@@ -98,12 +131,15 @@ class Slicer(object):
 
         Logger.properties(self.recording, "Clip creation recording characteristics")
 
-        # TODO add logic to evaluate clips by combined weighting of the clipping methods used
+        # Detect clusters in the list of Sample Clipping Intervals
+        intervals: List[SampleClippingInterval] = []
+        intervals += self.cluster_indexes('begin')
+        intervals += self.cluster_indexes('end')
 
         clips: [Clip] = []
         finish: int = min(start + length, len(self.sci)) - 1
         for index in range(start, finish):
-            clips.append(Clip(self.recording, self.sci[index]))
+            clips.append(Clip(self.recording, intervals[index]))
         return clips
 
     slice_on_beat_weight: int = 5

@@ -27,10 +27,7 @@ class VolumeSlicer(object):
         """
         self.sci: List[SampleClippingInterval] = []
 
-        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
-
-        if not active or 0 == weight:
-            return
+        weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         low_threshold: float = to_decibels(arguments['low_threshold']) if 'low_threshold' in arguments else Configuration().get('low_threshold')
         drift: float = to_decibels(arguments['drift']) if 'drift' in arguments else Configuration().get('drift_decibels')
@@ -71,7 +68,7 @@ class VolumeSlicer(object):
         clips = 0  # TODO turn peak decibels array into sample clipping intervals
         for clip_index in range(clips):
             sci = SampleClippingInterval(begin=0, end=0)
-            self.sci.append(sci)
+            self.sci += weight * [sci]  # append this Sample Clipping Interval to the list multiple times as specified by the weight
             Logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
 
     def get(self):

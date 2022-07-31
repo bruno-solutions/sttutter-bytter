@@ -25,10 +25,7 @@ class PitchSlicer(object):
         """
         self.sci: List[SampleClippingInterval] = []
 
-        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
-
-        if not active or 0 == weight:
-            return
+        weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         min_frequency: int = to_hertz(arguments['min_frequency']) if 'min_frequency' in arguments else 65  # hz (C2)
         max_frequency: int = to_hertz(arguments['max_frequency']) if 'max_frequency' in arguments else 2093  # hz (C7)

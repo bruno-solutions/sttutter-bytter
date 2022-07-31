@@ -29,10 +29,7 @@ class VocalSlicer(object):
         """
         self.sci: List[SampleClippingInterval] = []
 
-        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
-
-        if not active or 0 == weight:
-            return
+        weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         passes: int = arguments['passes'] if 'passes' in arguments else 1
         model: str = arguments['model'] if 'model' in arguments else 0

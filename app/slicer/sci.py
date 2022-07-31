@@ -5,9 +5,8 @@ class SampleClippingInterval(object):
     """
     Value object for a sample clipping interval
     """
-    MAXIMUM_SAMPLES = Configuration().get('maximum_samples')
 
-    def __init__(self, begin=0, end=MAXIMUM_SAMPLES):
+    def __init__(self, begin=None, end=None):
         """
         A sample index range within a source audio recording from which a clip can be produced
         Note: when reversed, begin and end will be swapped
@@ -16,18 +15,24 @@ class SampleClippingInterval(object):
         :param begin: the index of the first sample in the interval
         :param end:   the index of the last sample in the interval
         """
+        maximum_samples = Configuration().get('maximum_samples')
+
+        if begin is None:
+            begin = 0
+        if end is None:
+            end = maximum_samples
         if begin > end:
             begin, end = end, begin
         if 0 > begin:
             begin = 0
-        if end > self.MAXIMUM_SAMPLES:
-            end = self.MAXIMUM_SAMPLES
+        if end > maximum_samples:
+            end = maximum_samples
 
         self.begin = int(begin)
         self.end = int(end)
 
     def get(self):
         """
-        :return: the sample interval in multiple formats
+        :return: the sample interval
         """
         return self.begin, self.end

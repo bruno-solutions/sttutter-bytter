@@ -13,6 +13,7 @@ configuration_mutable = {
     "frame_rate": 44100,  # hz, CD quality
     "downloader_module": "aria2c",
     "clips_per_stage": 10,
+    "cluster_window_miliseconds": 75,
     "detection_window_miliseconds": 10,
     "low_threshold": -20.0,
     "drift_decibels": 0.1,

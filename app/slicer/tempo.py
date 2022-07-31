@@ -25,10 +25,7 @@ class TempoSlicer(object):
         """
         self.sci: List[SampleClippingInterval] = []
 
-        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
-
-        if not active or 0 == weight:
-            return
+        weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         total_samples: int = int(segment.frame_count())
 

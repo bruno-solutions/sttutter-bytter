@@ -24,7 +24,9 @@ class BeatSlicer(object):
         :param arguments: the common and slicer specific operational parameters
         :param recording: the downloaded audio recording from which clips will be sliced
         """
-        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
+        self.sci: List[SampleClippingInterval] = []
+
+        weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
         beats_per_clip: int = arguments['beats'] if 'beats' in arguments else Configuration().get('default_beat_count')
         attack: int = to_miliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('default_attack_miliseconds')
         decay: int = to_miliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('default_decay_miliseconds')
@@ -49,8 +51,6 @@ class BeatSlicer(object):
         Logger.debug(f"Found Beat Intervals: {beat_intervals}")
 
         Logger.debug(f"Segment Samples: {total_samples}")
-
-        self.sci: List[SampleClippingInterval] = []
 
         skip_count: int = 0
         beat_index: int = 0

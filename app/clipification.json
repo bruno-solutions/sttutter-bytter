@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"work_root": "c:\\users\\public\\desktop\\{application_name}",
+		"work_root": "c:\\users\\public\\desktop\\bytter",
 		"output_file_type": "wav",
 		"log_debug": true,
 		"log_warning": true,
@@ -12,6 +12,7 @@
 		"frame_rate": 44100,
 		"downloader_module": "aria2c",
 		"clips_per_stage": 10,
+		"cluster_window_miliseconds": 4000,
 		"detection_window_miliseconds": 10,
 		"low_threshold": -20.0,
 		"drift_decibels": 0.1,
@@ -23,11 +24,13 @@
 		"fade_in_miliseconds": 500,
 		"fade_out_miliseconds": 500
 	},
-    "process": [
-        {"method": "slice_at_random"},
-        {"method": "slice_at_interval", "arguments": {"begin": 0, "end": 1, "clip_size": "7500 ms", "clips": 7}},
-        {"method": "slice_on_beat", "arguments": {"begin": 0, "end": 1, "beats": 4, "attack": "25ms", "decay": 75, "clips": 15}},
-        {"method": "slice_on_volume_change", "arguments": {"begin": 0, "end": 1, "detection_window": 10, "low_threshold": -20.0, "drift": 0.1}},
-        {"method": "slice_on_vocal_change", "arguments": {"begin": 0, "end": 1, "passes": 1, "model": "spleeter:5stems-16kHz", "detection_window": 20, "low_threshold": -20.0, "drift": 0.1, "clips": 20}}
+    "logic": [
+        {"method": "slice_at_interval", "active": true, "weight": 2, "arguments": {"begin": 0, "end": 1, "clip_size": "7500 ms", "clips": 20}},
+        {"method": "slice_at_interval", "active": true, "weight": 1, "arguments": {"begin": 0, "end": 1, "clip_size": "3000 ms", "clips": 15}},
+        {"method": "slice_at_interval", "active": true, "weight": 3, "arguments": {"begin": 0, "end": 1, "clip_size": "21000 ms", "clips": 5}},
+
+        {"method": "slice_at_interval", "active": true, "weight": 0, "arguments": {"begin": 0, "end": 1, "clip_size": "1000 ms", "clips": 400}},
+        {"method": "slice_at_interval", "active": false, "weight": 10, "arguments": {"begin": 0, "end": 1, "clip_size": "500 ms", "clips": 200}},
+        {"method": "slice_at_interval", "active": false, "weight": 0, "arguments": {"begin": 0, "end": 1, "clip_size": "5550 ms", "clips": 11}}
     ]
 }

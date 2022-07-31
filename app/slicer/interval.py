@@ -25,10 +25,7 @@ class SimpleIntervalSlicer(object):
         """
         self.sci: List[SampleClippingInterval] = []
 
-        active, weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
-
-        if not active or 0 == weight:
-            return
+        weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         total_samples: int = int(segment.frame_count())
         samples_per_clip: int = int(segment.frame_rate * (min(clip_size, Configuration().get('maximum_clip_size_miliseconds')) / 1000))
@@ -64,7 +61,7 @@ class SimpleIntervalSlicer(object):
                 Logger.warning(f"The sample index {end_index} tried to pass the end of the recording at {total_samples} samples")
                 break
             sci = SampleClippingInterval(begin=begin_index, end=end_index)
-            self.sci.append(sci)
+            self.sci += weight * [sci]
             Logger.debug(f"Interval[{clip_index}]: {sci.begin} {sci.end}")
             begin_index += samples_per_iteration
 
