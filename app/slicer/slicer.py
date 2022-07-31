@@ -92,34 +92,86 @@ class Slicer(object):
         Logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")
         return self
 
-    def cluster_indexes(self, side: Literal["begin", "end"], proximity: Union[int, None] = None) -> [[int]]:
+    def cluster_indexes(self, sample_indexes: [int], proximity: Union[int, None] = None) -> [[int]]:
         """
         Group Sample Clipping Intervals by beginning or ending sample index to "vote" for likely clip edges
         Args:
-        :param side:      specifies whether to cluster by the 'begin' or 'end' attribute of the Sample Clipping Interval
-        :param proximity: the nearness in miliseconds by which to cluster Sample Clipping Intervals
+        :param sample_indexes: a list of begin or end Sample Clipping Intervals to cluster
+        :param proximity:   the nearness in miliseconds by which to cluster Sample Clipping Intervals
         """
-        intervals: List[SampleClippingInterval] = sorted(self.sci, key=lambda sci: getattr(sci, side))
+        sample_indexes.sort()
+        sample_index_proximity_threshold = (self.recording.frame_rate // 1000) * (proximity if proximity is not None else Configuration().get("cluster_window_miliseconds"))
 
-        if proximity is None:
-            proximity = Configuration().get('cluster_window_miliseconds')
-
-        proximity = self.recording.frame_rate // 1000 * proximity  # convert miliseconds to samples
-
-        cluster: List[SampleClippingInterval] = []
-        previous: int = 0
-
-        for interval in intervals:
-            current: int = getattr(interval, side)
-            if proximity >= current - previous:
-                cluster += [interval]
-            else:
+        cluster: [int] = []
+        trailing_sample_indexes_index: int = len(sample_indexes) - 1
+        while 0 <= trailing_sample_indexes_index:
+            trailing_sample_index: int = sample_indexes[trailing_sample_indexes_index]
+            leading_sample_indexes_index: int = trailing_sample_indexes_index
+            while 0 <= leading_sample_indexes_index:
+                current_sample_index: int = sample_indexes[leading_sample_indexes_index]
+                if sample_index_proximity_threshold < trailing_sample_index - current_sample_index:
+                    yield cluster
+                    cluster = []
+                    break
+                cluster += [current_sample_index]
+                leading_sample_indexes_index -= 1
+            if cluster:
                 yield cluster
-                cluster = [interval]
-            previous = current
+                cluster = []
+
+            # Scan for the next (potentially) overlapping cluster at a fraction of the proximity threshold away from the last trailing sample indexes index
+
+            trailing_sample_index -= sample_index_proximity_threshold // 4
+            while 0 <= trailing_sample_indexes_index and trailing_sample_index < sample_indexes[trailing_sample_indexes_index]:
+                trailing_sample_indexes_index -= 1
 
         if cluster:
             yield cluster
+
+    @staticmethod
+    def cluster_size_histogram(sci_index_clusters) -> ({int: int}, int, int, float):
+        histogram: {} = {}
+        for sci_cluster in sci_index_clusters:
+            key: int = len(sci_cluster)
+            histogram[key] = histogram[key] + 1 if key in histogram else 1
+
+        low: int = len(sci_index_clusters)
+        high: int = 0
+        accumulator: int = 0
+        for key in sorted(histogram, reverse=True):
+            frequency: int = histogram[key]
+            if low > frequency:
+                low = frequency
+            if high < frequency:
+                high = frequency
+            accumulator += frequency
+            del histogram[key]
+            histogram[key] = frequency
+
+        return histogram, low, high, accumulator // len(histogram)
+
+    @staticmethod
+    def cluster_prune(index_clusters: [[int]], threshold: int) -> [[int]]:
+        clusters: [[int]] = []
+        minimums: [int] = []
+        maximums: [int] = []
+
+        for index_cluster in index_clusters:
+            if threshold <= len(index_cluster):
+                clusters += [index_cluster]
+                minimums += [min(index_cluster)]
+                maximums += [max(index_cluster)]
+        return clusters, minimums, maximums
+
+    def clip_boundries(self, side: Literal["begin", "end"]) -> ([int], [int]):
+        indexes: [int] = []
+        indexes += (getattr(sci, side) for sci in self.sci)
+        index_clusters: List[List[int]] = []
+        index_clusters += self.cluster_indexes(indexes)
+        index_cluster_sizes_histogram, low, high, average = Slicer.cluster_size_histogram(index_clusters)
+        pruned_index_clusters, lowest_cluster_index, highest_cluster_index = Slicer.cluster_prune(index_clusters, average)
+
+        return pruned_index_clusters, lowest_cluster_index if "begin" == side else highest_cluster_index
 
     def get(self, start: int = None, length: int = None) -> [Clip]:
         """
@@ -133,15 +185,21 @@ class Slicer(object):
 
         Logger.properties(self.recording, "Clip creation recording characteristics")
 
-        # Detect clusters in the list of Sample Clipping Intervals
+        # Find clusters in the begin and end lists from the Sample Clipping Intervals
+
+        pruned_index_clusters_begin, lowest_index_in_cluster_begin = self.clip_boundries("begin")
+        pruned_index_clusters_end, highest_index_in_cluster_end = self.clip_boundries("end")
+
         intervals: List[SampleClippingInterval] = []
-        intervals += self.cluster_indexes('begin')
-        intervals += self.cluster_indexes('end')
+        maximum_samples: int = (self.recording.frame_rate // 1000) * Configuration().get("maximum_clip_size_miliseconds")
+        for begin_sample_index in lowest_index_in_cluster_begin:
+            for end_sample_index in highest_index_in_cluster_end:
+                if maximum_samples >= end_sample_index - begin_sample_index:
+                    intervals += [SampleClippingInterval(begin=begin_sample_index, end=end_sample_index)]
 
         clips: [Clip] = []
-        finish: int = min(start + length, len(self.sci)) - 1
-        for index in range(start, finish):
-            clips.append(Clip(self.recording, intervals[index]))
+        for interval in intervals:
+            clips += [Clip(self.recording, interval)]
         return clips
 
     slice_on_beat_weight: int = 5

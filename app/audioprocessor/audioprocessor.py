@@ -108,11 +108,14 @@ class AudioProcessor(object):
         :param fade_in_duration: The number of miliseconds for the fade in
         :param fade_out_duration: The number of miliseconds for the fade out
         """
+
         fade_in_duration = fade_in_duration if fade_in_duration is not None else Configuration().get('fade_in_miliseconds')
         fade_out_duration = fade_out_duration if fade_out_duration is not None else Configuration().get('fade_out_miliseconds')
 
-        for index, clip in enumerate(self.clips):
-            self.clips[index]['samples'] = clip['samples'].fade_in(fade_in_duration).fade_out(fade_out_duration)
+        for clip in self.clips:
+            # clip.segment = Clip(getattr(clip, "segment").fade_in(fade_in_duration).fade_out(fade_out_duration), sci=SampleClippingInterval(begin=clip.begin["index"], end=clip.end["index"]))
+            clip.segment = getattr(clip, "segment").fade_in(fade_in_duration).fade_out(fade_out_duration)
+
         return self
 
     def export(self):
@@ -123,8 +126,8 @@ class AudioProcessor(object):
         for index, clip in enumerate(self.clips):
             Path(export_root).mkdir(parents=True, exist_ok=True)
             filename = f"{export_root}\\{self.tagger.get('title')}.{index:05d}.{Configuration().get('output_file_type')}"
-            clip['samples'].export(filename, format=Configuration().get('output_file_type')).close()
-            self.tagger.set('source time indexes', f"{clip['source']['begin']['time']:.3f}:::{clip['source']['end']['time']:.3f}")
-            self.tagger.set('source samples', f"{clip['source']['begin']['sample']:0.0f}:::{clip['source']['end']['sample']:0.0f}")
+            getattr(clip, "segment").export(filename, format=Configuration().get('output_file_type')).close()
+            self.tagger.set('source time indexes', f"{getattr(clip, 'begin')['time']:.3f}:::{getattr(clip, 'end')['time']:.3f}")
+            self.tagger.set('source samples', f"{getattr(clip, 'begin')['index']:0.0f}:::{getattr(clip, 'end')['index']:0.0f}")
             self.tagger.write_audio_file_tags(filename)
         return self

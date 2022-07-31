@@ -20,14 +20,14 @@ class Clip(object):
         begin, end = sci.get()
         self.begin = {'index': begin, 'time': begin / frame_rate}
         self.end = {'index': end, 'time': end / frame_rate}
-        self.samples = recording.get_array_of_samples()[begin:end]  # TODO: determine the type is
+        self.segment = recording.get_sample_slice(start_sample=begin, end_sample=end)
 
     def get(self):
         """
         :return: the samples and the extract begin and end points (as a sample index and a time value) from the source recording
         """
         return {
-            'samples': self.samples,
+            'samples': self.segment,
             'source': {
                 'begin': self.begin,
                 'end': self.end
