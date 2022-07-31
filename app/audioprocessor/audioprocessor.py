@@ -27,7 +27,7 @@ class AudioProcessor(object):
             - mono frame: single sample value
             - stereo frame: sample value pair
         Args:
-        :param preserve_cache:    should downloaded source media files be kept after processing to prevent re-download later
+        :param preserve_cache: should downloaded source media files be kept after processing to prevent re-download later
         """
         rm_md(cache_root=(None if preserve_cache else Configuration().get('cache_root')), export_root=Configuration().get('export_root'), log_root=Configuration().get('log_root'), temp_root=Configuration().get('temp_root'))
 

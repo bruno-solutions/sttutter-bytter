@@ -22,8 +22,9 @@ def generate_configuration_and_logic_template(file_path: str) -> None:
             {
                 "method": method,
                 "active": False,
+                "weight": weight,
                 "arguments": {}
-            } for method in Slicer.get_slicer_methods()
+            } for method, weight in Slicer.get_slicer_methods()
         ]
     }
 

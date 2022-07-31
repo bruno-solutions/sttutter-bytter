@@ -3,7 +3,7 @@ from typing import List
 import pydub
 
 from arguments import parse_common_arguments
-from configuration.constants import MAXIMUM_CLIP_SIZE_MILISECONDS
+from configuration.configuration import Configuration
 from logger import Logger
 from sci import SampleClippingInterval
 
@@ -26,7 +26,7 @@ class SimpleIntervalSlicer(object):
         segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         total_samples: int = int(segment.frame_count())
-        samples_per_clip: int = int(segment.frame_rate * (min(clip_size, MAXIMUM_CLIP_SIZE_MILISECONDS) / 1000))
+        samples_per_clip: int = int(segment.frame_rate * (min(clip_size, Configuration().get('maximum_clip_size_miliseconds')) / 1000))
         max_possible_clips: int = total_samples // samples_per_clip
 
         cumulative_samples_to_skip = total_samples - (clips * samples_per_clip)

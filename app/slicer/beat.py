@@ -6,7 +6,6 @@ from numpy import ndarray
 
 from arguments import parse_common_arguments, to_miliseconds
 from configuration.configuration import Configuration
-from configuration.constants import MAXIMUM_CLIP_SIZE_MILISECONDS
 from logger import Logger
 from normalizer import Normalizer
 from sci import SampleClippingInterval
@@ -34,7 +33,7 @@ class BeatSlicer(object):
         attack_samples: int = (sample_rate // 1000) * attack
         decay_samples: int = (sample_rate // 1000) * decay
 
-        maximum_clip_samples = sample_rate * (MAXIMUM_CLIP_SIZE_MILISECONDS // 1000)
+        maximum_clip_samples = sample_rate * (Configuration().get('maximum_clip_size_miliseconds') // 1000)
         samples = Normalizer.monaural_normalization(segment)
         total_samples: int = len(samples)
 

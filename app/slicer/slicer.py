@@ -10,6 +10,7 @@ import pydub
 from beat import BeatSlicer
 from chaos import ChaosSlicer
 from clip import Clip
+from configuration.configuration import Configuration
 from interval import SimpleIntervalSlicer
 from logger import Logger
 from onset import OnsetSlicer
@@ -42,8 +43,10 @@ class Slicer(object):
         :param logic:     the slicers to use to slice the recording and the slicer arguments
         :param sci:       starter sample clipping intervals
         """
-        if recording is None or 1000 > len(recording):  # refuse to slice recordings shorter than 1 second (for no particular reason)
+        if recording is None:
             raise RuntimeError("Recording not provided, use the Loader class to load a file to slice")
+        if Configuration().get('minimum_recording_size_miliseconds') > len(recording):  # refuse to slice recordings shorter than 1 second (for no particular reason)
+            raise RuntimeError("Recording was less than 1000 miliseconds, will not slice")
         if logic is None or 0 == len(logic):
             raise RuntimeError("Slicer methods not declared, create a method dictionary that describes how to process and slice the recording")
 
@@ -103,6 +106,8 @@ class Slicer(object):
             clips.append(Clip(self.recording, self.sci[index]))
         return clips
 
+    slice_on_beat_weight: float = 5.0
+
     def slice_on_beat(self, stage: int, arguments: {}) -> None:
         """
         Wrapper for the slice on the musical every beat slicer:
@@ -112,6 +117,8 @@ class Slicer(object):
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
         self.sci += BeatSlicer(stage, arguments, self.recording).get()
+
+    slice_at_interval_weight: float = 0.75
 
     def slice_at_interval(self, stage: int, arguments: {}) -> None:
         """
@@ -123,6 +130,8 @@ class Slicer(object):
         """
         self.sci += SimpleIntervalSlicer(stage, arguments, self.recording).get()
 
+    slice_at_random_weight: float = 0.5
+
     def slice_at_random(self, stage: int, arguments: {}) -> None:
         """
         Wrapper for the slice randomly slicer:
@@ -132,6 +141,8 @@ class Slicer(object):
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
         self.sci += ChaosSlicer(stage, arguments, self.recording).get()
+
+    slice_on_vocal_change_weight: float = 1.0
 
     def slice_on_vocal_change(self, stage: int, arguments: {}) -> None:
         """
@@ -143,6 +154,8 @@ class Slicer(object):
         """
         self.sci += VocalSlicer(stage, arguments, self.recording).get()
 
+    slice_on_volume_change_weight: float = 5.0
+
     def slice_on_volume_change(self, stage: int, arguments: {}) -> None:
         """
         Wrapper for the slice on volume change slicer:
@@ -153,6 +166,8 @@ class Slicer(object):
         """
         self.sci += VolumeSlicer(stage, arguments, self.recording).get()
 
+    slice_at_onset_weight: float = 4.0
+
     def slice_at_onset(self, stage: int, arguments: {}) -> None:
         """
         Wrapper for the slice on onset detection slicer:
@@ -162,6 +177,8 @@ class Slicer(object):
         """
         self.sci += OnsetSlicer(stage, arguments, self.recording).get()
 
+    slice_on_tempo_change_weight: float = 3.0
+
     def slice_on_tempo_change(self, stage: int, arguments: {}) -> None:
         """
         Wrapper for the slice on tempo change detection slicer:
@@ -170,6 +187,8 @@ class Slicer(object):
         :param arguments: a dictionary of the common and slicing method specific processing parameters
         """
         self.sci += TempoSlicer(stage, arguments, self.recording).get()
+
+    slice_on_pitch_change_weight: float = 2.0
 
     def slice_on_pitch_change(self, stage: int, arguments: {}) -> None:
         """
@@ -181,9 +200,9 @@ class Slicer(object):
         self.sci += PitchSlicer(stage, arguments, self.recording).get()
 
     @staticmethod
-    def get_slicer_methods() -> list[str]:
+    def get_slicer_methods() -> list[(str, float)]:
         """
         Returns a list of the available slicer methods to assist users in writing slicing scripts:
         Note: all slicer wrapper method names must begin with "slice_"
         """
-        return [attribute for attribute in dir(Slicer) if attribute.startswith("slice_") and callable(getattr(Slicer, attribute))]
+        return [(attribute, getattr(Slicer, f"{getattr(Slicer, attribute).__name__}_weight")) for attribute in dir(Slicer) if attribute.startswith("slice_") and callable(getattr(Slicer, attribute))]
