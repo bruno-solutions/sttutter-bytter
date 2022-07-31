@@ -113,7 +113,6 @@ class AudioProcessor(object):
         fade_out_duration = fade_out_duration if fade_out_duration is not None else Configuration().get('fade_out_miliseconds')
 
         for clip in self.clips:
-            # clip.segment = Clip(getattr(clip, "segment").fade_in(fade_in_duration).fade_out(fade_out_duration), sci=SampleClippingInterval(begin=clip.begin["index"], end=clip.end["index"]))
             clip.segment = getattr(clip, "segment").fade_in(fade_in_duration).fade_out(fade_out_duration)
 
         return self
