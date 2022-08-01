@@ -192,7 +192,7 @@ class Tagger(object):
     def derive_clip_title(self):
         if self.get('clip title'):
             return
-        for tag in ['filename', 'title', 'subtitle', 'artist', 'album artist', 'album', 'performer', 'composer', 'conductor', 'webpage url', 'www']:
+        for tag in ['title', 'subtitle', 'artist', 'album artist', 'album', 'performer', 'composer', 'conductor', 'webpage url', 'www', 'filename']:
             value: str = self.get(tag)
             if value:
                 self.set('clip title', f"{value}")
