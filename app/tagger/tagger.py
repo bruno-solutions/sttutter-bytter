@@ -3,7 +3,7 @@ import os
 import re
 from typing import List, Union
 
-from configuration.constants import APPLICATION_NAME
+from configuration.configuration import Configuration
 from logger import Logger
 
 # Notes:
@@ -21,7 +21,7 @@ multivalue_tags: [] = list(k for k, _ in tag_to_multivalue_key.items())
 # Empirically discovered RIFF chuck labels using Audacity, TagScanner, and Hxd Hex Editor (Audacity and TagScanner disagree on some of these)
 
 monovalue_keys: [] = [
-    APPLICATION_NAME,  # [RIFF:LIST:id3 :ID3 :TXXX:SOUNDBYTE]
+    Configuration().get('application_name'),  # [RIFF:LIST:id3 :ID3 :TXXX:SOUNDBYTE]
     'age_limit',  # [RIFF:LIST:id3 :ID3 :TXXX:AGE LIMIT]
     'album',  # Album Title [Audacity][Fixed Tag] [RIFF:LIST:INFO:IPRD] or [RIFF:LIST:id3 :ID3 :TALB]
     'album_artist',  # Band [Audacity]
@@ -73,6 +73,8 @@ monovalue_keys: [] = [
     'rms',  # [RIFF:LIST:id3 :ID3 :TXXX:RMS]
     'sample_rate',  # [RIFF:LIST:id3 :ID3 :TXXX:SAMPLE RATE]
     'sample_width',  # [RIFF:LIST:id3 :ID3 :TXXX:SAMPLE WIDTH]
+    'source_sample_indexes',
+    'source_time_indexes',
     'subtitle',  # Subtitle [Audacity]  # [RIFF:LIST:id3 :ID3 :TXXX:Subtitle]
     'thumbnail',  # [RIFF:LIST:id3 :ID3 :TXXX:THUMBNAIL]
     'title',  # Track Title [Audacity][Fixed Tag] [RIFF:LIST:INFO:INAM] or [RIFF:LIST:id3 :ID3 :TIT2:title]

@@ -3,7 +3,6 @@ import sys
 from argparse import ArgumentParser
 
 from configuration.configuration import Configuration
-from configuration.constants import APPLICATION_NAME
 from configuration.mutable import configuration_mutable
 from slicer import Slicer
 from utility import normalize_file_path
@@ -34,11 +33,11 @@ def generate_configuration_and_logic_template(file_path: str) -> None:
         with open(file_path, 'w', encoding='utf-8') as json_file:
             json.dump(template, json_file, ensure_ascii=False, indent=4)
     except IOError as exception:
-        print(f"Unable to write {APPLICATION_NAME} template configuration/logic file {file_path}")
+        print(f"Unable to write {Configuration().get('application_name')} template configuration/logic file {file_path}")
         print(f"[ERROR]: {exception}")
         raise exception
 
-    print(f"Created {APPLICATION_NAME} template configuration/logic file {file_path}")
+    print(f"Created {Configuration().get('application_name')} template configuration/logic file {file_path}")
 
 
 def load_command_line_arguments():

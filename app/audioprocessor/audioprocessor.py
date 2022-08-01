@@ -121,17 +121,21 @@ class AudioProcessor(object):
         export_root = Configuration().get('export_root')
         export_file_name = self.tagger.get('clip title')
         output_file_type = Configuration().get('output_file_type')
+        Logger.debug(f"Exporting '{export_file_name}' clips to {export_root} as {output_file_type}", separator=True)
+        counter: int = 0
         for index, clip in enumerate(self.clips):
-            begin = getattr(clip, 'begin')
+            begin: {} = getattr(clip, 'begin')
             begin_time: int = int(begin['time'] * 1000)
             begin_index: int = int(begin['index'])
-            end = getattr(clip, 'end')
+            end: {} = getattr(clip, 'end')
             end_time: int = int(end['time'] * 1000)
             end_index: int = int(end['index'])
             Path(export_root).mkdir(parents=True, exist_ok=True)
-            filename = f"{export_root}\\{export_file_name}.[{begin_time:010d}-{end_time:010d}].{output_file_type}"
+            filename = f"{export_root}\\{export_file_name}.[{begin_time:,}-{end_time:,}].{output_file_type}"
             getattr(clip, "segment").export(filename, format=output_file_type).close()
-            self.tagger.set('source time indexes', f"{begin_time:010d}-{end_time * 1000:010d}")
-            self.tagger.set('source samples', f"{begin_index:010d}-{end_index:010d}")
+            self.tagger.set('source time indexes', f"{begin_time:,}-{end_time * 1000:,}ms")
+            self.tagger.set('source sample indexes', f"{begin_index:,}-{end_index:,}")
             self.tagger.write_audio_file_tags(filename)
+            counter += 1
+        Logger.debug(f"Exported {counter} '{export_file_name}' clips to {export_root}", separator=True)
         return self
