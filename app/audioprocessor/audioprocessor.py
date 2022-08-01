@@ -108,13 +108,10 @@ class AudioProcessor(object):
         :param fade_in_duration: The number of miliseconds for the fade in
         :param fade_out_duration: The number of miliseconds for the fade out
         """
-
         fade_in_duration = fade_in_duration if fade_in_duration is not None else Configuration().get('fade_in_miliseconds')
         fade_out_duration = fade_out_duration if fade_out_duration is not None else Configuration().get('fade_out_miliseconds')
-
         for clip in self.clips:
             clip.segment = getattr(clip, "segment").fade_in(fade_in_duration).fade_out(fade_out_duration)
-
         return self
 
     def export(self):
@@ -122,10 +119,12 @@ class AudioProcessor(object):
         Export the audio clips
         """
         export_root = Configuration().get('export_root')
+        export_file_name = self.tagger.get('clip title')
+        output_file_type = Configuration().get('output_file_type')
         for index, clip in enumerate(self.clips):
             Path(export_root).mkdir(parents=True, exist_ok=True)
-            filename = f"{export_root}\\{self.tagger.get('title')}.{index:05d}.{Configuration().get('output_file_type')}"
-            getattr(clip, "segment").export(filename, format=Configuration().get('output_file_type')).close()
+            filename = f"{export_root}\\{export_file_name}.{index:05d}.{output_file_type}"
+            getattr(clip, "segment").export(filename, format=output_file_type).close()
             self.tagger.set('source time indexes', f"{getattr(clip, 'begin')['time']:.3f}:::{getattr(clip, 'end')['time']:.3f}")
             self.tagger.set('source samples', f"{getattr(clip, 'begin')['index']:0.0f}:::{getattr(clip, 'end')['index']:0.0f}")
             self.tagger.write_audio_file_tags(filename)

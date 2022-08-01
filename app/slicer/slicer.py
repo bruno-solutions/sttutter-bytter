@@ -177,7 +177,7 @@ class Slicer(object):
         """
         Generate audio segment clips from the recording based upon the Sample Clipping Intervals determined by slice()
         Args:
-        :param start:  the index of the first clip to return (to support pagination/memory management)
+        :param start:  the zero based index of the first clip to return (to support pagination/memory management)
         :param length: the maximum number of clips to return (to support pagination/memory management)
         """
         start = 0 if start is None else start
@@ -190,12 +190,21 @@ class Slicer(object):
         pruned_index_clusters_begin, lowest_index_in_cluster_begin = self.clip_boundries("begin")
         pruned_index_clusters_end, highest_index_in_cluster_end = self.clip_boundries("end")
 
+        maximum_clip_size_samples: int = (self.recording.frame_rate // 1000) * Configuration().get("maximum_clip_size_miliseconds")
+        clips_considered: int = 0
+        clips_generated: int = 0
         intervals: List[SampleClippingInterval] = []
-        maximum_samples: int = (self.recording.frame_rate // 1000) * Configuration().get("maximum_clip_size_miliseconds")
         for begin_sample_index in lowest_index_in_cluster_begin:
             for end_sample_index in highest_index_in_cluster_end:
-                if maximum_samples >= end_sample_index - begin_sample_index:
-                    intervals += [SampleClippingInterval(begin=begin_sample_index, end=end_sample_index)]
+                if end_sample_index > begin_sample_index and maximum_clip_size_samples >= end_sample_index - begin_sample_index:
+                    if start <= clips_considered:
+                        intervals += [SampleClippingInterval(begin=begin_sample_index, end=end_sample_index)]
+                        clips_generated += 1
+                    if length <= clips_generated:
+                        break
+                    clips_considered += 1
+            if length <= clips_generated:
+                break
 
         clips: [Clip] = []
         for interval in intervals:

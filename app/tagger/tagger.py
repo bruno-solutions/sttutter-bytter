@@ -6,6 +6,10 @@ from typing import List, Union
 from configuration.constants import APPLICATION_NAME
 from logger import Logger
 
+# Notes:
+#      - tags use a spaces to separate words
+#      - keys use an underscore to separate words
+
 multivalue_key_to_tag: {} = {
     'categories': 'category',  # [RIFF:LIST:id3 :ID3 :TXXX:CATEGORY]
     'tags': 'tag', 'genres': 'genre'  # [RIFF:LIST:id3 :ID3 :TXXX:TAG]
@@ -20,7 +24,7 @@ monovalue_keys: [] = [
     APPLICATION_NAME,  # [RIFF:LIST:id3 :ID3 :TXXX:SOUNDBYTE]
     'age_limit',  # [RIFF:LIST:id3 :ID3 :TXXX:AGE LIMIT]
     'album',  # Album Title [Audacity][Fixed Tag] [RIFF:LIST:INFO:IPRD] or [RIFF:LIST:id3 :ID3 :TALB]
-    'album artist',  # Band [Audacity]
+    'album_artist',  # Band [Audacity]
     'application',  # [RIFF:LIST:id3 :ID3 :TXXX:APPLICATION]
     'artist',  # Artist Name [Audacity][Fixed Tag] [RIFF:LIST:INFO:IART] or [RIFF:LIST:id3 :ID3 :TPE1]
     'asr',  # [RIFF:LIST:id3 :ID3 :TXXX:ASR]
@@ -44,6 +48,7 @@ monovalue_keys: [] = [
     'disc',  # [RIFF:LIST:id3 :ID3 :TXXX:DISC]
     'duration',  # [RIFF:LIST:id3 :ID3 :TXXX:DURATION]
     'encodedby',  # Encoded by [Audacity] [RIFF:LIST:id3 :ID3 :TXXX : Encoded by] or [RIFF:LIST:id3 :ID3 :TENC]
+    'filename',
     'filesize',  # [RIFF:LIST:id3 :ID3 :TXXX:FILESIZE]
     'frame_rate',  # [RIFF:LIST:id3 :ID3 :TXXX:FRAME RATE]
     'full_scale_decibels',  # [RIFF:LIST:id3 :ID3 :TXXX:FULL SCALE DECIBELS]
@@ -184,6 +189,16 @@ class Tagger(object):
         """
         return tag in self.tags
 
+    def derive_clip_title(self):
+        if self.get('clip title'):
+            return
+        for tag in ['filename', 'title', 'subtitle', 'artist', 'album artist', 'album', 'performer', 'composer', 'conductor', 'webpage url', 'www']:
+            value: str = self.get(tag)
+            if value:
+                self.set('clip title', f"{value}")
+                return
+        self.set('clip title', 'clip')
+
     # https://github.com/supermihi/pytaglib/blob/39aabb26f4d6016c110794361b20b7fb76e64ecc/src/taglib.pyx#L43
 
     def load_audio_file_tags(self, filename: str):
@@ -323,5 +338,6 @@ class Tagger(object):
         self.clear()
         self.load_metadata_file(metadata_filename)
         self.load_audio_file_tags(media_filename)
+        self.derive_clip_title()
         self.write_downloader_metadata(metadata_filename)
         self.write_audio_file_tags(media_filename)

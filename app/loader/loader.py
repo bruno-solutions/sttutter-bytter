@@ -136,15 +136,17 @@ class Loader(object):
         """
         Logger.debug(f"Loading media file from {uri}", separator=True)
         start_time: float = time.time()
-        path_file_base: str = f"{Configuration().get('cache_root')}\\{hashlib.md5(uri.encode('utf-8')).hexdigest().upper()}"
+        filename: str = f"{hashlib.md5(uri.encode('utf-8')).hexdigest().upper()}"
+        path_file_base: str = f"{Configuration().get('cache_root')}\\{filename}"
         audio_file: str = f"{path_file_base}.{Configuration().get('output_file_type')}"
 
-        import pydub
-
         try:
+            import pydub
             recording: pydub.AudioSegment = self.copy(uri, path_file_base, audio_file) if uri.startswith("file://") else self.download(uri, path_file_base, audio_file)
         except FileNotFoundError:
             raise FileNotFoundError(f"Loading media file from URL: {uri} failed")
+
+        self.tagger.set('filename', filename)
 
         Logger.debug(f"Audio file {audio_file} generated")
         Logger.debug(f"Media file load and conversion finished [{time.time() - start_time} secs]")
