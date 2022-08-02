@@ -1,4 +1,4 @@
 """
-The module for splitting songs into clips
+The module that audio segments (clips) from (video or audio) media files
 """
 from .slicer import Slicer

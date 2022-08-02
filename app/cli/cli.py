@@ -3,9 +3,9 @@ import sys
 from argparse import ArgumentParser
 
 from configuration import Configuration
+from file import normalize_file_path
 from mutable import configuration_mutable
 from slicer import Slicer
-from utility import normalize_file_path
 
 
 def generate_configuration_and_logic_template(file_path: str) -> None:
