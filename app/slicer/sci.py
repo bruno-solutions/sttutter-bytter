@@ -1,4 +1,4 @@
-from configuration.configuration import Configuration
+from configuration import Configuration
 
 
 class SampleClippingInterval(object):

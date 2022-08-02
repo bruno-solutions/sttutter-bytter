@@ -8,7 +8,7 @@ from typing import List, Optional, Union, Literal
 from beat import BeatSlicer
 from chaos import ChaosSlicer
 from clip import Clip
-from configuration.configuration import Configuration
+from configuration import Configuration
 from interval import SimpleIntervalSlicer
 from logger import Logger
 from onset import OnsetSlicer
@@ -55,7 +55,7 @@ class Slicer(object):
         self.recording = recording
         self.sci = [] if sci is None else sci
 
-        Logger.debug("Slicing sample clipping intervals from the recording")
+        Logger.info("Slicing sample clipping intervals from the recording")
 
         for stage, slicer in enumerate(logic):  # execution each slicer is a "stage" in the processing of the source
             if "active" in slicer and not slicer["active"]:  # skip methods that are deactivated
@@ -86,7 +86,7 @@ class Slicer(object):
             arguments["weight"] = slicer["weight"] if "weight" in slicer else "1"
 
             Logger.properties(recording, f"Pre-stage:{stage} [{method_name}] slicing recording characteristics")
-            method(self, stage, arguments)  # -> None
+            method(self, stage, arguments)
             Logger.properties(recording, f"Post-stage:{stage} [{method_name}] slicing recording characteristics")
 
         Logger.debug(f"Sliced {len(self.sci)} sample clipping intervals from the recording")

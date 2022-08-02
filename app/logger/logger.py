@@ -3,11 +3,11 @@ import time
 from pathlib import Path
 from typing import Union
 
-from configuration.configuration import Configuration
+from configuration import Configuration
 
 
 def timestamp():
-    return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(time.time()))
 
 
 class Logger(object):
@@ -16,22 +16,26 @@ class Logger(object):
     """
 
     @staticmethod
-    def separator(separator: Union[str, bool] = Configuration().get('log_file_separator'), length: int = 80, mode: str = ''):
+    def logging_level() -> int:
+        return logging.DEBUG if Configuration().get("log_debug") else logging.INFO if Configuration().get("log_info") else logging.WARNING if Configuration().get("log_warning") else logging.ERROR
+
+    @staticmethod
+    def separator(separator: Union[str, bool] = Configuration().get("log_file_separator"), length: int = 80, mode: str = ""):
         """
         Emit a log separator
         """
-        if not separator or ('debug' == mode and not Configuration().get('log_debug')) or ('warning' == mode and not Configuration().get('log_warning')) or ('error' == mode and not Configuration().get('log_error')):
+        if not separator or ("debug" == mode and not Configuration().get("log_debug")) or ("info" == mode and not Configuration().get("log_info")) or ("warning" == mode and not Configuration().get("log_warning")) or ("error" == mode and not Configuration().get("log_error")):
             return
 
-        separator = ''.join([(separator if separator is str and separator != '' else Configuration().get('log_file_separator')) * length])
+        separator = "".join([(separator if separator is str and separator != "" else Configuration().get("log_file_separator")) * length])
 
-        if Configuration().get('log_to_console'):
+        if Configuration().get("log_to_console"):
             print(separator)
 
-        log_file_path = Configuration().get('log_file_path')
+        log_file_path = Configuration().get("log_file_path")
 
         if log_file_path and Path(log_file_path).parent.is_dir():
-            logging.basicConfig(filemode='w', filename=log_file_path, level=logging.DEBUG if Configuration().get('log_debug') else logging.WARNING if Configuration().get('log_warning') else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
+            logging.basicConfig(filemode="w", filename=log_file_path, level=Logger.logging_level(), format="%(asctime)s [%(levelname)s] %(message)s")
             logging.info(separator)
 
     @staticmethod
@@ -39,44 +43,69 @@ class Logger(object):
         """
         Log a debug message
         """
-        if not Configuration().get('log_debug'):
+        message = message.lstrip()
+
+        if message.startswith("[download]"):  # YouTubeDL progress messages are not "DEBUG" messages
+            Logger.info(message, separator)
+            return
+
+        if not Configuration().get("log_debug"):
             return
 
         Logger.separator(separator)
 
-        message: str = message.lstrip()
+        if Configuration().get("log_to_console"):
+            print(f"{timestamp()} [DEBUG]: {message}")
 
-        if Configuration().get('log_to_console'):
-            if message.startswith('[download]'):
-                print(f"\r{timestamp()} [DEBUG]: {message}", end='' if "100%" not in message else '\n', flush=True)
-            else:
-                print(f"{timestamp()} [DEBUG]: {message}")
-
-        log_file_path = Configuration().get('log_file_path')
+        log_file_path = Configuration().get("log_file_path")
 
         if log_file_path and Path(log_file_path).parent.is_dir():
-            logging.basicConfig(filemode='w', filename=log_file_path, level=logging.DEBUG if Configuration().get('log_debug') else logging.WARNING if Configuration().get('log_warning') else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
+            logging.basicConfig(filemode="w", filename=log_file_path, level=Logger.logging_level(), format="%(asctime)s [%(levelname)s] %(message)s")
             logging.debug(message)
+
+    @staticmethod
+    def info(message: str, separator: Union[str, bool] = False):
+        """
+        Log an informational message
+        """
+        if not Configuration().get("log_info"):
+            return
+
+        Logger.separator(separator)
+
+        message = message.lstrip()
+
+        if Configuration().get("log_to_console"):
+            if message.startswith("[download]"):
+                print(f"\r{timestamp()} [INFO]: {message}", end='' if " ETA " in message else '\n', flush=True)
+            else:
+                print(f"{timestamp()} [INFO]: {message}")
+
+        log_file_path = Configuration().get("log_file_path")
+
+        if log_file_path and Path(log_file_path).parent.is_dir():
+            logging.basicConfig(filemode="w", filename=log_file_path, level=Logger.logging_level(), format="%(asctime)s [%(levelname)s] %(message)s")
+            logging.info(message)
 
     @staticmethod
     def warning(message: str, separator: Union[str, bool] = False):
         """
         Log a warning
         """
-        if not Configuration().get('log_warning'):
+        if not Configuration().get("log_warning"):
             return
 
         Logger.separator(separator)
 
-        message: str = message.lstrip()
+        message = message.lstrip()
 
-        if Configuration().get('log_to_console'):
+        if Configuration().get("log_to_console"):
             print(f"{timestamp()} [WARNING]: {message}")
 
-        log_file_path = Configuration().get('log_file_path')
+        log_file_path = Configuration().get("log_file_path")
 
         if log_file_path and Path(log_file_path).parent.is_dir():
-            logging.basicConfig(filemode='w', filename=log_file_path, level=logging.DEBUG if Configuration().get('log_debug') else logging.WARNING if Configuration().get('log_warning') else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
+            logging.basicConfig(filemode="w", filename=log_file_path, level=Logger.logging_level(), format="%(asctime)s [%(levelname)s] %(message)s")
             logging.warning(message)
 
     @staticmethod
@@ -84,20 +113,20 @@ class Logger(object):
         """
         Log an error
         """
-        if not Configuration().get('log_error'):
+        if not Configuration().get("log_error"):
             return
 
         Logger.separator(separator)
 
-        message: str = message.lstrip()
+        message = message.lstrip()
 
-        if Configuration().get('log_to_console'):
+        if Configuration().get("log_to_console"):
             print(f"{timestamp()} [ERROR]: {message}")
 
-        log_file_path = Configuration().get('log_file_path')
+        log_file_path = Configuration().get("log_file_path")
 
         if log_file_path and Path(log_file_path).parent.is_dir():
-            logging.basicConfig(filemode='w', filename=log_file_path, level=logging.DEBUG if Configuration().get('log_debug') else logging.WARNING if Configuration().get('log_warning') else logging.ERROR, format="%(asctime)s [%(levelname)s] %(message)s")
+            logging.basicConfig(filemode="w", filename=log_file_path, level=Logger.logging_level(), format="%(asctime)s [%(levelname)s] %(message)s")
             logging.error(message)
 
     import pydub

@@ -1,7 +1,7 @@
 from typing import List
 
 from arguments import parse_common_arguments, to_miliseconds
-from configuration.configuration import Configuration
+from configuration import Configuration
 from logger import Logger
 from normalizer import Normalizer
 from sci import SampleClippingInterval
@@ -42,7 +42,7 @@ class BeatSlicer(object):
         beat_indexes: ndarray = librosa.frames_to_samples(librosa.beat.beat_track(y=samples, sr=segment.frame_rate)[1])
         beat_intervals = len(beat_indexes) - beats_per_clip
 
-        Logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Decay (trailing pad) Samples: {attack_samples}")
         Logger.debug(f"Attack (leading pad) Samples: {decay_samples}")

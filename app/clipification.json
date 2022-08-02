@@ -3,6 +3,7 @@
 		"work_root": "c:\\users\\public\\desktop\\bytter",
 		"output_file_type": "wav",
 		"log_debug": true,
+		"log_info": true,
 		"log_warning": true,
 		"log_error": true,
 		"log_to_console": true,

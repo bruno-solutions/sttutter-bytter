@@ -4,6 +4,7 @@ configuration_mutable = {
     "output_file_type": "wav",
     "work_root": str(Path.cwd()),
     "log_debug": True,
+    "log_info": True,
     "log_warning": True,
     "log_error": True,
     "log_to_console": True,

@@ -6,8 +6,9 @@ from typing import Optional
 
 import loader
 from clip import Clip
-from configuration.configuration import Configuration
-from file import rm_md, md
+from configuration import Configuration
+from .file import rm_md, md
+
 from logger import Logger
 from normalizer import Normalizer
 from slicer import Slicer
@@ -97,7 +98,7 @@ class AudioProcessor(object):
         Executes slicer methods in order defined in the methods list
         """
         logic = logic if logic is not None else Configuration().get('logic')
-        Logger.separator(mode='debug')
+        Logger.separator(mode='info')
         self.clips = self.slicer.slice(recording=self.recording, logic=logic).get()
         return self
 

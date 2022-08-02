@@ -7,7 +7,7 @@ import shutil
 import time
 from urllib.parse import urlparse
 
-from configuration.configuration import Configuration
+from configuration import Configuration
 from logger import Logger
 from tagger import Tagger
 
@@ -77,11 +77,11 @@ class Loader(object):
         :param audio_file:     the name of the downloaded audio file
         """
         downloader_module = Configuration().get('downloader_module')
-        Logger.debug(f"Download started [{downloader_module if downloader_module is not None else 'default YouTube Download'}]", separator=True)
+        Logger.info(f"Download started [{downloader_module if downloader_module is not None else 'default YouTube Download'}]", separator=True)
 
         def progress_monitor(attributes):
             if 'downloading' != attributes['status'] and 'finished' != attributes['status']:
-                Logger.debug(f"Download status: {attributes['status']}")
+                Logger.info(f"Download status: {attributes['status']}")
 
         # https://github.com/ytdl-org/youtube-dl/blob/3e4cedf9e8cd3157df2457df7274d0c842421945/youtube_dl/YoutubeDL.py#L137-L312
 
