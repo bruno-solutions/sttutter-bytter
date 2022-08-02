@@ -43,16 +43,12 @@ class Logger(object):
         """
         Log a debug message
         """
-        message = message.lstrip()
-
-        if message.startswith("[download]"):  # YouTubeDL progress messages are not "DEBUG" messages
-            Logger.info(message, separator)
-            return
-
         if not Configuration().get("log_debug"):
             return
 
         Logger.separator(separator)
+
+        message = message.lstrip()
 
         if Configuration().get("log_to_console"):
             print(f"{timestamp()} [DEBUG]: {message}")
@@ -76,10 +72,7 @@ class Logger(object):
         message = message.lstrip()
 
         if Configuration().get("log_to_console"):
-            if message.startswith("[download]"):
-                print(f"\r{timestamp()} [INFO]: {message}", end='' if " ETA " in message else '\n', flush=True)
-            else:
-                print(f"{timestamp()} [INFO]: {message}")
+            print(f"{timestamp()} [INFO]: {message}")
 
         log_file_path = Configuration().get("log_file_path")
 

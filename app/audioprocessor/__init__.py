@@ -1,5 +1,4 @@
 """
-General audio processing operations
+Audio processing orchestration control module
 """
-
 from .audioprocessor import AudioProcessor

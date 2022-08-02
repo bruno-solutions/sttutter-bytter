@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from configuration import Configuration
 from logger import Logger
+from monitor import Monitor
 from tagger import Tagger
 
 
@@ -79,10 +80,6 @@ class Loader(object):
         downloader_module = Configuration().get('downloader_module')
         Logger.info(f"Download started [{downloader_module if downloader_module is not None else 'default YouTube Download'}]", separator=True)
 
-        def progress_monitor(attributes):
-            if 'downloading' != attributes['status'] and 'finished' != attributes['status']:
-                Logger.info(f"Download status: {attributes['status']}")
-
         # https://github.com/ytdl-org/youtube-dl/blob/3e4cedf9e8cd3157df2457df7274d0c842421945/youtube_dl/YoutubeDL.py#L137-L312
 
         parameters = {
@@ -98,7 +95,6 @@ class Loader(object):
             'prefer_ffmpeg': True,
             'keepvideo': True,  # ffmpeg -k
             'verbose': True,
-            'logger': Logger(),
             'external_downloader': downloader_module,
             'postprocessors': [
                 {
@@ -106,11 +102,14 @@ class Loader(object):
                     'preferredcodec': Configuration().get('output_file_type'),  # see ffmpeg -f and -bsf options
                     'preferredquality': '192',  # see ffmpeg -b -q options
                 }
-            ],
-            'progress_hooks': [
-                progress_monitor
             ]
         }
+
+        if Configuration().get("log_debug"):
+            parameters["logger"] = Monitor
+
+        if Configuration().get("log_info"):
+            parameters["progress_hooks"] = [Monitor.progress]
 
         import youtube_dl
 

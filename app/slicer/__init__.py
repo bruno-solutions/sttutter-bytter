@@ -1,3 +1,4 @@
-"""The module for splitting songs into shorter clips."""
-
+"""
+The module for splitting songs into clips
+"""
 from .slicer import Slicer
