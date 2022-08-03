@@ -27,9 +27,9 @@ class BeatSlicer(object):
         self.sci: List[SampleClippingInterval] = []
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
-        beats_per_clip: int = arguments['beats'] if 'beats' in arguments else Configuration().get('default_beat_count')
-        attack: int = to_miliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('default_attack_miliseconds')
-        decay: int = to_miliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('default_decay_miliseconds')
+        beats_per_clip: int = arguments['beats'] if 'beats' in arguments else Configuration().get('beat_count')
+        attack: int = to_miliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('attack_miliseconds')
+        decay: int = to_miliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('decay_miliseconds')
 
         sample_rate = segment.frame_rate
         attack_samples: int = (sample_rate // 1000) * attack
@@ -52,19 +52,16 @@ class BeatSlicer(object):
 
         Logger.debug(f"Segment Samples: {total_samples}")
 
-        skip_count: int = 0
-        beat_index: int = 0
+        for clip_index in range(len(beat_indexes) - beats_per_clip):
+            begin: int = segment_offset_index + beat_indexes[clip_index] - attack_samples
+            end: int = segment_offset_index + beat_indexes[clip_index + beats_per_clip - 1] + decay_samples
 
-        for clip_index in range(min(clips, len(beat_indexes) - beats_per_clip)):
-            begin: int = segment_offset_index + beat_indexes[beat_index] - attack_samples
-            end: int = segment_offset_index + beat_indexes[beat_index + beats_per_clip - 1] + decay_samples
-            if 0 > begin or maximum_clip_samples < end - begin or total_samples < end:
-                skip_count += 1
-                continue
-            sci = SampleClippingInterval(begin=begin, end=end)
-            self.sci.append(sci)
-            Logger.debug(f"Interval[{clip_index - skip_count}]: {sci.begin} {sci.end}")
-            beat_index += 1
+            if 0 <= begin and maximum_clip_samples >= end - begin and total_samples >= end:
+                sci = SampleClippingInterval(begin=begin, end=end)
+                self.sci.append(sci)
+                Logger.debug(f"Interval[{len(self.sci) - 1}]: {sci.begin} {sci.end}")
+                if clips <= len(self.sci):
+                    break
 
     def get(self):
         return self.sci
