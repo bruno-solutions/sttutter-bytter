@@ -1,9 +1,9 @@
 from typing import List
 
-from arguments import parse_common_arguments
+from .arguments import parse_common_arguments
 from configuration.configuration import Configuration
 from logger import Logger
-from sci import SampleClippingInterval
+from .sci import SampleClippingInterval
 
 
 class ChaosSlicer(object):
@@ -27,7 +27,7 @@ class ChaosSlicer(object):
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
 
         total_samples: int = int(segment.frame_count())
-        sample_window: int = segment.frame_rate * min(clip_size, Configuration().get('maximum_clip_size_miliseconds'))
+        sample_window: int = segment.frame_rate * min(clip_size, Configuration().get('maximum_clip_size_milliseconds'))
 
         Logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 

@@ -1,8 +1,8 @@
 from typing import List
 
-from arguments import parse_common_arguments
+from .arguments import parse_common_arguments
 from logger import Logger
-from sci import SampleClippingInterval
+from .sci import SampleClippingInterval
 
 
 class OnsetSlicer(object):
@@ -36,6 +36,7 @@ class OnsetSlicer(object):
         # https://librosa.org/doc/main/generated/librosa.to_mono.html
         # https://librosa.org/doc/main/generated/librosa.onset.onset_detect.html
 
+        # noinspection PyUnusedLocal
         onsets: ndarray = librosa.onset.onset_detect(y=librosa.to_mono(y=recording.get_array_of_samples()), sr=recording.frame_rate)
 
         clips = 0  # TODO turn the onset array into sample clipping intervals

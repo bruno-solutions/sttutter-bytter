@@ -15,7 +15,7 @@ from tagger import Tagger
 class Loader(object):
     def __init__(self, tagger: Tagger = None):
         """
-        Propvides the ability to load (download or copy) and convert source media (audio or video) files as audio files
+        Provides the ability to load (download or copy) and convert source media (audio or video) files as audio files
         Args:
         :param tagger: the tags for the audio file
         """

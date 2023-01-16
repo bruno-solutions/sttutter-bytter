@@ -1,10 +1,10 @@
 from typing import List
 
-from arguments import parse_common_arguments
+from .arguments import parse_common_arguments
 from configuration.configuration import Configuration
 from logger import Logger
-from sci import SampleClippingInterval
-from volume import VolumeSlicer
+from .sci import SampleClippingInterval
+from .volume import VolumeSlicer
 
 models = ['spleeter:2stems', 'spleeter:4stems', 'spleeter:5stems', 'spleeter:2stems-16kHz', 'spleeter:4stems-16kHz', 'spleeter:5stems-16kHz']
 
@@ -40,7 +40,7 @@ class VocalSlicer(object):
         Logger.debug(f"Slicing stage[{stage}], Vocal Slicer: {clips} clips using Spleeter training model '{model}'", separator=True)
 
         Logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
-        Logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
+        Logger.debug(f"Target Clip Length Milliseconds: {clip_size}")
 
         try:
             if isinstance(model, int):

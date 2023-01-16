@@ -1,10 +1,10 @@
 from typing import List
 
-from arguments import parse_common_arguments, to_decibels
+from .arguments import parse_common_arguments, to_decibels
 from configuration.configuration import Configuration
 from logger import Logger
-from normalizer import Normalizer
-from sci import SampleClippingInterval
+from audioprocessor.normalizer import Normalizer
+from .sci import SampleClippingInterval
 
 
 class VolumeSlicer(object):
@@ -31,12 +31,12 @@ class VolumeSlicer(object):
 
         low_threshold: float = to_decibels(arguments['low_threshold']) if 'low_threshold' in arguments else Configuration().get('low_threshold')
         drift: float = to_decibels(arguments['drift']) if 'drift' in arguments else Configuration().get('drift_decibels')
-        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else Configuration().get('detection_window_miliseconds')
+        chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else Configuration().get('detection_window_milliseconds')
 
         Logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
-        Logger.debug(f"Target Clip Length Miliseconds: {clip_size}")
+        Logger.debug(f"Target Clip Length Milliseconds: {clip_size}")
 
         Logger.debug(f"Silence Threshold Decibels: {low_threshold}")
         Logger.debug(f"Per Chunk Raise Limit Decibels: {drift}")

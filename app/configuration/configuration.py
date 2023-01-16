@@ -1,8 +1,8 @@
 import json
 
-from constants import configuration_constants
-from derived import configuration_derived
-from mutable import configuration_mutable, logic_mutable
+from .constants import configuration_constants
+from .derived import configuration_derived
+from .mutable import configuration_mutable, logic_mutable
 from utility import normalize_file_path
 from utility.singleton import singleton
 

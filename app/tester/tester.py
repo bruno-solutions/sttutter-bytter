@@ -15,7 +15,7 @@ def source(index=None):
         'https://youtu.be/QDYRQX6FPQQ',
         'https://youtu.be/PARA6_ErZI0',
         'https://youtu.be/hOZgb0T7AM4',
-        'file:///C:/Users/Public/Desktop/bytter/source/Zombo com/Zombo.com.wav'
+        'file:///S:/Source/sttutter/sttutter-bytter/test/wav files/Zombo.com.wav'
     ]
 
     return example_sources[random.randrange(len(example_sources))] if index is None else example_sources[index % len(example_sources)]

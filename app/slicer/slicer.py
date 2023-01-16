@@ -1,20 +1,20 @@
-"""
+﻿"""
 Slicer module
 """
 from __future__ import annotations
 
 from typing import List, Optional, Union, Literal
 
-from beat import BeatSlicer
-from chaos import ChaosSlicer
-from clip import Clip
+from .beat import BeatSlicer
+from .chaos import ChaosSlicer
+from .clip import Clip
 from configuration.configuration import Configuration
-from interval import SimpleIntervalSlicer
+from .interval import SimpleIntervalSlicer
 from logger import Logger
-from onset import OnsetSlicer
-from pitch import PitchSlicer
-from sci import SampleClippingInterval
-from tempo import TempoSlicer
+from .onset import OnsetSlicer
+from .pitch import PitchSlicer
+from .sci import SampleClippingInterval
+from .tempo import TempoSlicer
 from .vocal import VocalSlicer
 from .volume import VolumeSlicer
 
@@ -22,7 +22,7 @@ from .volume import VolumeSlicer
 class Slicer(object):
     """
     Builds a list of weighted sample clipping intervals based upon the results of the invoked slicing methods
-    from which lists of auido array sample arrays (known as clips) are prepared from a source audio recording
+    from which lists of audio array sample arrays (known as clips) are prepared from a source audio recording
     """
 
     def __init__(self):
@@ -47,8 +47,8 @@ class Slicer(object):
         """
         if recording is None:
             raise RuntimeError("Recording not provided, use the Loader class to load a file to slice")
-        if Configuration().get('minimum_recording_size_miliseconds') > len(recording):  # refuse to slice recordings shorter than 1 second (for no particular reason)
-            raise RuntimeError("Recording was less than 1000 miliseconds, will not slice")
+        if Configuration().get('minimum_recording_size_milliseconds') > len(recording):  # refuse to slice recordings shorter than 1 second (for no particular reason)
+            raise RuntimeError("Recording was less than 1000 milliseconds, will not slice")
         if logic is None or 0 == len(logic):
             raise RuntimeError("Slicer methods not declared, create a method dictionary that describes how to process and slice the recording")
 
@@ -73,7 +73,7 @@ class Slicer(object):
             try:
                 method = getattr(Slicer, method_name)
             except AttributeError:
-                Logger.warning(f"No slicer method named '{method_name}' is avaialable in the slicer module, referenced in slicer[{stage}]")
+                Logger.warning(f"No slicer method named '{method_name}' is available in the slicer module, referenced in slicer[{stage}]")
                 Logger.warning(f"Available methods are: 'slice_on_beat', 'slice_at_random', 'slice_on_vocal_change', 'slice_on_volume_change'")
                 continue
 
@@ -97,10 +97,10 @@ class Slicer(object):
         Group Sample Clipping Intervals by beginning or ending sample index to "vote" for likely clip edges
         Args:
         :param sample_indexes: a list of begin or end Sample Clipping Intervals to cluster
-        :param proximity:   the nearness in miliseconds by which to cluster Sample Clipping Intervals
+        :param proximity:   the nearness in milliseconds by which to cluster Sample Clipping Intervals
         """
         sample_indexes.sort()
-        sample_index_proximity_threshold = (self.recording.frame_rate // 1000) * (proximity if proximity is not None else Configuration().get("cluster_window_miliseconds"))
+        sample_index_proximity_threshold = (self.recording.frame_rate // 1000) * (proximity if proximity is not None else Configuration().get("cluster_window_milliseconds"))
 
         cluster: [int] = []
         trailing_sample_indexes_index: int = len(sample_indexes) - 1
@@ -163,7 +163,7 @@ class Slicer(object):
                 maximums += [max(index_cluster)]
         return clusters, minimums, maximums
 
-    def clip_boundries(self, side: Literal["begin", "end"]) -> ([int], [int]):
+    def clip_boundaries(self, side: Literal["begin", "end"]) -> ([int], [int]):
         indexes: [int] = []
         indexes += (getattr(sci, side) for sci in self.sci)
         index_clusters: List[List[int]] = []
@@ -187,10 +187,10 @@ class Slicer(object):
 
         # Find clusters in the begin and end lists from the Sample Clipping Intervals
 
-        pruned_index_clusters_begin, lowest_index_in_cluster_begin = self.clip_boundries("begin")
-        pruned_index_clusters_end, highest_index_in_cluster_end = self.clip_boundries("end")
+        pruned_index_clusters_begin, lowest_index_in_cluster_begin = self.clip_boundaries("begin")
+        pruned_index_clusters_end, highest_index_in_cluster_end = self.clip_boundaries("end")
 
-        maximum_clip_size_samples: int = (self.recording.frame_rate // 1000) * Configuration().get("maximum_clip_size_miliseconds")
+        maximum_clip_size_samples: int = (self.recording.frame_rate // 1000) * Configuration().get("maximum_clip_size_milliseconds")
         clips_considered: int = 0
         clips_generated: int = 0
         intervals: List[SampleClippingInterval] = []

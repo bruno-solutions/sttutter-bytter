@@ -1,10 +1,10 @@
 from typing import List
 
-from arguments import parse_common_arguments, to_miliseconds
+from .arguments import parse_common_arguments, to_milliseconds
 from configuration.configuration import Configuration
 from logger import Logger
-from normalizer import Normalizer
-from sci import SampleClippingInterval
+from audioprocessor.normalizer import Normalizer
+from .sci import SampleClippingInterval
 
 
 class BeatSlicer(object):
@@ -28,14 +28,14 @@ class BeatSlicer(object):
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
         beats_per_clip: int = arguments['beats'] if 'beats' in arguments else Configuration().get('default_beat_count')
-        attack: int = to_miliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('default_attack_miliseconds')
-        decay: int = to_miliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('default_decay_miliseconds')
+        attack: int = to_milliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('default_attack_milliseconds')
+        decay: int = to_milliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('default_decay_milliseconds')
 
         sample_rate = segment.frame_rate
         attack_samples: int = (sample_rate // 1000) * attack
         decay_samples: int = (sample_rate // 1000) * decay
 
-        maximum_clip_samples = sample_rate * (Configuration().get('maximum_clip_size_miliseconds') // 1000)
+        maximum_clip_samples = sample_rate * (Configuration().get('maximum_clip_size_milliseconds') // 1000)
         samples = Normalizer.monaural_normalization(segment)
         total_samples: int = len(samples)
 

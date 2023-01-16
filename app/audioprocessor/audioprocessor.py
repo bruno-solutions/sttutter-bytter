@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Optional
 
 import loader
-from clip import Clip
+from slicer.clip import Clip
 from configuration.configuration import Configuration
-from file import rm_md, md
+from .file import rm_md, md
 from logger import Logger
-from normalizer import Normalizer
+from .normalizer import Normalizer
 from slicer import Slicer
 from tagger import Tagger
 
@@ -43,7 +43,7 @@ class AudioProcessor(object):
 
     def load(self, uri: str):
         """
-        Downloads or copies a file and converts it into a pydub AudioSegmant object
+        Downloads or copies a file and converts it into a pydub AudioSegment object
         Args:
         :param uri: The source Uniform Resource Identifier from which to extract the audio recording
         """
@@ -105,11 +105,11 @@ class AudioProcessor(object):
         """
         Apply fade-in and fade-out to the clips
         Args:
-        :param fade_in_duration: The number of miliseconds for the fade in
-        :param fade_out_duration: The number of miliseconds for the fade out
+        :param fade_in_duration: The number of milliseconds for the fade in
+        :param fade_out_duration: The number of milliseconds for the fade out
         """
-        fade_in_duration = fade_in_duration if fade_in_duration is not None else Configuration().get('fade_in_miliseconds')
-        fade_out_duration = fade_out_duration if fade_out_duration is not None else Configuration().get('fade_out_miliseconds')
+        fade_in_duration = fade_in_duration if fade_in_duration is not None else Configuration().get('fade_in_milliseconds')
+        fade_out_duration = fade_out_duration if fade_out_duration is not None else Configuration().get('fade_out_milliseconds')
         for clip in self.clips:
             clip.segment = getattr(clip, "segment").fade_in(fade_in_duration).fade_out(fade_out_duration)
         return self

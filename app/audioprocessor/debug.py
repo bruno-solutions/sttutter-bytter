@@ -1,4 +1,4 @@
-from normalizer import Normalizer
+from audioprocessor.normalizer import Normalizer
 
 
 # https://librosa.org/doc/main/generated/librosa.to_mono.html

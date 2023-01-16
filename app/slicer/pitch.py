@@ -1,8 +1,8 @@
 from typing import List
 
-from arguments import parse_common_arguments, to_hertz
+from .arguments import parse_common_arguments, to_hertz
 from logger import Logger
-from sci import SampleClippingInterval
+from .sci import SampleClippingInterval
 
 
 class PitchSlicer(object):
@@ -40,6 +40,7 @@ class PitchSlicer(object):
         # https://librosa.org/doc/main/generated/librosa.to_mono.html
         # https://librosa.org/doc/main/generated/librosa.yin.html
 
+        # noinspection PyUnusedLocal
         changes: ndarray = librosa.yin(y=librosa.to_mono(y=recording.get_array_of_samples()), fmin=min_frequency, fmax=max_frequency, sr=recording.frame_rate, frame_length=frame_length)
 
         clips = 0  # TODO turn the pitch change points array into sample clipping intervals

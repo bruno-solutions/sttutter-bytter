@@ -17,9 +17,13 @@ So `youtube-dl` can invoke `ffmpeg` the directory in which `ffmpeg` executable i
 
 ---
 
-To obtain required third-party Python packages/modules for the application use PIP:
+To obtain required third-party Python packages/modules for the application use PIP (or PIP3):
 
    - `pip install -r requirements.txt`
+
+or 
+
+   - `pip3 install -r requirements.txt`
 
 ### I*nteractive* D*evelopment* E*nvironment* *configuration tips*
 

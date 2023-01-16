@@ -10,17 +10,17 @@ from logger import Logger
 #      - tags use a spaces to separate words
 #      - keys use an underscore to separate words
 
-multivalue_key_to_tag: {} = {
+multi_value_key_to_tag: {} = {
     'categories': 'category',  # [RIFF:LIST:id3 :ID3 :TXXX:CATEGORY]
     'tags': 'tag', 'genres': 'genre'  # [RIFF:LIST:id3 :ID3 :TXXX:TAG]
 }
-multivalue_keys: [] = list(k for k, _ in multivalue_key_to_tag.items())
-tag_to_multivalue_key: {} = dict((v, k) for k, v in multivalue_key_to_tag.items())
-multivalue_tags: [] = list(k for k, _ in tag_to_multivalue_key.items())
+multi_value_keys: [] = list(k for k, _ in multi_value_key_to_tag.items())
+tag_to_multi_value_key: {} = dict((v, k) for k, v in multi_value_key_to_tag.items())
+multi_value_tags: [] = list(k for k, _ in tag_to_multi_value_key.items())
 
 # Empirically discovered RIFF chuck labels using Audacity, TagScanner, and Hxd Hex Editor (Audacity and TagScanner disagree on some of these)
 
-monovalue_keys: [] = [
+mono_value_keys: [] = [
     Configuration().get('application_name'),  # [RIFF:LIST:id3 :ID3 :TXXX:SOUNDBYTE]
     'age_limit',  # [RIFF:LIST:id3 :ID3 :TXXX:AGE LIMIT]
     'album',  # Album Title [Audacity][Fixed Tag] [RIFF:LIST:INFO:IPRD] or [RIFF:LIST:id3 :ID3 :TALB]
@@ -100,20 +100,20 @@ def key_to_tag(tag: str):
     return tag.replace('_', ' ')
 
 
-def multivalue_tag_value_formatter(value: str):
+def multi_value_tag_value_formatter(value: str):
     return ' '.join(re.sub(r"(\|)\1+", r"\1", re.sub(r'(\|\s*)', '|', re.sub(r'(\s*\|)', '|', value.replace(',', '|').replace(';', '|').replace(':', '|')))).strip('|').replace('|', ' | ').split())
 
 
-def is_monovalue_key(key: str):
-    return key in monovalue_keys
+def is_mono_value_key(key: str):
+    return key in mono_value_keys
 
 
-def is_multivalue_key(key: str):
-    return key in multivalue_keys
+def is_multi_value_key(key: str):
+    return key in multi_value_keys
 
 
-def is_multivalue_tag(tag: str):
-    return tag in multivalue_tags
+def is_multi_value_tag(tag: str):
+    return tag in multi_value_tags
 
 
 class Tagger(object):
@@ -141,7 +141,7 @@ class Tagger(object):
 
     def set(self, tag: str, value):
         """
-        Set a tag value (silently overwritting where there is an existing value)
+        Set a tag value (silently overwriting where there is an existing value)
         """
         self.tags[tag] = str(value)
 
@@ -166,7 +166,7 @@ class Tagger(object):
 
     def delete(self, tag: str):
         """
-        Delete a tag (sliently allows tags that do not exist to be "deleted")
+        Delete a tag (silently allows tags that do not exist to be "deleted")
         """
         if tag in self.tags:
             del self.tags[tag]
@@ -222,7 +222,7 @@ class Tagger(object):
 
         recording: pydub.AudioSegment = pydub.AudioSegment.from_file(filename)
 
-        Logger.debug(f"Generating additional metadata values (minicking YouTube Download option 'writeinfojson': True)", separator=True)
+        Logger.debug(f"Generating additional metadata values (mimicking YouTube Download option 'writeinfojson': True)", separator=True)
         metadata['asr'] = recording.frame_rate
         metadata['channels'] = recording.channels
         metadata['converter'] = recording.converter
@@ -239,8 +239,8 @@ class Tagger(object):
         for tag, value in metadata.items():
             tag = tag.lower()
             value = value[0] if type(value) in (tuple, list) else str(value) if type(value) in (int, float) else value
-            if is_multivalue_tag(tag):
-                value = multivalue_tag_value_formatter(value)
+            if is_multi_value_tag(tag):
+                value = multi_value_tag_value_formatter(value)
                 self.append(tag, value)
             else:
                 self.set(tag, str(value))
@@ -289,19 +289,19 @@ class Tagger(object):
 
         # We only handle metadata keys that are defined in this module (all others are ignored)
 
-        for key in monovalue_keys:
+        for key in mono_value_keys:
             if key in metadata:
                 if metadata[key] is not None:
                     self.set(key_to_tag(key), metadata[key] if metadata[key] is str else str(metadata[key]))
 
-        for key in multivalue_key_to_tag:
+        for key in multi_value_key_to_tag:
             if key in metadata:
                 for index, value in enumerate(metadata[key]):
                     value = ' '.join([word.title() if word not in "a an and as but by for in if nor of off on onto or out so the to up with yet" else word for word in value.capitalize().split(' ')])
-                    if self.exists(multivalue_key_to_tag[key]):
-                        self.set(multivalue_key_to_tag[key], f"{self.get(multivalue_key_to_tag[key])} | {value}")
+                    if self.exists(multi_value_key_to_tag[key]):
+                        self.set(multi_value_key_to_tag[key], f"{self.get(multi_value_key_to_tag[key])} | {value}")
                     else:
-                        self.set(multivalue_key_to_tag[key], value)
+                        self.set(multi_value_key_to_tag[key], value)
 
         return filename
 
@@ -317,11 +317,11 @@ class Tagger(object):
 
         for tag in self.tags:
             key = tag_to_key(tag)
-            if is_monovalue_key(key):
+            if is_mono_value_key(key):
                 metadata[key] = self.get(tag)
                 continue
-            if is_multivalue_tag(tag):
-                key = tag_to_multivalue_key[tag]
+            if is_multi_value_tag(tag):
+                key = tag_to_multi_value_key[tag]
                 metadata[key] = self.get(tag).split(' | ')
 
         try:

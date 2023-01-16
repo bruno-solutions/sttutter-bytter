@@ -1,4 +1,4 @@
-from sci import SampleClippingInterval
+from .sci import SampleClippingInterval
 
 
 class Clip(object):

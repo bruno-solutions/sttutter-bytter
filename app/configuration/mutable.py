@@ -13,17 +13,17 @@ configuration_mutable = {
     "frame_rate": 44100,  # hz, CD quality
     "downloader_module": "aria2c",
     "clips_per_stage": 10,
-    "cluster_window_miliseconds": 75,
-    "detection_window_miliseconds": 10,
+    "cluster_window_milliseconds": 75,
+    "detection_window_milliseconds": 10,
     "low_threshold": -20.0,
     "drift_decibels": 0.1,
-    "clip_size_miliseconds": 9000,
+    "clip_size_milliseconds": 9000,
     "beat_count": 4,
-    "attack_miliseconds": 50,
-    "decay_miliseconds": 50,
-    "pad_duration_miliseconds": 250,
-    "fade_in_miliseconds": 500,
-    "fade_out_miliseconds": 500
+    "attack_milliseconds": 50,
+    "decay_milliseconds": 50,
+    "pad_duration_milliseconds": 250,
+    "fade_in_milliseconds": 500,
+    "fade_out_milliseconds": 500
 }
 
 logic_mutable: [{}] = []

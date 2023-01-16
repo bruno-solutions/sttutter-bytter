@@ -1,8 +1,8 @@
 from typing import List
 
-from arguments import parse_common_arguments
+from .arguments import parse_common_arguments
 from logger import Logger
-from sci import SampleClippingInterval
+from .sci import SampleClippingInterval
 
 
 class TempoSlicer(object):
@@ -38,6 +38,8 @@ class TempoSlicer(object):
         # https://librosa.org/doc/main/generated/librosa.beat.tempo.html
 
         onset_env = librosa.onset.onset_strength(y=librosa.to_mono(y=recording.get_array_of_samples()), sr=recording.frame_rate)
+
+        # noinspection PyUnusedLocal
         changes: ndarray = librosa.beat.tempo(onset_envelope=onset_env, sr=recording.frame_rate, aggregate=None)
 
         clips = 0  # TODO turn the tempo change points array into sample clipping intervals

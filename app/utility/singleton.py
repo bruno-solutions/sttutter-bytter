@@ -1,10 +1,10 @@
 def singleton(cls):
     instances = {}
 
-    def getinstance():
+    def get_instance():
         if cls not in instances:
             instances[cls] = cls()
             return instances[cls]
         return instances[cls]
 
-    return getinstance
+    return get_instance
