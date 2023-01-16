@@ -29,7 +29,7 @@ class ChaosSlicer(object):
         total_samples: int = int(segment.frame_count())
         sample_window: int = segment.frame_rate * min(clip_size, Configuration().get('maximum_clip_size_milliseconds'))
 
-        Logger.debug(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Chaos Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Segment Sample Window: {sample_window}")
         Logger.debug(f"Segment Samples: {total_samples}")

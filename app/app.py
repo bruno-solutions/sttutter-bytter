@@ -17,7 +17,7 @@ def main():
 
     recording = AudioProcessor(preserve_cache=True)
 
-    url = tester.source(10)
+    url = tester.source(9)
 
     try:
         recording.load(url)

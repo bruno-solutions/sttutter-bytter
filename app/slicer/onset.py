@@ -29,7 +29,7 @@ class OnsetSlicer(object):
 
         total_samples: int = int(segment.frame_count())
 
-        Logger.debug(f"Slicing stage[{stage}], Onset Detection Slicer: {clips} clips", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Onset Detection Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Segment Samples: {total_samples}")
 

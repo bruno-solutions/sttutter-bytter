@@ -33,7 +33,7 @@ class VolumeSlicer(object):
         drift: float = to_decibels(arguments['drift']) if 'drift' in arguments else Configuration().get('drift_decibels')
         chunk_size: int = arguments['detection_window'] if 'detection_window' in arguments else Configuration().get('detection_window_milliseconds')
 
-        Logger.debug(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Volume Change Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
         Logger.debug(f"Target Clip Length Milliseconds: {clip_size}")

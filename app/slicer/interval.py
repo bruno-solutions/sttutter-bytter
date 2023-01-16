@@ -36,7 +36,7 @@ class SimpleIntervalSlicer(object):
 
         samples_per_iteration = samples_per_clip + samples_per_skip
 
-        Logger.debug(f"Slicing stage[{stage}], Interval Slicer: {clips} clips", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Interval Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Maximum Possible Clips: {max_possible_clips}")
 

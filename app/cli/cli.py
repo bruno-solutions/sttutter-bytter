@@ -2,10 +2,10 @@ import json
 import sys
 from argparse import ArgumentParser
 
-from configuration.configuration import Configuration
-from configuration.mutable import configuration_mutable
+from configuration import Configuration
+from file import normalize_file_path
+from mutable import configuration_mutable
 from slicer import Slicer
-from utility import normalize_file_path
 
 
 def generate_configuration_and_logic_template(file_path: str) -> None:
@@ -46,7 +46,7 @@ def load_command_line_arguments():
     parser.add_argument("-U", "--urls", dest="url_file", help="file containing an array of media file URLs", metavar="xxx.json")
     parser.add_argument("-u", "--url", dest="url", help="local file system or remote URL of a media file", metavar="file://... or http(s)://...")
     parser.add_argument("-r", "--root", dest="work_root", help="directory from which to process", metavar="local file system path")
-    parser.add_argument("-v", "--verbose", dest="verbose", action="store_false", default=False, help="send debug messages to stdout")
+    parser.add_argument("-v", "--verbose", dest="verbose", action="store_true", default=False, help="send debug messages to stdout")
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", default=True, help="send debug messages to the log file")
     parser.add_argument("-t", "--template", dest="template_file", nargs="?", const=f"{Configuration().get('configuration_logic_file_path')}", help="generate a default configuration and logic template file", metavar="xxx.json")
     parser.add_argument("--version""", action="version", version=f"%(prog)s {Configuration().get('application_version')}")

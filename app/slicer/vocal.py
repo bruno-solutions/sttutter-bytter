@@ -37,7 +37,7 @@ class VocalSlicer(object):
 
         # No need to extract arguments that are only used by VolumeSlicer()
 
-        Logger.debug(f"Slicing stage[{stage}], Vocal Slicer: {clips} clips using Spleeter training model '{model}'", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Vocal Slicer: {clips} clips using Spleeter training model '{model}'", separator=True)
 
         Logger.debug(f"Downloaded Audio Segment Offset: {segment_offset_index}")
         Logger.debug(f"Target Clip Length Milliseconds: {clip_size}")

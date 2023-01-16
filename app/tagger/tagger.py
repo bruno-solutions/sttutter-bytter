@@ -3,7 +3,7 @@ import os
 import re
 from typing import List, Union
 
-from configuration.configuration import Configuration
+from configuration import Configuration
 from logger import Logger
 
 # Notes:

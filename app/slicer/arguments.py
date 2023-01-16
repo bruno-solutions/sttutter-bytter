@@ -4,7 +4,7 @@ from typing import Union
 
 import pydub
 
-from configuration.configuration import Configuration
+from configuration import Configuration
 from logger import Logger
 
 

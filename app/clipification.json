@@ -3,6 +3,7 @@
 		"work_root": "c:\\users\\public\\desktop\\bytter",
 		"output_file_type": "wav",
 		"log_debug": true,
+		"log_info": true,
 		"log_warning": true,
 		"log_error": true,
 		"log_to_console": true,
@@ -25,11 +26,12 @@
 		"fade_out_milliseconds": 500
 	},
     "logic": [
-        {"method": "slice_at_interval", "active": true, "weight": 2, "arguments": {"begin": 0, "end": 1, "clip_size": "7500 ms", "clips": 20}},
-        {"method": "slice_at_interval", "active": true, "weight": 1, "arguments": {"begin": 0, "end": 1, "clip_size": "3000 ms", "clips": 15}},
-        {"method": "slice_at_interval", "active": true, "weight": 3, "arguments": {"begin": 0, "end": 1, "clip_size": "21000 ms", "clips": 5}},
+        {"method": "slice_on_beat", "active": true, "weight": 5, "arguments": {"beats": 8, "clips": 40}},
+        {"method": "slice_at_interval", "active": false, "weight": 2, "arguments": {"begin": 0, "end": 1, "clip_size": "7500 ms", "clips": 20}},
+        {"method": "slice_at_interval", "active": false, "weight": 1, "arguments": {"begin": 0, "end": 1, "clip_size": "3000 ms", "clips": 15}},
+        {"method": "slice_at_interval", "active": false, "weight": 3, "arguments": {"begin": 0, "end": 1, "clip_size": "21000 ms", "clips": 5}},
 
-        {"method": "slice_at_interval", "active": true, "weight": 0, "arguments": {"begin": 0, "end": 1, "clip_size": "1000 ms", "clips": 400}},
+        {"method": "slice_at_interval", "active": false, "weight": 0, "arguments": {"begin": 0, "end": 1, "clip_size": "1000 ms", "clips": 400}},
         {"method": "slice_at_interval", "active": false, "weight": 10, "arguments": {"begin": 0, "end": 1, "clip_size": "500 ms", "clips": 200}},
         {"method": "slice_at_interval", "active": false, "weight": 0, "arguments": {"begin": 0, "end": 1, "clip_size": "5550 ms", "clips": 11}}
     ]

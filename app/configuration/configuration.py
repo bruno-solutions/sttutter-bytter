@@ -74,11 +74,13 @@ class Configuration(object):
         if verbose is not None:
             loaded_configuration['log_to_console'] = verbose
             loaded_configuration['log_debug'] = verbose
+            loaded_configuration['log_info'] = verbose
             loaded_configuration['log_warning'] = verbose
             loaded_configuration['log_error'] = verbose
 
         if debug is not None:
             loaded_configuration['log_debug'] = debug
+            loaded_configuration['log_info'] = debug
             loaded_configuration['log_warning'] = debug
             loaded_configuration['log_error'] = debug
 

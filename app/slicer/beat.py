@@ -42,7 +42,7 @@ class BeatSlicer(object):
         beat_indexes: ndarray = librosa.frames_to_samples(librosa.beat.beat_track(y=samples, sr=segment.frame_rate)[1])
         beat_intervals = len(beat_indexes) - beats_per_clip
 
-        Logger.debug(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
+        Logger.info(f"Slicing stage[{stage}], Beat Slicer: {clips} clips", separator=True)
 
         Logger.debug(f"Decay (trailing pad) Samples: {attack_samples}")
         Logger.debug(f"Attack (leading pad) Samples: {decay_samples}")
@@ -52,19 +52,16 @@ class BeatSlicer(object):
 
         Logger.debug(f"Segment Samples: {total_samples}")
 
-        skip_count: int = 0
-        beat_index: int = 0
+        for clip_index in range(len(beat_indexes) - beats_per_clip):
+            begin: int = segment_offset_index + beat_indexes[clip_index] - attack_samples
+            end: int = segment_offset_index + beat_indexes[clip_index + beats_per_clip - 1] + decay_samples
 
-        for clip_index in range(min(clips, len(beat_indexes) - beats_per_clip)):
-            begin: int = segment_offset_index + beat_indexes[beat_index] - attack_samples
-            end: int = segment_offset_index + beat_indexes[beat_index + beats_per_clip - 1] + decay_samples
-            if 0 > begin or maximum_clip_samples < end - begin or total_samples < end:
-                skip_count += 1
-                continue
-            sci = SampleClippingInterval(begin=begin, end=end)
-            self.sci.append(sci)
-            Logger.debug(f"Interval[{clip_index - skip_count}]: {sci.begin} {sci.end}")
-            beat_index += 1
+            if 0 <= begin and maximum_clip_samples >= end - begin and total_samples >= end:
+                sci = SampleClippingInterval(begin=begin, end=end)
+                self.sci.append(sci)
+                Logger.debug(f"Interval[{len(self.sci) - 1}]: {sci.begin} {sci.end}")
+                if clips <= len(self.sci):
+                    break
 
     def get(self):
         return self.sci
