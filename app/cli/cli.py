@@ -3,8 +3,8 @@ import sys
 from argparse import ArgumentParser
 
 from configuration import Configuration
-from file import normalize_file_path
-from mutable import configuration_mutable
+from utility import normalize_file_path
+from configuration import configuration_mutable
 from slicer import Slicer
 
 

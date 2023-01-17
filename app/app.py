@@ -2,7 +2,6 @@
 
 # TODO [Enhancement] enable method combining (combine/compare the nearness sample clipping intervals to evaluate the quality of a clip)
 # TODO [Enhancement] enable method chaining (feed samples from one method into another to create sub-clips)
-import sys
 
 import tester
 from audioprocessor import AudioProcessor
@@ -21,14 +20,37 @@ def main():
 
     try:
         recording.load(url)
-    except FileNotFoundError:
+    except:
         Logger.error(f"Unable to access {url} [Processing with next URL]")
-        sys.exit(-1)
+        print("Failed while loading source")
+        exit(-5)
 
-    recording.normalize()
-    recording.slice()
-    recording.fade()
-    recording.export()
+    try:
+        recording.normalize()
+    except:
+        print("Failed while normalizing source")
+        exit(-4)
+
+    try:
+        recording.slice()
+    except:
+        print("Failed while slicing clips")
+        exit(-3)
+
+    try:
+        recording.fade()
+    except:
+        print("Failed while applying clip fade-in and fade-out")
+        exit(-2)
+
+    try:
+        recording.export()
+    except:
+        print("Failed during export")
+        exit(-1)
+
+    print("Succeeded")
+    exit(0)
 
 
 if "__main__" == __name__:

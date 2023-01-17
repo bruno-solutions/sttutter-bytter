@@ -28,8 +28,8 @@ class BeatSlicer(object):
 
         weight, segment, segment_offset_index, clip_size, clips = parse_common_arguments(arguments, recording)
         beats_per_clip: int = arguments['beats'] if 'beats' in arguments else Configuration().get('default_beat_count')
-        attack: int = to_milliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('default_attack_milliseconds')
-        decay: int = to_milliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('default_decay_milliseconds')
+        attack: int = to_milliseconds(arguments['attack'], len(recording)) if 'attack' in arguments else Configuration().get('attack_milliseconds')
+        decay: int = to_milliseconds(arguments['decay'], len(recording)) if 'decay' in arguments else Configuration().get('decay_milliseconds')
 
         sample_rate = segment.frame_rate
         attack_samples: int = (sample_rate // 1000) * attack

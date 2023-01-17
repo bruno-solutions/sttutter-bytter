@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from configuration import Configuration
 from logger import Logger
-from monitor import Monitor
+from .monitor import Monitor
 from tagger import Tagger
 
 
