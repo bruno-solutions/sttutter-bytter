@@ -1,8 +1,14 @@
 ffmpeg-python~=0.2.0
 librosa==0.8.1
 matplotlib==3.6.3
+normalizer~=0.2.1
 numpy==1.19.5
+nussl==1.1.6
 pydub~=0.25.1
 pytaglib~=1.5.0
+scipy~=1.8.1
+setuptools~=63.1.0
+soundfile~=0.11.0
 spleeter~=2.3.1
+typing~=3.7.4.3
 youtube-dl~=2021.12.17

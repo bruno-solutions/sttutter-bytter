@@ -5,6 +5,7 @@ random.seed()
 
 def source(index=None):
     example_sources = [
+        "https://youtu.be/oa6crdQIAcI",  # Jordan Peterson
         "https://youtu.be/Dc1-W4KsHvE",
         "https://youtu.be/oJL-lCzEXgI",
         "https://youtu.be/dQw4w9WgXcQ",
@@ -16,7 +17,7 @@ def source(index=None):
         "https://youtu.be/PARA6_ErZI0",
         "https://youtu.be/hOZgb0T7AM4",
         "file:///S:/Source/sttutter/sttutter-bytter/test/wav files/Zombo.com.wav",
-        "https://youtu.be/oa6crdQIAcI"  # Jordan Peterson
+        "S:/Source/sttutter/sttutter-bytter/test/wav files/TheNewKing.wav"
     ]
 
     return example_sources[random.randrange(len(example_sources))] if index is None else example_sources[index % len(example_sources)]

@@ -297,7 +297,7 @@ class Tagger(object):
         for key in multi_value_key_to_tag:
             if key in metadata:
                 for index, value in enumerate(metadata[key]):
-                    value = ' '.join([word.title() if word not in "a an and as but by for in if nor of off on onto or out so the to up with yet" else word for word in value.capitalize().split(' ')])
+                    value = ' '.join([word.title() if word not in "a an and as but by for in if nor of off on onto or out so the to up with yet" else word for word in value.capitalize().decompose(' ')])
                     if self.exists(multi_value_key_to_tag[key]):
                         self.set(multi_value_key_to_tag[key], f"{self.get(multi_value_key_to_tag[key])} | {value}")
                     else:

@@ -5,6 +5,7 @@
 
 import tester
 from audioprocessor import AudioProcessor
+from audioprocessor import voice
 from cli.cli import process_command_line_arguments
 from configuration.configuration import Configuration
 from logger import Logger
@@ -16,7 +17,9 @@ def main():
 
     recording = AudioProcessor(preserve_cache=True)
 
-    url = tester.source(9)
+    url = tester.source(12)
+
+    voice.decompose(url)
 
     try:
         recording.load(url)
