@@ -1,0 +1,444 @@
+# Prompt: I want python code to split an audio wav file of a song into clips based upon vocal pauses
+
+import wave
+import contextlib
+import numpy as np
+
+def split_audio_on_pauses(audio_file_path, output_folder, threshold=0.01):
+    # Open the audio file
+    with contextlib.closing(wave.open(audio_file_path,'r')) as audio_file:
+        # Read the audio file's properties
+        num_channels = audio_file.getnchannels()
+        sample_width = audio_file.getsampwidth()
+        frame_rate = audio_file.getframerate()
+        num_frames = audio_file.getnframes()
+
+        # Read the frames from the audio file
+        frames = audio_file.readframes(num_frames)
+
+        # Convert the frames to a numpy array
+        frames = np.fromstring(frames, dtype=np.int16)
+
+        # Initialize variables to keep track of the current frame and clip
+        current_frame = 0
+        current_clip = 1
+
+        # Iterate over the frames of the audio file
+        for i in range(1, num_frames):
+            # Calculate the difference between the current and previous frames
+            diff = abs(frames[i] - frames[i - 1])
+
+            # Check if the difference exceeds the threshold (indicating a pause)
+            if (diff > threshold):
+                # If it does, save the current clip to file
+                with contextlib.closing(wave.open(output_folder + '/clip' + str(current_clip) + '.wav', 'w')) as clip_file:
+                    clip_file.setparams((num_channels, sample_width, frame_rate, current_frame, "NONE", "not compressed"))
+                    clip_file.writeframes(frames[i-current_frame:i])
+                current_frame = 0
+                current_clip += 1
+            else:
+                current_frame += 1
+
+
+# Prompt: I want python code using Spleeter that extracts the vocal portion of a song
+
+from spleeter.separator import Separator
+
+# Initialize the separator
+separator = Separator('spleeter:2stems')
+
+# Load the audio file
+audio_path = 'path/to/audio.mp3'
+
+# Perform the separation
+result = separator.separate(audio_path)
+
+# Save the vocal track to a new file
+vocal_path = 'path/to/vocal.wav'
+result['vocals'].export(vocal_path, format='wav')
+
+
+# Prompt: I want python code that uses a timestamped audio transcript of the lyrics of a song to split the song into sections by lyric line
+
+from pydub import AudioSegment
+import json
+
+# Load the audio file
+audio_path = 'path/to/audio.mp3'
+audio = AudioSegment.from_file(audio_path, format="mp3")
+
+# Load the timestamped lyrics transcript
+lyrics_path = 'path/to/lyrics.json'
+with open(lyrics_path) as f:
+    lyrics = json.load(f)
+
+# Create a list to store the sections
+sections = []
+
+# Iterate through the lyrics and split the audio accordingly
+for line in lyrics:
+    start_time = line['start_time']
+    end_time = line['end_time']
+    start_time = float(start_time) * 1000
+    end_time = float(end_time) * 1000
+    section = audio[start_time:end_time]
+    sections.append(section)
+
+# Export the sections to new files
+for i, section in enumerate(sections):
+    section.export('section{}.mp3'.format(i), format='mp3')
+
+
+# Prompt: I want to create a timestamped lyrics transcript from a wav file song using Python
+
+from pydub import AudioSegment
+import json
+import speech_recognition as sr
+
+def transcribe_audio(audio_path):
+    # Initialize the recognizer
+    recognizer = sr.Recognizer()
+
+    # Load the audio file
+    audio = AudioSegment.from_file(audio_path, format="wav")
+    audio.export("audio.wav", format="wav")
+
+    with sr.AudioFile("audio.wav") as source:
+        audio = recognizer.record(source)
+
+    # Perform speech recognition
+    transcript = recognizer.recognize_google(audio)
+
+    # Create a list to store the timestamped lines
+    lines = []
+
+    # Split the transcript into lines
+    for line in transcript.split("\n"):
+        # Get the time for the line
+        time = recognizer.recognize_google(line, show_all=True)
+
+        # Extract the start and end time
+        start_time = time['alternative'][0]['transcript']
+        end_time = start_time + len(line.split(" "))
+        # Append the line and its time to the list
+        lines.append({'text': line, 'start_time': start_time, 'end_time': end_time})
+
+    # Return the list of timestamped lines
+    return lines
+
+# transcribing the audio
+audio_path = 'path/to/audio.wav'
+lines = transcribe_audio(audio_path)
+
+# saving the data to json file
+with open('lyrics.json', 'w') as f:
+    json.dump(lines, f)
+
+
+# Prompt: I want to detect the start and stop of vocals in a song wav file using python with a pause duration parameter to qualify the minimum duration of a vocal pause
+
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
+
+def detect_vocals(audio_path, min_silence_len=1000, silence_thresh=-16):
+    # Load the audio file
+    audio = AudioSegment.from_file(audio_path, format="wav")
+
+    # Split the audio on silence
+    chunks = split_on_silence(audio, min_silence_len=min_silence_len, silence_thresh=silence_thresh)
+
+    # Create a list to store the start and stop times of the vocals
+    vocals = []
+
+    # Iterate through the chunks and detect the start and stop times of the vocals
+    for i, chunk in enumerate(chunks):
+        if i == 0:
+            start_time = 0
+        else:
+            start_time = chunks[i - 1].duration_seconds + chunks[i - 1].start_time_seconds
+        end_time = chunk.duration_seconds + start_time
+        vocals.append({'start_time': start_time, 'end_time': end_time})
+
+    return vocals
+
+audio_path = 'path/to/audio.wav'
+min_duration_of_pause = 0.5 # in seconds
+vocals = detect_vocals(audio_path, min_silence_len=min_duration_of_pause*1000)
+
+for i,vocal in enumerate(vocals):
+    print(f'Vocal {i+1} starts at {vocal["start_time"]} seconds and ends at {vocal["end_time"]} seconds')
+
+
+# Prompt: I need to differentiate between a vocal pause and pauses in the sounds from the instruments such that pauses are only triggered on the vocal pauses while the music continues
+
+import librosa
+import numpy as np
+
+def detect_vocals(audio_path, sr=44100, min_silence_len=1000, silence_thresh=-16):
+    # Load the audio file
+    audio, sr = librosa.load(audio_path, sr=sr)
+
+    # Perform spectral subtraction to remove the sounds from the instruments
+    audio = librosa.effects.spectral_subtraction(audio, sr=sr)
+
+    # Convert the audio to a pydub audio segment
+    audio = librosa.effects.remix(audio, sr=sr)
+    audio = AudioSegment(
+        audio.tobytes(),
+        frame_rate=sr,
+        sample_width=2,
+        channels=1
+    )
+
+    # Split the audio on silence
+    chunks = split_on_silence(audio, min_silence_len=min_silence_len, silence_thresh=silence_thresh)
+
+    # Create a list to store the start and stop times of the vocals
+    vocals = []
+
+    # Iterate through the chunks and detect the start and stop times of the vocals
+    for i, chunk in enumerate(chunks):
+        if i == 0:
+            start_time = 0
+        else:
+            start_time = chunks[i - 1].duration_seconds + chunks[i - 1].start_time_seconds
+        end_time = chunk.duration_seconds + start_time
+        vocals.append({'start_time': start_time, 'end_time': end_time})
+
+    return vocals
+
+audio_path = 'path/to/audio.wav'
+min_duration_of_pause = 0.5 # in seconds
+vocals = detect_vocals(audio_path, min_silence_len=min_duration_of_pause*1000)
+
+for i,vocal in enumerate(vocals):
+    print(f'Vocal {i+1} starts at {vocal["start_time"]} seconds and ends at {vocal["end_time"]} seconds')
+
+
+# Prompt: I want to use nussl instead of librosa spectral_subtraction
+
+import nussl
+import json
+
+def detect_vocals(audio_path, min_silence_len=1000, silence_thresh=-16):
+    # Load the audio file
+    audio_signal = nussl.AudioSignal(audio_path)
+
+    # Perform source separation
+    separation = nussl.separation.deep_clustering.DeepClustering(audio_signal)
+    separation.run()
+
+    # Get the separated vocals
+    vocals = separation.make_audio_signals()[0]
+
+    # Convert the vocals to a pydub audio segment
+    vocals = AudioSegment(
+        vocals.data.tobytes(),
+        frame_rate=vocals.sample_rate,
+        sample_width=2,
+        channels=1
+    )
+
+    # Split the audio on silence
+    chunks = split_on_silence(vocals, min_silence_len=min_silence_len, silence_thresh=silence_thresh)
+
+    # Create a list to store the start and stop times of the vocals
+    vocals = []
+
+    # Iterate through the chunks and detect the start and stop times of the vocals
+    for i, chunk in enumerate(chunks):
+        if i == 0:
+            start_time = 0
+        else:
+            start_time = chunks[i - 1].duration_seconds + chunks[i - 1].start_time_seconds
+        end_time = chunk.duration_seconds + start_time
+        vocals.append({'start_time': start_time, 'end_time': end_time})
+
+    return vocals
+
+audio_path = 'path/to/audio.wav'
+min_duration_of_pause = 0.5 # in seconds
+vocals = detect_vocals(audio_path, min_silence_len=min_duration_of_pause*1000)
+
+for i,vocal in enumerate(vocals):
+    print(f'Vocal {i+1} starts at {vocal["start_time"]} seconds and ends at {vocal["end_time"]} seconds')
+
+
+
+
+# Prompt: Use librosa to perform vocal separation with NMF
+
+import librosa
+import numpy as np
+
+# Load the audio file
+y, sr = librosa.load('song.mp3')
+
+# Separate the vocals and instrumentals using NMF
+S, _ = librosa.decompose.decompose(y, n_components=2, sort=True)
+vocals = S[0]
+instrumentals = S[1]
+
+# Save the separated audio tracks
+librosa.output.write_wav('vocals.wav', vocals, sr)
+librosa.output.write_wav('instrumentals.wav', instrumentals, sr)
+
+
+
+
+# Prompt: Show me vocal source separation using scikit-learn with ICA source separation
+
+import librosa
+from sklearn.decomposition import FastICA
+import numpy as np
+
+# Load the audio file
+y, sr = librosa.load('song.mp3')
+
+# Reshape the audio data into a 2D array for ICA
+S = np.reshape(y, (-1, 1))
+
+# Perform ICA
+ica = FastICA(n_components=2)
+S_ = ica.fit_transform(S)
+
+# Extract the vocals and instrumentals
+vocals = S_[:,0]
+instrumentals = S_[:,1]
+
+# Save the separated audio tracks
+librosa.output.write_wav('vocals.wav', vocals, sr)
+librosa.output.write_wav('instrumentals.wav', instrumentals, sr)
+
+
+
+# Prompt: Show me vocal source separation using scikit-learn using U-Net architecture
+
+# Using a U-Net architecture to separate vocals from an audio track is a bit more complex and would typically require more resources such as a powerful GPU, a dataset and the knowledge of deep learning. Here's an example of how you could use the U-Net architecture to separate vocals from an audio track in Python using the library Keras:
+# This code defines a U-Net architecture with down-sampling and up-sampling layers, and train it with a dataset of audio files. Then it use this trained model to predict the separation of vocals and instrumentals on new audio files.
+# Keep in mind that this is just a example, in practice you would need to have a large dataset of paired vocal and instrumental tracks and tweak the model architecture and hyperparameters to achieve good results. Additionally, you need to have the knowledge of deep learning and experience in training deep neural networks.
+
+from keras.layers import Input, Conv1D, MaxPooling1D, UpSampling1D
+from keras.models import Model
+
+# Define the input layer
+input_layer = Input(shape=(None, 1))
+
+# Define the down-sampling layers
+conv1 = Conv1D(16, 3, activation='relu', padding='same')(input_layer)
+pool1 = MaxPooling1D(2)(conv1)
+conv2 = Conv1D(32, 3, activation='relu', padding='same')(pool1)
+pool2 = MaxPooling1D(2)(conv2)
+conv3 = Conv1D(64, 3, activation='relu', padding='same')(pool2)
+pool3 = MaxPooling1D(2)(conv3)
+
+# Define the up-sampling layers
+up1 = UpSampling1D(2)(pool3)
+conv4 = Conv1D(64, 3, activation='relu', padding='same')(up1)
+up2 = UpSampling1D(2)(conv4)
+conv5 = Conv1D(32, 3, activation='relu', padding='same')(up2)
+up3 = UpSampling1D(2)(conv5)
+conv6 = Conv1D(16, 3, activation='relu', padding='same')(up3)
+
+# Define the output layer
+output_layer = Conv1D(2, 3, activation='sigmoid', padding='same')(conv6)
+
+# Create the U-Net model
+model = Model(input_layer, output_layer)
+
+# Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy')
+
+# Train the model with your audio dataset
+model.fit(X_train, y_train, epochs=100)
+
+# Predict the separation on new audio
+predicted_separation = model.predict(X_test)
+
+# Extract the vocals and instrumentals
+vocals = predicted_separation[:,:,0]
+instrumentals = predicted_separation[:,:,1]
+
+
+
+# Prompt: I want python code to use synthetic data generation techniques to create a dataset.
+
+# This code first trains the discriminator on the concatenated dataset of instrumental tracks and synthetic vocals, then it freezes the weights of the discriminator and creates a GAN by adding the generator on top of it. Finally, it trains the GAN using random noise as input and ones as output.
+
+import librosa
+import numpy as np
+from keras.layers import Input, Dense, Reshape, LeakyReLU, Dropout, Flatten
+from keras.layers import BatchNormalization, Activation, ZeroPadding2D
+from keras.layers.advanced_activations import PReLU, LeakyReLU
+from keras.layers.convolutional import UpSampling2D, Conv2D
+from keras.models import Sequential, Model
+from keras.optimizers import Adam
+
+# Define the generator
+def build_generator():
+    model = Sequential()
+    model.add(Dense(256, input_dim=100))
+    model.add(LeakyReLU(alpha=0.01))
+    model.add(Dense(512))
+    model.add(LeakyReLU(alpha=0.01))
+    model.add(Dense(1024))
+    model.add(LeakyReLU(alpha=0.01))
+    model.add(Dense(np.prod(shape_before_flattening), activation='tanh'))
+    model.add(Reshape(shape_before_flattening))
+    model.summary()
+    return model
+
+# Define the discriminator
+def build_discriminator():
+    model = Sequential()
+    model.add(Flatten(input_shape=shape_before_flattening))
+    model.add(Dense(512))
+    model.add(LeakyReLU(alpha=0.01))
+    model.add(Dense(256))
+    model.add(LeakyReLU(alpha=0.01))
+    model.add(Dense(1, activation='sigmoid'))
+    model.summary()
+    return model
+
+# Define the GAN
+def build_gan(discriminator, generator):
+    model = Sequential()
+    model.add(generator)
+    model.add(discriminator)
+    model.summary()
+    return model
+
+# Load the instrumental audio tracks
+filenames = ["song1.mp3", "song2.mp3", "song3.mp3"]
+X_train = []
+for filename in filenames:
+    X_train.append(librosa.load(filename))
+X_train = np.array(X_train)
+shape_before_flattening = X_train.shape[1:]
+
+# Generate synthetic vocal tracks
+generator = build_generator()
+noise = np.random.rand(len(X_train), 100)
+synthetic_vocals = generator.predict(noise)
+
+# Concatenate the synthetic vocals with the instrumental tracks to create the training dataset
+X_train = np.concatenate((X_train, synthetic_vocals))
+y_train = np.concatenate((np.zeros(len(filenames)), np.ones(len(filenames))))
+
+# Train the discriminator and the GAN
+discriminator = build_discriminator()
+discriminator.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+discriminator.fit(X_train, y_train, epochs=100, batch_size=32)
+
+# Freeze the weights of the discriminator
+discriminator.trainable = False
+
+# Create the GAN and compile it
+gan = build_gan(discriminator, generator)
+gan.compile(optimizer='adam', loss='binary_crossentropy')
+
+# Train the GAN
+noise = np.random.rand(len(X_train), 100)
+y_gen = np.ones(len(X_train))
+gan.fit(noise, y_gen, epochs=100, batch_size=32)
+
